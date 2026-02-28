@@ -1,41 +1,53 @@
-# Prerequisites
-*.d
+# ==========================================
+# C++ Build Outputs
+# ==========================================
+# Ignore the standard CMake build directories
+build/
+out/
+bin/
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
+# Ignore compiled executables and libraries
 *.exe
 *.out
 *.app
+*.o
+*.obj
+*.dll
+*.dylib
+*.so
+*.a
+*.lib
 
-# debug information files
-*.dwo
+# ==========================================
+# Windows & Visual Studio Junk
+# ==========================================
+.vs/
+*.user
+*.suo
+*.db
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+# ==========================================
+# macOS & Apple Junk
+# ==========================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+*.xcodeproj/
+*.xcworkspace/
+
+# ==========================================
+# VS Code (Optional but recommended)
+# ==========================================
+.vscode/
+
+# ==========================================
+# Project Specific
+# ==========================================
+# Ignore any user-generated text files during testing, 
+# but keep the required default data files in /resources
+*.log
