@@ -7,6 +7,9 @@ project(DataStructureVisualizer)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# This option is for generating compile_commands.json, which is useful for code editors and IDEs to understand your project structure and provide features like code navigation and auto-completion.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Recursively find all .cpp implementation files inside the src/ folder
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
