@@ -24,4 +24,21 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 # TODO FOR LATER: 
 # When your team finalizes Raylib or SFML, you will use `find_package`
 # and `target_link_libraries` right here to connect the graphics!
+include(FetchContent)
+
+FetchContent_Declare(
+    SFML
+    GIT_REPOSITORY https://github.com/SFML/SFML.git
+    GIT_TAG        3.0.2
+)
+
+FetchContent_MakeAvailable(SFML)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    SFML::Graphics 
+    SFML::Window 
+    SFML::System 
+    SFML::Audio 
+    SFML::Network
+)
 # =========================================================================
