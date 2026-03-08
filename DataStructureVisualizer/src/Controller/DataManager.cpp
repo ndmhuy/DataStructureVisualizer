@@ -44,3 +44,28 @@ void DataManager::inputFromConsole(const std::string& text) {
     }
 }
 
+// File output
+void DataManager::outputToFile(const std::string& filePath) const { // not changing class value
+    std::ofstream fileOut(filePath);
+
+    if (!fileOut.is_open()) {
+        std::cerr << "Error: Cannot open the output file!" << endl;
+
+        return;
+    }
+
+    for (int value : data) {
+        fileOut << value << " ";
+    }
+    
+    fileOut.close();
+}
+
+// Manual output
+void DataManager::outputToConsole() const { // not changing class value 
+    for (int value : data) {
+        std::cout << value << " ";
+    }
+
+    std::cout << std::endl;
+}

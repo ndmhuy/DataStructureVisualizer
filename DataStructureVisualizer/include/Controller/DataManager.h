@@ -15,6 +15,11 @@ public:
     void inputFromFile(const string& filePath);
 
     void inputFromConsole(const std::string& text);
+    
+    // Output
+    void outputToFile(const std::string& filePath) const;
+
+    void outputToConsole() const;
 };
 
 #endif
