@@ -15,11 +15,17 @@ public:
     void inputFromFile(const string& filePath);
 
     void inputFromConsole(const std::string& text);
-    
+
     // Output
     void outputToFile(const std::string& filePath) const;
 
     void outputToConsole() const;
+
+    // Getter
+    const std::vector<int>& getData() const;
+
+    // Data randomizer
+    void randomData(int n, int minValue, int maxValue);
 };
 
 #endif

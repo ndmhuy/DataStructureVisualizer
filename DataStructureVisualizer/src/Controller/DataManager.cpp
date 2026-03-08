@@ -69,3 +69,20 @@ void DataManager::outputToConsole() const { // not changing class value
 
     std::cout << std::endl;
 }
+
+// Randomizer
+void DataManager::randomData(int n, int minValue, int maxValue) {
+    data.clear();
+
+    srand(time(0)); // This should be put in MAIN for calling just one seed
+    for (int i = 0; i < n; i++) {
+        int value = minValue + rand() % (maxValue - minValue + 1);
+        data.push_back(value);
+    }
+}
+
+// Data getter
+const std::vector<int>& DataManager::getData() const {
+    // Neither changing vector data nor changing class value
+    return data; 
+}
