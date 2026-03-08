@@ -8,5 +8,39 @@
 
 #include "DataManager.h"
 
+// File input
+void DataManager::inputFromFile(const std::string& filePath) {
+    std::ifstream fileIn(filePath);
 
+    if (!fileIn.is_open()) {
+        std::cerr << "Error: Cannot open the input file!" << std::endl;
+
+        return;
+    }
+
+    std::string line = "";
+    data.clear();
+
+    while (std::getline(fileIn, line)) {
+        std::stringstream ss(line);
+        int value;
+        
+        while (ss >> value) {
+            data.push_back(value);
+        }
+    }
+
+    fileIn.close();
+}
+
+// Manual input
+void DataManager::inputFromConsole(const std::string& text) {
+    data.clear();
+    std::stringstream ss(text);
+    int value;
+
+    while (ss >> value) {
+        data.push_back(value);
+    }
+}
 

@@ -11,6 +11,10 @@ class DataManager
 private:
     std::vector<int> data;
 public:
+    // Input
+    void inputFromFile(const string& filePath);
+
+    void inputFromConsole(const std::string& text);
 };
 
 #endif
