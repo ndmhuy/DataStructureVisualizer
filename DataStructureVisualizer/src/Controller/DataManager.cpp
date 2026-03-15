@@ -20,17 +20,39 @@ void DataManager::inputFromFile(const std::string& filePath) {
 
     std::string line = "";
     data.clear();
+    bool isTrash = true;
 
     while (std::getline(fileIn, line)) {
+        if (line.empty() || (line.find_first_not_of(" \t\n\v\f\r") == std::string::npos)) {
+            continue;
+        }
+
         std::stringstream ss(line);
         int value;
         
-        while (ss >> value) {
-            data.push_back(value);
+        while (!ss.eof()) {
+            
+            if (ss >> value) {
+                isTrash = false;
+                data.push_back(value);
+            }
+            else {
+                ss.clear();
+                ss.ignore(1);
+            }
+        }
+
+        if (isTrash && ss.eof()) {
+            std::cout << "Invalid data input text file!" << std::endl;
+            ss.ignore()
         }
     }
 
     fileIn.close();
+
+    if (isTrash) {
+        std::cout << "There is not any valid interger in this file!" << std::endl;
+    }
 }
 
 // Manual input
@@ -72,6 +94,17 @@ void DataManager::outputToConsole() const { // not changing class value
 
 // Randomizer
 void DataManager::randomData(int n, int minValue, int maxValue) {
+    if (n <= 0) {
+        std::cerr << "Invalid data size!";
+
+        return;
+    }
+    if (minValue > maxValue) {
+        std::cerr << "Invalid range!";
+
+        return;
+    }
+
     data.clear();
 
     srand(time(0)); // This should be put in MAIN for calling just one seed
