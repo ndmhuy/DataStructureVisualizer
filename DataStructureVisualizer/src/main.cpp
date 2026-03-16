@@ -1,6 +1,7 @@
-#include <iostream>
+#include "Controller/AppEngine.h"
 
 int main() {
-    std::cout << "Data Visualizer Framework Initialized!" << std::endl;
+    AppEngine engine;
+    engine.run();
     return 0;
 }
