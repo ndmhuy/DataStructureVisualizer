@@ -1,8 +1,9 @@
 #include "Model/DataStructure/SinglyLinkedList.h"
+#include <string>
 
 std::vector<int> SinglyLinkedList::toVector() const {
     std::vector<int> result;
-    Node* current = head;
+    const Node* current = head;
     while (current) {
         result.push_back(current->value);
         current = current->next;
@@ -10,15 +11,18 @@ std::vector<int> SinglyLinkedList::toVector() const {
     return result;
 }
 
+void SinglyLinkedList::deleteNodes(Node*& head) {
+    while (head) {
+        Node* next = head->next;
+        delete head;
+        head = next;
+    }
+}
+
 SinglyLinkedList::SinglyLinkedList() : head(nullptr) {}
 
 SinglyLinkedList::~SinglyLinkedList() {
-    Node* current = head;
-    while (current) {
-        Node* next = current->next;
-        delete current;
-        current = next;
-    }
+    deleteNodes(head);
 }
 
 void SinglyLinkedList::initialize(const std::vector<int>& data, Timeline& timeline) {
@@ -54,14 +58,14 @@ void SinglyLinkedList::insert(int value, Timeline& timeline) {
     Node* current = head;
     int index = 0;
 
+    std::vector<int> currentState = toVector();
     while (current->next) {
         current = current->next;
         index++;
-        timeline.addFrame(Frame(toVector(), {index}, 3, "Traversing... current node is " + std::to_string(current->value)));
+        timeline.addFrame(Frame(currentState, {index}, 3, "Traversing... current node is " + std::to_string(current->value)));
     }
     current->next = newNode;
     timeline.addFrame(Frame(toVector(), {index + 1}, 4, "Successfully inserted " + std::to_string(value) + " at the tail."));
-        timeline.addFrame(Frame(toVector(), {index + 1}, 4, "Successfully inserted " + std::to_string(value) + " at the tail."));
 }
 
 void SinglyLinkedList::remove(int value, Timeline& timeline) {
@@ -84,10 +88,11 @@ void SinglyLinkedList::remove(int value, Timeline& timeline) {
     Node* current = head;
     int index = 0;
 
+    std::vector<int> currentState = toVector();
     while (current->next) {
-        timeline.addFrame(Frame(toVector(), {index, index + 1}, 5, "Checking if next node is " + std::to_string(current->next->value)));
+        timeline.addFrame(Frame(currentState, {index, index + 1}, 5, "Checking if next node is " + std::to_string(current->next->value)));
         if (current->next->value == value) {
-            timeline.addFrame(Frame(toVector(), {index + 1}, 6, "Target found! Unlinking node..."));
+            timeline.addFrame(Frame(currentState, {index + 1}, 6, "Target found! Unlinking node..."));
 
             Node* nodeToRemove = current->next;
             current->next = current->next->next;
@@ -103,33 +108,28 @@ void SinglyLinkedList::remove(int value, Timeline& timeline) {
 }
 
 void SinglyLinkedList::search(int value, Timeline& timeline) {
-    timeline.addFrame(Frame(toVector(), {}, 1, "Searching for " + std::to_string(value)));
+    std::vector<int> currentState = toVector();
+    timeline.addFrame(Frame(currentState, {}, 1, "Searching for " + std::to_string(value)));
 
     Node* current = head;
     int index = 0;
     
     while (current) {
-        timeline.addFrame(Frame(toVector(), {index}, 2, "Comparing with node value " + std::to_string(current->value)));
+        timeline.addFrame(Frame(currentState, {index}, 2, "Comparing with node value " + std::to_string(current->value)));
         if (current->value == value) {
-            timeline.addFrame(Frame(toVector(), {index}, 3, "Value found at index " + std::to_string(index)));
+            timeline.addFrame(Frame(currentState, {index}, 3, "Value found at index " + std::to_string(index)));
             return;
         }
         current = current->next;
         index++;
     }
-    timeline.addFrame(Frame(toVector(), {}, 4, "Value " + std::to_string(value) + " was not found in the list."));
+    timeline.addFrame(Frame(currentState, {}, 4, "Value " + std::to_string(value) + " was not found in the list."));
 }
 
 void SinglyLinkedList::clear(Timeline& timeline) {
     timeline.addFrame(Frame(toVector(), {}, 1, "Clearing the entire linked list..."));
 
-    Node* current = head;
-    while (current) {
-        Node* next = current->next;
-        delete current;
-        current = next;
-    }
-    head = nullptr;
-    timeline.addFrame(Frame(toVector(), {}, 2, "Linked list cleared successfully."));
+    deleteNodes(head);
 
+    timeline.addFrame(Frame(toVector(), {}, 2, "Linked list cleared successfully."));
 }

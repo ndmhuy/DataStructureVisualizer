@@ -3,6 +3,7 @@
 
 #include "Model/IDataStructure.h"
 #include "Model/Timeline.h"
+#include <vector>
 
 class SinglyLinkedList : public IDataStructure {
     private:
@@ -15,10 +16,14 @@ class SinglyLinkedList : public IDataStructure {
     
     Node* head;
     std::vector<int> toVector() const;
+    void deleteNodes(Node*& head);
 
     public:
     SinglyLinkedList();
     ~SinglyLinkedList() override;
+
+    SinglyLinkedList(const SinglyLinkedList&) = delete;
+    SinglyLinkedList& operator=(const SinglyLinkedList&) = delete;
 
     void initialize(const std::vector<int>& data, Timeline& timeline) override;
     void insert(int value, Timeline& timeline) override;
