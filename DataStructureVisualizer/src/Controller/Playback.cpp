@@ -36,7 +36,7 @@ void Playback::stepBackward() {
     currentTimeline.prevFrame();
 }
 
-void Playback::goToStep(int index) {
+void Playback::goToStep(size_t index) {
     currentTimeline.goToFrame(index);
 }
 
