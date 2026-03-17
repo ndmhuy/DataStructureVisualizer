@@ -17,7 +17,7 @@ private:
     sf::Sprite bgSprite;
 
 public:
-    Renderer(Window& window, const Theme& theme);
+    Renderer(Window& m_window, const Theme& m_theme);
 
     bool loadAssets();
 
