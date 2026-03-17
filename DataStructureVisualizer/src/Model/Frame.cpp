@@ -1,13 +1,13 @@
 #include "Model/Frame.h"
 
-Frame::Frame(const std::vector<int>& data, const std::vector<int>& highlight, int lineId, const std::string& msg)
+Frame::Frame(const std::vector<int>& data, const std::vector<size_t>& highlight, int lineId, const std::string& msg)
     : currentData(data), highlightIndices(highlight), codeLineId(lineId), message(msg) {}
 
 const std::vector<int>& Frame::getCurrentData() const {
     return currentData;
 }
 
-const std::vector<int>& Frame::getHighlightIndices() const {
+const std::vector<size_t>& Frame::getHighlightIndices() const {
     return highlightIndices;
 }
 
