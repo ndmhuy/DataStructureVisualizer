@@ -1,11 +1,11 @@
 #include "Controller/AppEngine.h"
 
-AppEngine::AppEngine() : appWindow(), playbackController() {}
+AppEngine::AppEngine() : playbackController(), appWindow() {}
 
 void AppEngine::run() {
-    appWindow.init();
+    appWindow.init(1920, 1080, "Data Structure Visualizer");
     while (appWindow.isOpen()) {
-        float deltaTIme = appWindow.getDeltaTime();
+        float deltaTime = appWindow.getDeltaTime();
         processInput();
         update(deltaTime);
         render();
