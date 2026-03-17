@@ -23,8 +23,8 @@ void Timeline::prevFrame() {
     }
 }
 
-void Timeline::goToFrame(int index) {
-    if (index >= 0 && index < frames.size()) {
+void Timeline::goToFrame(size_t index) {
+    if (index < frames.size()) {
         currentFrameIndex = index;
     }
 }
@@ -45,11 +45,11 @@ bool Timeline::isAtEnd() const {
     return frames.empty() || currentFrameIndex >= frames.size() - 1;
 }
 
-int Timeline::getFrameCount() const {
+size_t Timeline::getFrameCount() const {
     return frames.size();
 }
 
-int Timeline::getCurrentFrameIndex() const {
+size_t Timeline::getCurrentFrameIndex() const {
     return currentFrameIndex;
 }
 
