@@ -7,13 +7,14 @@ void Playback::update(float deltaTime) {
     if (isPlaying && currentTimeline.getFrameCount() > 0) {
         timeAccumulator += deltaTime * speedMultiplier;
 
-        if (timeAccumulator >= baseStepDuration) {
+        while (timeAccumulator >= baseStepDuration) {
             stepForward();
 
             timeAccumulator -= baseStepDuration;
 
-            if (currentTimeline.currentFrameIndex >= currentTimeline.getFrameCount() - 1) {
+            if (currentTimeline.isAtEnd()) {
                 pause();
+                break;
             }
         }
     }
@@ -32,13 +33,19 @@ void Playback::stepForward() {
 }
 
 void Playback::stepBackward() {
-    if (currentTimeline.currentFrameIndex > 0) {
-        --currentTimeline.currentFrameIndex;
-    }
+    currentTimeline.prevFrame();
+}
+
+void Playback::goToStep(size_t index) {
+    currentTimeline.goToFrame(index);
+}
+
+void Playback::goToFirstStep() {
+    currentTimeline.goToFirstFrame();
 }
 
 void Playback::goToFinalStep() {
-    currentTimeline.currentFrameIndex = std::max(0, currentTimeline.getFrameCount() - 1);
+    currentTimeline.goToLastFrame();
 }
 
 void Playback::setSpeed(float multiplier) {
