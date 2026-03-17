@@ -18,3 +18,6 @@ void Window::display(){
 bool Window::IsOpen() const{
     return RenderWindow.isOpen();
 }
+sf::RenderWindow& Window::GetWindow(){
+    return RenderWindow;
+}
