@@ -31,7 +31,23 @@ void Renderer::drawImageNode(float x,float y,const std::string& text){
     sf::Text a(mainFont,text,20);
     a.setFillColor(theme.textColor);
     sf::FloatRect textRect=a.getLocalBounds();
-    a.setOrigin({bounds.size.x,bounds.size.y});
+    a.setOrigin({textRect.position.x+textRect.size.x/2,textRect.position.y+textRect.size.y});
+    a.setPosition({x,y});
+    window.GetWindow().draw(a);
+}
+void Renderer::drawArrayCell(float x,float y,const std::string& text){
+    sf::Sprite sprite(arrayTexture);
+    sprite.setColor(theme.arrayTintColor);
+    sprite.setScale({theme.arrayScale,theme.arrayScale});
+    sf::FloatRect bounds=sprite.getLocalBounds();
+    sprite.setOrigin({bounds.size.x/2,bounds.size.y/2});
+    sprite.setPosition({x,y});
+    window.GetWindow().draw(sprite);
+
+    sf::Text a(mainFont,text,20);
+    a.setFillColor(theme.textColor);
+    sf::FloatRect textRect=a.getLocalBounds();
+    a.setOrigin({textRect.position.x+textRect.size.x/2,textRect.position.y+textRect.size.y/2});
     a.setPosition({x,y});
     window.GetWindow().draw(a);
 }
