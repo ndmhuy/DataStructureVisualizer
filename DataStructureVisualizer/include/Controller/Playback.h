@@ -20,7 +20,7 @@ class Playback {
     void pause();
     void stepForward();
     void stepBackward();
-    void goToStep(int index);
+    void goToStep(size_t index);
     void goToFirstStep();
     void goToFinalStep();
     void setSpeed(float multiplier);

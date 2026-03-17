@@ -7,7 +7,7 @@
 class Timeline {
     private:
     std::vector<Frame> frames;
-    int currentFrameIndex;
+    size_t currentFrameIndex;
 
     public:
     Timeline();
@@ -16,13 +16,13 @@ class Timeline {
 
     void nextFrame();
     void prevFrame();
-    void goToFrame(int index);
+    void goToFrame(size_t index);
     void goToFirstFrame();
     void goToLastFrame();
 
     bool isAtEnd() const;
-    int getFrameCount() const;
-    int getCurrentFrameIndex() const;
+    size_t getFrameCount() const;
+    size_t getCurrentFrameIndex() const;
     const Frame* getCurrentFrame() const;
 };
 
