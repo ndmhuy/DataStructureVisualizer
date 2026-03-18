@@ -2,6 +2,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <cmath>
 #include "View/Window.h"
 #include "Model/Theme.h"
 class Renderer {
@@ -25,5 +26,5 @@ public:
     void drawBackground();
     void drawImageNode(float x, float y, const std::string& text);
     void drawArrayCell(float x, float y, const std::string& text);
-    void drawLine(float x1, float y1, float x2, float y2, float thickness = 3.0f);
+    void drawLine(float x1, float y1, float x2, float y2, float thickness);
 };
