@@ -3,10 +3,9 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include <ctime>
-#include <cstdlib>
+#include <random>
 
-#include "DataManager.h"
+#include "Controller/DataManager.h"
 
 // File input
 void DataManager::inputFromFile(const std::string& filePath) {
@@ -14,13 +13,12 @@ void DataManager::inputFromFile(const std::string& filePath) {
 
     if (!fileIn.is_open()) {
         std::cerr << "Error: Cannot open the input file!" << std::endl;
-
         return;
     }
 
-    std::string line = "";
+    std::string line;
     data.clear();
-    bool isTrash = true;
+    bool hasAnyValid = false;
 
     while (std::getline(fileIn, line)) {
         if (line.empty() || (line.find_first_not_of(" \t\n\v\f\r") == std::string::npos)) {
@@ -29,41 +27,40 @@ void DataManager::inputFromFile(const std::string& filePath) {
 
         std::stringstream ss(line);
         int value;
-        
-        while (!ss.eof()) {
-            
-            if (ss >> value) {
-                isTrash = false;
-                data.push_back(value);
-            }
-            else {
-                ss.clear();
-                ss.ignore(1);
-            }
+        bool lineHasValid = false;
+
+        while (ss >> value) {
+            data.push_back(value);
+            hasAnyValid = true;
+            lineHasValid = true;
         }
 
-        if (isTrash && ss.eof()) {
-            std::cout << "Invalid data input text file!" << std::endl;
-            ss.ignore()
+        if (!lineHasValid) {
+            std::cout << "Invalid data input text file! Non-integer content ignored on current line." << std::endl;
         }
     }
 
     fileIn.close();
 
-    if (isTrash) {
-        std::cout << "There is not any valid interger in this file!" << std::endl;
+    if (!hasAnyValid) {
+        std::cout << "There is not any valid integer in this file!" << std::endl;
+    }
+}
+
+// Stream input
+void DataManager::inputFromStream(std::istream& in) {
+    data.clear();
+    int value;
+
+    while (in >> value) {
+        data.push_back(value);
     }
 }
 
 // Manual input
 void DataManager::inputFromConsole(const std::string& text) {
-    data.clear();
     std::stringstream ss(text);
-    int value;
-
-    while (ss >> value) {
-        data.push_back(value);
-    }
+    inputFromStream(ss);
 }
 
 // File output
@@ -71,7 +68,7 @@ void DataManager::outputToFile(const std::string& filePath) const { // not chang
     std::ofstream fileOut(filePath);
 
     if (!fileOut.is_open()) {
-        std::cerr << "Error: Cannot open the output file!" << endl;
+        std::cerr << "Error: Cannot open the output file!" << std::endl;
 
         return;
     }
@@ -107,10 +104,11 @@ void DataManager::randomData(int n, int minValue, int maxValue) {
 
     data.clear();
 
-    srand(time(0)); // This should be put in MAIN for calling just one seed
+    static thread_local std::mt19937 engine(std::random_device{}());
+    std::uniform_int_distribution<int> dist(minValue, maxValue);
+
     for (int i = 0; i < n; i++) {
-        int value = minValue + rand() % (maxValue - minValue + 1);
-        data.push_back(value);
+        data.push_back(dist(engine));
     }
 }
 
