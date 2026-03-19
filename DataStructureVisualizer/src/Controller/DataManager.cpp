@@ -35,8 +35,13 @@ void DataManager::inputFromFile(const std::string& filePath) {
             lineHasValid = true;
         }
 
-        if (!lineHasValid) {
-            std::cout << "Invalid data input text file! Non-integer content ignored on current line." << std::endl;
+        // When input file only contains non "specific" integer value
+        if (!lineHasValid && (ss.fail() || !ss.eof())) {
+            std::cout << "Invalid data input text file! No valid integers found on current line; line ignored." << std::endl;
+        }
+        // Warning when there is some integer and some text
+        else if (lineHasValid && ss.fail() && !ss.eof()) {
+            std::cout << "Warning: Non-integer content after valid integers ignored on current line." << std::endl;
         }
     }
 
@@ -92,12 +97,12 @@ void DataManager::outputToConsole() const { // not changing class value
 // Randomizer
 void DataManager::randomData(int n, int minValue, int maxValue) {
     if (n <= 0) {
-        std::cerr << "Invalid data size!";
+        std::cerr << "Invalid data size!" << std::endl;
 
         return;
     }
     if (minValue > maxValue) {
-        std::cerr << "Invalid range!";
+        std::cerr << "Invalid range!" << std::endl;
 
         return;
     }
