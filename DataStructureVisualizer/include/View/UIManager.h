@@ -8,12 +8,18 @@
 class UIManager{
     private:
     //statics values
-        
+        bool isPlay=true; //Determine if it's play butt or pause butt, initially play butt
+        Button play;
+        Button pause;
+        Button stepForward;
+        Button stepBackward;
     public:
 
     bool init(sf::RenderWindow&); //Initial set up for ImGui+SFML
 
     void processEvent(sf::RenderWindow&,const sf::Event&); //Pass event from SFML to Imgui
+
+    void resize(const sf::RenderWindow& window); //resize event
 
     void update(sf::RenderWindow&,const sf::Time&); //Update UI status
 
