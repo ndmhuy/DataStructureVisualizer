@@ -48,49 +48,41 @@ bool Button::init(const std::string& imagepath, sf::Vector2f position, sf::Vecto
 
 void Button::setActive(bool active){
     isActive=active;
-    if (isActive){
-        sprite.setColor(sf::Color(255,255,255,255));
-    }
-    else{
-        sprite.setColor(sf::Color(150,150,150,100));
-    }
 }
 
 bool Button::handleEvent(const sf::RenderWindow& window, const sf::Event& event){
-    if (!isActive) return false;
+    if (!isActive){
+        isHovered = false;
+        isPressed = false;
+        sprite.setColor(notActive);
+        return false;
+    }
     sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
     sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
-
-    //check if the mouse is in the button
     isHovered = sprite.getGlobalBounds().contains(mouseWorldPos);
 
-    if (isHovered){
-        //dim
-        sprite.setColor(sf::Color(200,200,200,255));
-
-        if (event.is<sf::Event::MouseButtonPressed>()) {
-                const auto* mouseEvent = event.getIf<sf::Event::MouseButtonPressed>();
-                if (mouseEvent && mouseEvent->button == sf::Mouse::Button::Left) {
-                    isPressed = true;
-                    // Click: dimmer
-                    sprite.setColor(sf::Color(150, 150, 150, 255)); 
-                }
-            } 
-            else if (event.is<sf::Event::MouseButtonReleased>()) {
-                const auto* mouseEvent = event.getIf<sf::Event::MouseButtonReleased>();
-                if (mouseEvent && mouseEvent->button == sf::Mouse::Button::Left) {
-                    if (isPressed) {
-                        isPressed = false;
-                        sprite.setColor(sf::Color(200, 200, 200, 255)); //return dim color
-                        return true; // successfully clicked
-                    }
-                }
+    if (!isHovered){
+        isPressed=false;
+        sprite.setColor(normal);
+        return false;
     }
+    if (event.is<sf::Event::MouseButtonPressed>()) {
+        const auto* mouseEvent = event.getIf<sf::Event::MouseButtonPressed>();
+        if (mouseEvent && mouseEvent->button == sf::Mouse::Button::Left && isHovered) {
+            isPressed = true;
+            sprite.setColor(pressed);
+            return false;
+        }
     }
-    else {
-        sprite.setColor(sf::Color(255,255,255,255));
-        isPressed = false;
+    if (event.is<sf::Event::MouseButtonReleased>()) {
+        const auto* mouseEvent = event.getIf<sf::Event::MouseButtonReleased>();
+        if (mouseEvent && mouseEvent->button == sf::Mouse::Button::Left&&isPressed) {
+            isPressed = false;
+            sprite.setColor(hovered);
+            return true;
+        }
     }
+    sprite.setColor(hovered);
     return false;
 }
 
