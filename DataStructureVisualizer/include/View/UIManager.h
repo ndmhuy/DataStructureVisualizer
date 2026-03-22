@@ -25,13 +25,19 @@ class UIManager{
 class Button{
     private:
         //statics
-        bool isActive=false; //If the button is active (dim/light)
+        bool isActive=true; //If the button is active (dim/light)
         bool isPressed=false; //If the button is clicked
         bool isHovered=false; // If the mouse is in the button
 
         //image
         sf::Texture texture;
         sf::Sprite sprite;
+
+        //Color
+        sf::Color normal{255,255,255,255};
+        sf::Color hovered{200,200,200,255};
+        sf::Color pressed{150,150,150,255};
+        sf::Color notActive{150,150,150,100};
     
     public:
 
@@ -47,5 +53,5 @@ class Button{
     //draw
     void render(sf::RenderWindow&);
 
-    
+
 };
