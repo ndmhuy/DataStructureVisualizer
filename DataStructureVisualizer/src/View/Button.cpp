@@ -1,43 +1,62 @@
 #include <iostream>
+#include <algorithm>
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
-#include "imgui.h"
-#include "imgui-SFML.h"
 #include "../../include/View/Button.h"
 
-bool Button::init(const std::string& imagepath, sf::Vector2f position, sf::Vector2f size){
+bool Button::init(const std::string& imagepath){
     if (!texture.loadFromFile(imagepath)){
         std::cerr<<"Can't load from file!";
         return false;
     }
     texture.setSmooth(true);
     sprite.setTexture(texture);
-    sprite.setPosition(position);
-    
-    //fixed size
+
     sf::Vector2u textureSize = texture.getSize();
-    sprite.setScale(
-        {size.x / static_cast<float>(textureSize.x), 
-        size.y / static_cast<float>(textureSize.y)}
-    );
+    //set centre
+    sprite.setOrigin({textureSize.x / 2.0f, textureSize.y / 2.0f});
 
     return true;
 }
 
 void Button::setActive(bool active){
-    isActive=active;
+    isActive = active;
+    if (!isActive) {
+        isHovered = false;
+        isPressed = false;
+        sprite.setColor(notActive); 
+    } else {
+        sprite.setColor(normal);  
+    }
+}
+
+void Button::resize(sf::Vector2f position, float radius){
+    sf::Vector2u textureSize = texture.getSize();
+    // set position (is the position of the centre)
+    sprite.setPosition(position);
+
+    //Scale
+    float targetDiameter = radius * 2.0f;
+    sprite.setScale(
+        {targetDiameter / static_cast<float>(textureSize.x), 
+        targetDiameter / static_cast<float>(textureSize.y)}
+    );
+
+    pos=position;
+    rad=radius;
 }
 
 bool Button::handleEvent(const sf::RenderWindow& window, const sf::Event& event){
     if (!isActive){
         isHovered = false;
         isPressed = false;
-        sprite.setColor(notActive);
         return false;
     }
     sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
     sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
-    isHovered = sprite.getGlobalBounds().contains(mouseWorldPos);
+    float dx=mouseWorldPos.x-pos.x;
+    float dy=mouseWorldPos.y-pos.y;
+    isHovered=(dx*dx+dy*dy<=rad*rad);
 
     if (!isHovered){
         isPressed=false;
@@ -60,7 +79,8 @@ bool Button::handleEvent(const sf::RenderWindow& window, const sf::Event& event)
             return true;
         }
     }
-    sprite.setColor(hovered);
+    if (!isPressed) sprite.setColor(hovered);
+    else sprite.setColor(pressed);
     return false;
 }
 
