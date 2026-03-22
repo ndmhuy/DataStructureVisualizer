@@ -12,19 +12,19 @@ bool UIManager::init(sf::RenderWindow& window){
         std::cerr<<"Can't ImGUI::SFML::Init(window)";
         return false;
     }
-    if (!play.init(""/*stringpath*/)){
+    if (!play.init("../../../assets/playbutton.png"/*stringpath*/)){
         std::cerr<<"Can't load play image";
         return false;
     }
-    if (!pause.init(""/*stringpath*/)){
+    if (!pause.init("../../../assets/pausebutton.png"/*stringpath*/)){
         std::cerr<<"Can't load pause image";
         return false;
     }
-    if (!stepForward.init(""/*stringpath*/)){
+    if (!stepForward.init("../../../assets/stepforward.png"/*stringpath*/)){
         std::cerr<<"Can't load step forward image";
         return false;
     }
-    if (!stepBackward.init(""/*stringpath*/)){
+    if (!stepBackward.init("../../../assets/stepbackward.png"/*stringpath*/)){
         std::cerr<<"Can't load play image";
         return false;
     }
