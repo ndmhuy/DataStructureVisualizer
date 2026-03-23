@@ -7,15 +7,15 @@
 
 class AVLTree : public IDataStructure {
     private:
+
     struct Node {
         int value;
-        Node* left = nullptr;
-        Node* right = nullptr;
+        Node* left;
+        Node* right;
         int height;
-
         Node(int val) : value(val), left(nullptr), right(nullptr), height(1) {}
 
-        int heightOf(Node* root);
+        static int heightOf(Node* root);
         int heightLChild();
         int heightRChild();
         int balanceFactor();
@@ -24,10 +24,15 @@ class AVLTree : public IDataStructure {
     Node* root;
 
     std::vector<int> toVector() const;
+    void deleteNodes(Node*& root);
+
     Node* rotateRight(Node* root);
     Node* rotateLeft(Node* root);
     void balance(Node*& root);
-    void deleteNodes(Node*& root);
+
+    // Beta
+    bool initialInsert(int value, Node*& root);
+    bool initialRemove(int value, Node*& root);
 
     public:
     AVLTree();
