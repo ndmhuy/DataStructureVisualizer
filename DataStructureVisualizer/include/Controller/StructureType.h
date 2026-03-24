@@ -12,7 +12,7 @@ enum class StructureType {
     AVLTree,
     RedBlackTree,
     TwoThreeTree,
-    TWoThreeFourTree,
+    TwoThreeFourTree,
 
     // Heaps
     MinHeap,
