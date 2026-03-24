@@ -10,7 +10,7 @@ bool Button::init(const std::string& imagepath){
         return false;
     }
     texture.setSmooth(true);
-    sprite.setTexture(texture);
+    sprite.setTexture(texture,true);
 
     sf::Vector2u textureSize = texture.getSize();
     //set centre

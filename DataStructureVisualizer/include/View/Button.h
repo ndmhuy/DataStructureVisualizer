@@ -17,13 +17,15 @@ class Button{
         sf::Color normal{255,255,255,255};
         sf::Color hovered{200,200,200,255};
         sf::Color pressed{150,150,150,255};
-        sf::Color notActive{150,150,150,100};
+        sf::Color notActive{100,100,100,255};
 
         //statistic
         sf::Vector2f pos; //centre pos
         float rad; //radius
     
     public:
+
+    Button() : sprite(texture) {}
 
     //create a button with image
     bool init(const std::string& imagepath);
