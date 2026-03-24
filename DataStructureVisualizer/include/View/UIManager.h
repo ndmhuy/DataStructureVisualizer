@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include "Button.h"
+#include "Slider.h"
 
 class UIManager{
     private:
@@ -13,7 +14,12 @@ class UIManager{
         Button pause;
         Button stepForward;
         Button stepBackward;
+
+        Slider speedSlider;
+        float speed;
     public:
+
+    UIManager()=default;//constructor
 
     bool init(sf::RenderWindow&); //Initial set up for ImGui+SFML
 

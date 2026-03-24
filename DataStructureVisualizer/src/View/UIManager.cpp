@@ -7,32 +7,34 @@
 #include "../../include/View/UIManager.h"
 #include "../../include/View/Button.h"
 
+
 bool UIManager::init(sf::RenderWindow& window){
     if (!ImGui::SFML::Init(window)) {
         std::cerr<<"Can't ImGUI::SFML::Init(window)";
         return false;
     }
-    if (!play.init("../../../assets/playbutton.png"/*stringpath*/)){
+    if (!play.init("../assets/playbutton.png"/*stringpath*/)){
         std::cerr<<"Can't load play image";
         return false;
     }
-    if (!pause.init("../../../assets/pausebutton.png"/*stringpath*/)){
+    if (!pause.init("../assets/pausebutton.png"/*stringpath*/)){
         std::cerr<<"Can't load pause image";
         return false;
     }
-    if (!stepForward.init("../../../assets/stepforward.png"/*stringpath*/)){
+    if (!stepForward.init("../assets/stepforward.png"/*stringpath*/)){
         std::cerr<<"Can't load step forward image";
         return false;
     }
-    if (!stepBackward.init("../../../assets/stepbackward.png"/*stringpath*/)){
+    if (!stepBackward.init("../assets/stepbackward.png"/*stringpath*/)){
         std::cerr<<"Can't load play image";
         return false;
     }
-
+    speed=1;
+    speedSlider.init(&speed);
     //setup Size and position for buttons
     resize(window);
 
-    play.setActive(false);
+    play.setActive(true);
     pause.setActive(false);
     stepForward.setActive(false);
     stepBackward.setActive(false);
@@ -47,10 +49,7 @@ void UIManager::processEvent(sf::RenderWindow& window,const sf::Event& event){
     if (ImGui::GetIO().WantCaptureMouse) {
         return; 
     }
-
-    if (event.is<sf::Event::Resized>()){
-        resize(window);
-    }
+    
     if (play.handleEvent(window,event)){
         //do sth when play butt is clicked
         isPlay=false;
@@ -69,6 +68,7 @@ void UIManager::processEvent(sf::RenderWindow& window,const sf::Event& event){
     if (stepBackward.handleEvent(window,event)){
         //stepBackward logic
     }
+    speedSlider.handleEvent(window,event);
 }
 
 void UIManager::resize(const sf::RenderWindow& window){
@@ -80,6 +80,7 @@ void UIManager::resize(const sf::RenderWindow& window){
     pause.resize(sf::Vector2f{x/4,9*y/10},rad);
     stepForward.resize(sf::Vector2f{5*x/12,9*y/10},rad);
     stepBackward.resize(sf::Vector2f{x/12,9*y/10},rad);
+    speedSlider.resize(window);
 }
 
 void UIManager::update(sf::RenderWindow& window,const sf::Time& deltatime){
@@ -91,6 +92,7 @@ void UIManager::render(sf::RenderWindow& window){
     else pause.render(window);
     stepForward.render(window);
     stepBackward.render(window);
+    speedSlider.render(window);
     ImGui::SFML::Render(window);
 }
 
