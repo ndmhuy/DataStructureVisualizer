@@ -1,20 +1,15 @@
-#ifndef IDATASTRUCTURE_H
-#define IDATASTRUCTURE_H
+#ifndef ISTANDARDSTRUCTURE_H
+#define ISTANDARDSTRUCTURE_H
 
-#include "Model/Timeline.h"
+#include "Model/IVisualizable.h"
 #include <vector>
 
-class IDataStructure {
-public:
-    virtual ~IDataStructure() = default;
-    
+class IStandardStructure : public IVisualizable {
+    public:
     virtual void initialize(const std::vector<int>& data, Timeline& timeline) = 0;
-
     virtual void insert(int value, Timeline& timeline) = 0;
     virtual void remove(int value, Timeline& timeline) = 0;
     virtual void search(int value, Timeline& timeline) = 0;
-    
-    virtual void clear(Timeline& timeline) = 0;
 };
 
-#endif // IDATASTRUCTURE_H
+#endif // ISTANDARDSTRUCTURE_H

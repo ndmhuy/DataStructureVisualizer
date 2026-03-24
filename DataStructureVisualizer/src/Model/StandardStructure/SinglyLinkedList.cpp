@@ -1,4 +1,4 @@
-#include "Model/DataStructure/SinglyLinkedList.h"
+#include "Model/StandardStructure/SinglyLinkedList.h"
 #include <string>
 
 std::vector<int> SinglyLinkedList::toVector() const {
@@ -56,7 +56,7 @@ void SinglyLinkedList::insert(int value, Timeline& timeline) {
     }
 
     Node* current = head;
-    int index = 0;
+    size_t index = 0;
 
     std::vector<int> currentState = toVector();
     while (current->next) {
@@ -86,7 +86,7 @@ void SinglyLinkedList::remove(int value, Timeline& timeline) {
     }
 
     Node* current = head;
-    int index = 0;
+    size_t index = 0;
 
     std::vector<int> currentState = toVector();
     while (current->next) {
@@ -112,7 +112,7 @@ void SinglyLinkedList::search(int value, Timeline& timeline) {
     timeline.addFrame(Frame(currentState, {}, 1, "Searching for " + std::to_string(value)));
 
     Node* current = head;
-    int index = 0;
+    size_t index = 0;
     
     while (current) {
         timeline.addFrame(Frame(currentState, {index}, 2, "Comparing with node value " + std::to_string(current->value)));
@@ -132,4 +132,8 @@ void SinglyLinkedList::clear(Timeline& timeline) {
     deleteNodes(head);
 
     timeline.addFrame(Frame(toVector(), {}, 2, "Linked list cleared successfully."));
+}
+
+StructureType SinglyLinkedList::getStructureType() const {
+    return StructureType::SinglyLinkedList;
 }

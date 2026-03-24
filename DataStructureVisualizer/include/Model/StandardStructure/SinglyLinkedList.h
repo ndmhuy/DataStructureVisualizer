@@ -1,11 +1,11 @@
 #ifndef SINGLYLINKEDLIST_H
 #define SINGLYLINKEDLIST_H
 
-#include "Model/IDataStructure.h"
+#include "Model/StandardStructure/IStandardStructure.h"
 #include "Model/Timeline.h"
 #include <vector>
 
-class SinglyLinkedList : public IDataStructure {
+class SinglyLinkedList : public IStandardStructure {
     private:
 
     struct Node {
@@ -30,6 +30,8 @@ class SinglyLinkedList : public IDataStructure {
     void remove(int value, Timeline& timeline) override;
     void search(int value, Timeline& timeline) override;
     void clear(Timeline& timeline) override;
+
+    StructureType getStructureType() const override;
 };
 
 #endif // SINGLYLINKEDLIST_H
