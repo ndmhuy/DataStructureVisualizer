@@ -5,11 +5,11 @@
 #include <vector>
 
 struct Edge {
-    int from;
-    int to;
+    size_t from;
+    size_t to;
     int weight;
 
-    Edge(int f, int t, int w = 1) : from(f), to(t), weight(w) {}
+    Edge(size_t f, size_t t, int w = 1) : from(f), to(t), weight(w) {}
 };
 
 class IGraphStructure : public IVisualizable {
@@ -22,15 +22,15 @@ class IGraphStructure : public IVisualizable {
     size_t size() const { return vertexCount; }
     bool empty() const { return vertexCount == 0; }
 
-    virtual void addEdge(int from, int to, int weight = 1) = 0;
-    virtual void deleteEdge(int from, int to) = 0;
-    virtual bool hasEdge(int from, int to) const = 0;
-    
-    virtual std::vector<int> getVertices() const = 0;
+    virtual void addEdge(size_t from, size_t to, int weight = 1) = 0;
+    virtual void deleteEdge(size_t from, size_t to) = 0;
+    virtual bool hasEdge(size_t from, size_t to) const = 0;
+
+    virtual std::vector<size_t> getVertices() const = 0;
     virtual std::vector<Edge> getEdges() const = 0;
 
-    virtual std::vector<int> getNeighbours(int vertex) const = 0;
-    virtual std::vector<Edge> getEdgesFromVertex(int vertex) const = 0;
+    virtual std::vector<size_t> getNeighbours(size_t vertex) const = 0;
+    virtual std::vector<Edge> getEdgesFromVertex(size_t vertex) const = 0;
 
     virtual void initialize(const std::vector<Edge>& startingEdges, Timeline& timeline) = 0;
 };

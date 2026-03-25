@@ -1,8 +1,8 @@
-#include "Model/DataStructure/AdjacencyList.h"
+#include "Model/GraphStructure/AdjacencyList.h"
 
 AdjacencyList::AdjacencyList(bool directed = false) : isDirected(directed) { vertexCount = 0; }
 
-void AdjacencyList::addEdge(int from, int to, int weight = 1) {
+void AdjacencyList::addEdge(size_t from, size_t to, int weight) {
     if (!hasEdge(from, to)) {
         adjacencyList[from].emplace_back(to, weight);
         if (!isDirected) {
@@ -12,7 +12,7 @@ void AdjacencyList::addEdge(int from, int to, int weight = 1) {
     }
 }
 
-void AdjacencyList::deleteEdge(int from, int to) {
+void AdjacencyList::deleteEdge(size_t from, size_t to) {
     if (hasEdge(from, to)) {
         adjacencyList[from].remove_if([to](const GraphNode& node) { return node.vertex == to;});
         if (!isDirected) {
@@ -21,7 +21,7 @@ void AdjacencyList::deleteEdge(int from, int to) {
     }
 }
 
-bool AdjacencyList::hasEdge(int from, int to) const {
+bool AdjacencyList::hasEdge(size_t from, size_t to) const {
     auto it = adjacencyList.find(from);
     if (it != adjacencyList.end()) {
         for (const auto& node : it->second) {
@@ -33,8 +33,8 @@ bool AdjacencyList::hasEdge(int from, int to) const {
     return false;
 }
 
-std::vector<int> AdjacencyList::getVertices() const {
-    std::vector<int> vertices;
+std::vector<size_t> AdjacencyList::getVertices() const {
+    std::vector<size_t> vertices;
     for (const auto& pair : adjacencyList) {
         vertices.push_back(pair.first);
     }
@@ -45,7 +45,7 @@ std::vector<int> AdjacencyList::getVertices() const {
 std::vector<Edge> AdjacencyList::getEdges() const {
     std::vector<Edge> edges;
     for (const auto& pair : adjacencyList) {
-        int from = pair.first;
+        size_t from = pair.first;
         for (const auto& node : pair.second) {
             edges.emplace_back(from, node.vertex, node.weight);
         }
@@ -53,8 +53,8 @@ std::vector<Edge> AdjacencyList::getEdges() const {
     return edges;
 }
 
-std::vector<int> AdjacencyList::getNeighbours(int vertex) const {
-    std::vector<int> neighbours;
+std::vector<size_t> AdjacencyList::getNeighbours(size_t vertex) const {
+    std::vector<size_t> neighbours;
     auto it = adjacencyList.find(vertex);
     if (it != adjacencyList.end()) {
         for (const auto& node : it->second) {
@@ -64,7 +64,7 @@ std::vector<int> AdjacencyList::getNeighbours(int vertex) const {
     return neighbours;
 }
 
-std::vector<Edge> AdjacencyList::getEdgesFromVertex(int vertex) const {
+std::vector<Edge> AdjacencyList::getEdgesFromVertex(size_t vertex) const {
     std::vector<Edge> edges;
     auto it = adjacencyList.find(vertex);
     if (it != adjacencyList.end()) {
@@ -75,18 +75,23 @@ std::vector<Edge> AdjacencyList::getEdgesFromVertex(int vertex) const {
     return edges;
 }
 
-virtual void AdjacencyList::initialize(const std::vector<int>& data, Timeline& timeline) {
-
+void AdjacencyList::initialize(const std::vector<Edge>& startingEdges, Timeline& timeline) {
+    clear(timeline);
+    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Initializing Adjacency List with given edges..."));
+    for (const auto& edge : startingEdges) {
+        addEdge(edge.from, edge.to, edge.weight);
+    }
+    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Initialization complete."));
 }
-virtual void AdjacencyList::insert(int value, Timeline& timeline) {
 
+void AdjacencyList::clear(Timeline& timeline) {
+    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Clearing Adjacency List..."));
+    adjacencyList.clear();
+    vertexCount = 0;
+    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Adjacency List cleared..."));
 }
-virtual void AdjacencyList::remove(int value, Timeline& timeline) {
 
+StructureType AdjacencyList::getStructureType() const {
+    return StructureType::AdjacencyList;
 }
-virtual void AdjacencyList::search(int value, Timeline& timeline) {
 
-}
-virtual void AdjacencyList::clear(Timeline& timeline) {
-
-}
