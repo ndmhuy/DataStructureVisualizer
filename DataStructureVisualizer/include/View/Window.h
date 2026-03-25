@@ -7,6 +7,7 @@ class Window{
     sf::RenderWindow RenderWindow;
     public:
     Window();//Initializes the window with a size, title, and sets the framerate limit.
+    sf::RenderWindow& GetWindow();
     void HandleEvent();//Polls for events (like closing the window).
     void clear();//Clears the window screen with a specific color.
     void display();//Displays what has been rendered to the window.

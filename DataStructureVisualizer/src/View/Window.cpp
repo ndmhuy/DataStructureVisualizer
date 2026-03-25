@@ -1,5 +1,5 @@
 #include "view/Window.h"
-Window::Window() :RenderWindow(sf::VideoMode({1280,720}),"Data Structure Visualization",sf::Style::Default){
+Window::Window() :RenderWindow(sf::VideoMode({1920,1080}),"Data Structure Visualization",sf::Style::Default){
 RenderWindow.setFramerateLimit(60);
 }
 void Window::HandleEvent(){
@@ -17,4 +17,7 @@ void Window::display(){
 }
 bool Window::IsOpen() const{
     return RenderWindow.isOpen();
+}
+sf::RenderWindow& Window::GetWindow(){
+    return RenderWindow;
 }
