@@ -54,7 +54,7 @@ size_t Timeline::getCurrentFrameIndex() const {
 }
 
 const Frame* Timeline::getCurrentFrame() const {
-    if (frames.empty() || currentFrameIndex < 0 || currentFrameIndex >= frames.size()) {
+    if (frames.empty() || currentFrameIndex >= frames.size()) {
         return nullptr;
     }
     return &frames[currentFrameIndex];

@@ -1,9 +1,9 @@
 #include "model/Theme.h"
 Theme::Theme() {
-    fontPath = "assets/retro-pixel-thick.ttf";           
-    bgImagePath = "assets/background.png"; 
-    nodeImagePath = "assets/Node.png";       
-    ArrayImangePath = "assets/array.png";
+fontPath = "../assets/retro-pixel-thick.ttf";           
+    bgImagePath = "../assets/background.png"; 
+    nodeImagePath = "../assets/Node.png";       
+    ArrayImangePath = "../assets/array.png";
 
     textColor = sf::Color({0,71,171});
     nodeTintColor = sf::Color::White; 
