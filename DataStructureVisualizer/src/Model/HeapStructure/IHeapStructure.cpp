@@ -30,18 +30,15 @@ void IHeapStructure::heapify(int n, int i) {
     }
 }
 
-void IHeapStructure::buildHeap(int n) {
-    for (int i = n/2-1; i >= 0; i--)
-        heapify(n, i);
-}
-
 void IHeapStructure::initialize(const std::vector<int>& data, Timeline& timeline) {
     clear(timeline);
     
     timeline.addFrame(Frame(heapArray, {}, 0, "Initializing Heap from data..."));
 
     heapArray = data;
-    buildHeap(data.size());
+    int heap_size = data.size();
+    for (int idx = heap_size/2-1; idx >= 0; idx--)
+        heapify(heap_size, idx);
 
     timeline.addFrame(Frame(heapArray, {}, 0, "Initialization complete."));
 }
