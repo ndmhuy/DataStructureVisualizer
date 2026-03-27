@@ -5,6 +5,7 @@
 #include "imgui-SFML.h"
 #include "Button.h"
 #include "Slider.h"
+#include "InputMenu.h"
 
 class UIManager{
     private:
@@ -17,6 +18,8 @@ class UIManager{
 
         Slider speedSlider;
         float speed;
+
+        InputMenu inputMenu;
     public:
 
     UIManager()=default;//constructor

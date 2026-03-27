@@ -39,6 +39,11 @@ bool UIManager::init(sf::RenderWindow& window){
     stepForward.setActive(false);
     stepBackward.setActive(false);
 
+    if (!inputMenu.init()){
+        std::cerr<<"Can't load randombox from file";
+        return false;
+    }
+
     return true;
 }
 
@@ -88,6 +93,7 @@ void UIManager::update(sf::RenderWindow& window,const sf::Time& deltatime){
 }
 
 void UIManager::render(sf::RenderWindow& window){
+    inputMenu.render(window);
     if (isPlay) play.render(window);
     else pause.render(window);
     stepForward.render(window);
