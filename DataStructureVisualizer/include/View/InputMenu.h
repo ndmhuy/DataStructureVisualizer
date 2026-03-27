@@ -21,8 +21,8 @@ class InputMenu{
         ImVec4 colorWhite  = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
         //size
-        int height=40;
-        int length=120;
+        int height=60;
+        int length=180;
 
         //texture for randombox
         sf::Texture texture;
