@@ -75,11 +75,11 @@ void UIManager::resize(const sf::RenderWindow& window){
     sf::Vector2u windowsize=window.getSize();
     float x=windowsize.x;
     float y=windowsize.y;
-    float rad=std::min(y/10,x/12);
-    play.resize(sf::Vector2f{x/4,9*y/10},rad);
-    pause.resize(sf::Vector2f{x/4,9*y/10},rad);
-    stepForward.resize(sf::Vector2f{5*x/12,9*y/10},rad);
-    stepBackward.resize(sf::Vector2f{x/12,9*y/10},rad);
+    float rad=std::min(y/16,x/12);
+    play.resize(sf::Vector2f{x/4,15*y/16},rad);
+    pause.resize(sf::Vector2f{x/4,15*y/16},rad);
+    stepForward.resize(sf::Vector2f{5*x/12,15*y/16},rad);
+    stepBackward.resize(sf::Vector2f{x/12,15*y/16},rad);
     speedSlider.resize(window);
 }
 

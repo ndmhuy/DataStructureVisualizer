@@ -58,12 +58,12 @@ void Slider::resize(const sf::RenderWindow& window){
     });
 
     //set position
-    track.setPosition(sf::Vector2f{3*x/4.f,9*y/10.f});
-    semiCircle1.setPosition(sf::Vector2f{start,9*y/10.f});
-    semiCircle2.setPosition(sf::Vector2f{end,9*y/10.f});
-    text.setPosition(sf::Vector2f{19*x/20.f,9*y/10.f});
+    track.setPosition(sf::Vector2f{3*x/4.f,15*y/16.f});
+    semiCircle1.setPosition(sf::Vector2f{start,15*y/16.f});
+    semiCircle2.setPosition(sf::Vector2f{end,15*y/16.f});
+    text.setPosition(sf::Vector2f{19*x/20.f,15*y/16.f});
     // update position of knob based on speed
-    knobpos.y=9*y/10.f;
+    knobpos.y=15*y/16.f;
     knobpos.x=start+(*speed-0.5)/3.5*(end-start);
     knob.setPosition(knobpos);
 }
