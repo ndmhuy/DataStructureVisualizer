@@ -93,6 +93,7 @@ void UIManager::update(sf::RenderWindow& window,const sf::Time& deltatime){
 }
 
 void UIManager::render(sf::RenderWindow& window){
+    codePanel.render(window);
     inputMenu.render(window);
     if (isPlay) play.render(window);
     else pause.render(window);

@@ -6,6 +6,7 @@
 #include "Button.h"
 #include "Slider.h"
 #include "InputMenu.h"
+#include "CodePanel.h"
 
 class UIManager{
     private:
@@ -20,6 +21,8 @@ class UIManager{
         float speed;
 
         InputMenu inputMenu;
+
+        CodePanel codePanel;
     public:
 
     UIManager()=default;//constructor
