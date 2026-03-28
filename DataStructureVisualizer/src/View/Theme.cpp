@@ -1,4 +1,4 @@
-#include "model/Theme.h"
+#include "View/Theme.h"
 Theme::Theme() {
 fontPath = "../assets/retro-pixel-thick.ttf";           
     bgImagePath = "../assets/background.png"; 
