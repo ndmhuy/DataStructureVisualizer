@@ -1,0 +1,43 @@
+#ifndef PSEUDOCODEMANAGER_H
+#define PSEUDOCODEMANAGER_H
+
+#include <vector>
+#include <string>
+
+enum class AlgorithmType {
+    None,
+    // Singly linked list algorithms
+    SinglyLinkedListInsert,
+    SinglyLinkedListDelete,
+    SinglyLinkedListSearch,
+
+    // Heap
+
+    // AVL Tree
+
+    // Graph algorithms
+    GraphDAGShortestPath,
+    GraphDijkstra,
+    GraphAStar,
+    GraphBellmanFord,
+    GraphFloydWarshall,
+    GraphJohnson,
+};
+
+class PseudocodeManager {
+    private:
+    static const std::vector<std::string> SinglyLinkedListInsertCode;
+    static const std::vector<std::string> SinglyLinkedListDeleteCode;
+    static const std::vector<std::string> SinglyLinkedListSearchCode;
+    static const std::vector<std::string> DAGShortestPathCode;
+    static const std::vector<std::string> DijkstraCode;
+    static const std::vector<std::string> AStarCode;
+    static const std::vector<std::string> BellmanFordCode;
+    static const std::vector<std::string> FloydWarshallCode;
+    static const std::vector<std::string> JohnsonCode;
+    
+    public:
+    static const std::vector<std::string>& getPseudocode(AlgorithmType type);
+};
+
+#endif // PSEUDOCODEMANAGER_H
