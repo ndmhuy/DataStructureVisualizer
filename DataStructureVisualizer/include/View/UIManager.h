@@ -1,47 +1,37 @@
-#pragma once
+#ifndef UIMANAGER_H
+#define UIMANAGER_H
+
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
+
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include "Button.h"
-#include "Slider.h"
-#include "InputMenu.h"
-#include "CodePanel.h"
 
-class UIManager{
-    private:
-    //statics values
-        bool isPlay=true; //Determine if it's play butt or pause butt, initially play butt
-        Button play;
-        Button pause;
-        Button stepForward;
-        Button stepBackward;
+class UIManager {
+private:
+    // state values
+    bool isPlay = true; // Determine if it's play or pause button, initially play
+    Button play;
+    Button pause;
+    Button stepForward;
+    Button stepBackward;
 
-        Slider speedSlider;
-        float speed;
+public:
+    // Setup and teardown.
+    bool init(sf::RenderWindow&); // Initial set up for ImGui + SFML
 
-        InputMenu inputMenu;
+    // Event and layout handling.
+    void processEvent(sf::RenderWindow&, const sf::Event&); // Pass event from SFML to ImGui
 
-        CodePanel codePanel;
-    public:
+    void resize(const sf::RenderWindow& window); // resize event
 
-    UIManager()=default;//constructor
+    // Per-frame update and draw.
+    void update(sf::RenderWindow&, const sf::Time&); // Update UI status
 
-    bool init(sf::RenderWindow&); //Initial set up for ImGui+SFML
+    void render(sf::RenderWindow&); // draw UI
 
-    void processEvent(sf::RenderWindow&,const sf::Event&); //Pass event from SFML to Imgui
-
-    void resize(const sf::RenderWindow& window); //resize event
-
-    void update(sf::RenderWindow&,const sf::Time&); //Update UI status
-
-    void render(sf::RenderWindow&); //draw UI
-
-    void shutdown(); //shutdown Imgui
-
-    void getCodes(std::vector<std::string>& Codes);// pass to CodePanel
-
-    void getHighlightedLine(int line); //pass to CodePanel
-
-    void clearCodePanel();//pass to Codepanel
+    void shutdown(); // shutdown ImGui
 };
+
+#endif // UIMANAGER_H

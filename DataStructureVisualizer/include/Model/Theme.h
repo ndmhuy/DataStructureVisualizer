@@ -1,4 +1,6 @@
-#pragma once
+#ifndef THEME_H
+#define THEME_H
+
 #include <SFML/Graphics.hpp>
 #include <string>
 struct Theme {
@@ -16,3 +18,5 @@ struct Theme {
     float arrayScale;
     Theme();
 };
+
+#endif // THEME_H
