@@ -9,6 +9,7 @@ Frame::Frame(const TreePayload& p, int lineId, const std::string& msg)
 Frame::Frame(const HeapPayload& p, int lineId, const std::string& msg)
     : codeLineId(lineId), message(msg), payload(new HeapPayload(p)) {}
 
+<<<<<<< HEAD
 Frame::Frame(const GraphPayload& p, int lineId, const std::string& msg)
     : codeLineId(lineId), message(msg), payload(new GraphPayload(p)) {}
 
@@ -23,6 +24,12 @@ Frame::Frame(const AllPairsPayload& p, int lineId, const std::string& msg)
 
 Frame::~Frame() {
     delete payload;
+=======
+Frame::Frame(const std::vector<int>& arrData, const std::vector<size_t>& vertices, const std::vector<Edge>& edges, const std::vector<size_t>& highlightedNodes, const std::vector<Edge>& highlightedEdges, int lineId, const std::string& msg) : arrayData(arrData), verticesData(vertices), edgeData(edges), highlightIndices(highlightedNodes), highlightEdges(highlightedEdges), codeLineId(lineId), message(msg) {}
+
+const std::vector<int>& Frame::getArrayData() const {
+    return arrayData;
+>>>>>>> 9f4a91b (feat: Implement GridGraph for grid representation, implement Dijkstra and Bellman-Ford (incomplete))
 }
 
 Frame::Frame(const Frame& other)
