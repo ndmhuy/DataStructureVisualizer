@@ -1,27 +1,27 @@
 #include "Utilities/PseudocodeManager.h"
 
-std::vector<std::string> PseudocodeManager::getPseudocode(AlgorithmType type) {
+const std::vector<std::string>& PseudocodeManager::getPseudocode(AlgorithmType type) {
     switch (type) {
         case AlgorithmType::None:
             return {"No algorithm selected."};
-        case AlgorithmType::SinglyLinkedList_Insert:
+        case AlgorithmType::SinglyLinkedListInsert:
             return SinglyLinkedListInsertCode;
-        case AlgorithmType::SinglyLinkedList_Delete:
+        case AlgorithmType::SinglyLinkedListDelete:
             return SinglyLinkedListDeleteCode;
-        case AlgorithmType::SinglyLinkedList_Search:
+        case AlgorithmType::SinglyLinkedListSearch:
             return SinglyLinkedListSearchCode;
-        case AlgorithmType::Graph_DAGShortestPath:
-            return DAGShortestPathCode;
-        case AlgorithmType::Graph_Dijkstra:
-            return DijkstraCode;
-        case AlgorithmType::Graph_AStar:
-            return AStarCode;
-        case AlgorithmType::Graph_BellmanFord:
-            return BellmanFordCode;
-        case AlgorithmType::Graph_FloydWarshall:
-            return FloydWarshallCode;
-        case AlgorithmType::Graph_Johnson:
-            return JohnsonCode;
+        case AlgorithmType::GraphDAGShortestPath:
+            return GraphDAGShortestPathCode;
+        case AlgorithmType::GraphDijkstra:
+            return GraphDijkstraCode;
+        case AlgorithmType::GraphAStar:
+            return GraphAStarCode;
+        case AlgorithmType::GraphBellmanFord:
+            return GraphBellmanFordCode;
+        case AlgorithmType::GraphFloydWarshall:
+            return GraphFloydWarshallCode;
+        case AlgorithmType::GraphJohnson:
+            return GraphJohnsonCode;
         default:
             return {"No pseudocode available for this algorithm."};
     }
@@ -66,20 +66,20 @@ const std::vector<std::string> PseudocodeManager::SinglyLinkedListSearchCode = {
     "    return false"
 };
 
-const std::vector<std::string> PseudocodeManager::DAGShortestPathCode = {
+const std::vector<std::string> PseudocodeManager::GraphDAGShortestPathCode = {
 };
 
-const std::vector<std::string> PseudocodeManager::DijkstraCode = {
+const std::vector<std::string> PseudocodeManager::GraphDijkstraCode = {
 };
 
-const std::vector<std::string> PseudocodeManager::AStarCode = {
+const std::vector<std::string> PseudocodeManager::GraphAStarCode = {
 };
 
-const std::vector<std::string> PseudocodeManager::BellmanFordCode = {
+const std::vector<std::string> PseudocodeManager::GraphBellmanFordCode = {
 };
 
-const std::vector<std::string> PseudocodeManager::FloydWarshallCode = {
+const std::vector<std::string> PseudocodeManager::GraphFloydWarshallCode = {
 };
 
-const std::vector<std::string> PseudocodeManager::JohnsonCode = {
+const std::vector<std::string> PseudocodeManager::GraphJohnsonCode = {
 };
