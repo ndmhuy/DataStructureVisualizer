@@ -1,6 +1,6 @@
 #include "Utilities/PseudocodeManager.h"
 
-std::vector<std::string> PseudocodeManager::getPseudocode(AlgorithmType type) {
+const std::vector<std::string>& PseudocodeManager::getPseudocode(AlgorithmType type) {
     switch (type) {
         case AlgorithmType::None:
             return {"No algorithm selected."};

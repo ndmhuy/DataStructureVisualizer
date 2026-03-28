@@ -7,21 +7,21 @@
 enum class AlgorithmType {
     None,
     // Singly linked list algorithms
-    SinglyLinkedList_Insert,
-    SinglyLinkedList_Delete,
-    SinglyLinkedList_Search,
+    SinglyLinkedListInsert,
+    SinglyLinkedListDelete,
+    SinglyLinkedListSearch,
 
     // Heap
 
     // AVL Tree
 
     // Graph algorithms
-    Graph_DAGShortestPath,
-    Graph_Dijkstra,
-    Graph_AStar,
-    Graph_BellmanFord,
-    Graph_FloydWarshall,
-    Graph_Johnson,
+    GraphDAGShortestPath,
+    GraphDijkstra,
+    GraphAStar,
+    GraphBellmanFord,
+    GraphFloydWarshall,
+    GraphJohnson,
 };
 
 class PseudocodeManager {
@@ -37,7 +37,7 @@ class PseudocodeManager {
     static const std::vector<std::string> JohnsonCode;
     
     public:
-    static std::vector<std::string> getPseudocode(AlgorithmType type);
+    static const std::vector<std::string>& getPseudocode(AlgorithmType type);
 };
 
 #endif // PSEUDOCODEMANAGER_H
