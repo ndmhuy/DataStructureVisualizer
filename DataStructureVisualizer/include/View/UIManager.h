@@ -38,4 +38,10 @@ class UIManager{
     void render(sf::RenderWindow&); //draw UI
 
     void shutdown(); //shutdown Imgui
+
+    void getCodes(std::vector<std::string>& Codes);// pass to CodePanel
+
+    void getHighlightedLine(int line); //pass to CodePanel
+
+    void clearCodePanel();//pass to Codepanel
 };

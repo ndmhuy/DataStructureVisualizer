@@ -106,3 +106,15 @@ void UIManager::render(sf::RenderWindow& window){
 void UIManager::shutdown(){
     ImGui::SFML::Shutdown();
 }
+
+void UIManager::getCodes(std::vector<std::string>& Codes){
+    codePanel.setCode(Codes);
+}
+
+void UIManager::getHighlightedLine(int line){
+    codePanel.setHighlightedLine(line);
+}
+
+void UIManager::clearCodePanel(){
+    codePanel.clearCode();
+}
