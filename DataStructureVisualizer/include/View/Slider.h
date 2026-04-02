@@ -1,54 +1,44 @@
-#pragma once
+#ifndef SLIDER_H
+#define SLIDER_H
+
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 
-class Slider{
-    private:
+#include "View/Theme.h"
 
-    // the changeable value using slider
-        float* speed; //range 0.5x->4.0x
-    
-    // Some statics variable
-        float start; //start point of the slider
-        float end;   //end point of the slider
-        float radius; // radius of all CircleShape below
+class Slider {
+private:
+    float* speed; // Range 0.5x -> 4.0x.
+    Theme theme = Theme::getDefaultTheme();
 
-    // Some status variable:
-        bool isDragging;
+    float start; // Start point of the slider.
+    float end; // End point of the slider.
+    float radius; // Radius of the circle shapes below.
 
+    bool isDragging;
 
-    // track
-        sf::RectangleShape track;
-        sf::CircleShape semiCircle1; //faked rounded edges
-        sf::CircleShape semiCircle2;
-        sf::Color trackColor{sf::Color::White};
+    sf::RectangleShape track;
+    sf::CircleShape semiCircle1; // Faked rounded edges.
+    sf::CircleShape semiCircle2;
+    sf::Color trackColor;
 
-    // Knob
-        sf::CircleShape knob;
-        sf::Color knobColor{30, 144, 255};
-        sf::Vector2f knobpos;
+    sf::CircleShape knob;
+    sf::Color knobColor;
+    sf::Vector2f knobpos;
 
-    // Text- demostrate speed
-        sf::Font font;
-        sf::Text text;
+    sf::Font font;
+    sf::Text text;
 
-    public:
-
+public:
     Slider() : text(font) {}
 
-    // init slider
-    void init(float* value);
-
-    //resize event
+    void init(float* value, const Theme& theme);
     void resize(const sf::RenderWindow& window);
-
-    //Handle event
     void handleEvent(const sf::RenderWindow& window, const sf::Event& event);
-
-    //draw
     void render(sf::RenderWindow& window);
-    
 };
 
-// when the speed is changed-> used this to change the text
+// When the speed changes, update the displayed text.
 void update(float speed, sf::Text& text);
+
+#endif // SLIDER_H

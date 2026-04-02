@@ -1,52 +1,40 @@
-#pragma once
+#ifndef INPUTMENU_H
+#define INPUTMENU_H
+
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
-#include "imgui.h"
+
 #include "imgui-SFML.h"
+#include "imgui.h"
 
-class InputMenu{
-    private:
-        //static variable
-        bool isopenMenu=false;// is the menu visible or not
+#include "View/Theme.h"
 
-        int hasAction=0; //0: no action, 1:Add, 2:Delete, 3: Search, 4: Update
+class InputMenu {
+private:
+    bool isopenMenu = false; // Is the menu visible or not.
+    int hasAction = 0; // 0: no action, 1: Add, 2: Delete, 3: Search, 4: Update.
+    int currentOption = -1; // -1: Close, 0: Add, 1: Delete, 2: Search, 3: Update.
 
-        int currentoption=-1; //-1: Close, 0: Add, 1: Delete, 2: Search, 3: Update
-        
-        const char* menu[4]={"Insert","Delete","Search","Update"};
+    Theme theme = Theme::getDefaultTheme();
 
-        // Color
-        ImVec4 colorPurple = ImVec4(0.31f, 0.28f, 0.59f, 1.0f); 
-        ImVec4 colorPink   = ImVec4(1.0f, 0.58f, 0.81f, 1.0f); 
-        ImVec4 colorWhite  = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    const char* menu[4] = {"Insert", "Delete", "Search", "Update"};
 
-        //size
-        int height=60;
-        int length=180;
+    sf::Texture texture;
 
-        //texture for randombox
-        sf::Texture texture;
+    int k = 0; // Use for add, delete, search, update.
+    int r = 0; // Use for update.
 
-        //variables
-        int k=0; //use for Add, delete, search, Update
-        int r=0; //use for Update
+public:
+    InputMenu() = default;
 
-    public:
-        InputMenu()=default;//constructor
+    bool init(const Theme& theme);
+    void render(const sf::RenderWindow& window);
+    void renderinputform(const sf::RenderWindow& window, int cur, ImVec2 currentbttnPos);
 
-        //load randombox file
-        bool init();
-
-        void render(const sf::RenderWindow& window);// draw
-
-        void renderinputform(const sf::RenderWindow& window, int cur, ImVec2 currentbttnPos);
-
-        //functions for other branch
-        int getAction() const { return hasAction; }//0: no action, 1:Add, 2:Delete, 3: Search, 4: Update
-        
-        int getK() const { return k; }// use for get the 1st number
-
-        int getR() const { return r; }// use for get the second number (for Updating)
-
-        void resetAction() { hasAction = 0; } //Call after get the Action
+    int getAction() const { return hasAction; }
+    int getK() const { return k; }
+    int getR() const { return r; }
+    void resetAction() { hasAction = 0; }
 };
+
+#endif // INPUTMENU_H
