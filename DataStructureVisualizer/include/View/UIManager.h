@@ -1,29 +1,41 @@
-#pragma once
+#ifndef UIMANAGER_H
+#define UIMANAGER_H
+
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
+
 #include "imgui.h"
 #include "imgui-SFML.h"
-#include "Button.h"
+#include "View/Button.h"
+#include "View/Theme.h"
 
-class UIManager{
-    private:
-    //statics values
-        bool isPlay=true; //Determine if it's play butt or pause butt, initially play butt
-        Button play;
-        Button pause;
-        Button stepForward;
-        Button stepBackward;
-    public:
+class UIManager {
+private:
+    // state values
+    bool initialized = false;
+    bool isPlay = true; // Determine if it's play or pause button, initially play
+    Theme theme = Theme::getDefaultTheme();
+    Button play;
+    Button pause;
+    Button stepForward;
+    Button stepBackward;
 
-    bool init(sf::RenderWindow&); //Initial set up for ImGui+SFML
+public:
+    UIManager() = default;
+    // Setup and teardown.
+    bool init(sf::RenderWindow&, const Theme& theme); // Initial set up for ImGui + SFML
 
-    void processEvent(sf::RenderWindow&,const sf::Event&); //Pass event from SFML to Imgui
+    // Event and layout handling.
+    void processEvent(sf::RenderWindow&, const sf::Event&); // Pass event from SFML to ImGui
 
-    void resize(const sf::RenderWindow& window); //resize event
+    void resize(const sf::RenderWindow& window); // resize event
 
-    void update(sf::RenderWindow&,const sf::Time&); //Update UI status
+    // Per-frame update and draw.
+    void update(sf::RenderWindow&, const sf::Time&); // Update UI status
 
-    void render(sf::RenderWindow&); //draw UI
+    void render(sf::RenderWindow&); // draw UI
 
-    void shutdown(); //shutdown Imgui
+    void shutdown(); // shutdown ImGui
 };
+
+#endif // UIMANAGER_H

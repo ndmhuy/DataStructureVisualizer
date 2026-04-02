@@ -12,7 +12,8 @@ void DataManager::inputFromFile(const std::string& filePath) {
     std::ifstream fileIn(filePath);
 
     if (!fileIn.is_open()) {
-        std::cerr << "Error: Cannot open the input file!" << std::endl;
+        std::cerr << "Error: DataManager::inputFromFile cannot open input file '"
+                  << filePath << "'." << std::endl;
         return;
     }
 
@@ -73,7 +74,8 @@ void DataManager::outputToFile(const std::string& filePath) const { // not chang
     std::ofstream fileOut(filePath);
 
     if (!fileOut.is_open()) {
-        std::cerr << "Error: Cannot open the output file!" << std::endl;
+        std::cerr << "Error: DataManager::outputToFile cannot open output file '"
+                  << filePath << "'." << std::endl;
 
         return;
     }
@@ -97,12 +99,14 @@ void DataManager::outputToConsole() const { // not changing class value
 // Randomizer
 void DataManager::randomData(int n, int minValue, int maxValue) {
     if (n <= 0) {
-        std::cerr << "Invalid data size!" << std::endl;
+        std::cerr << "Error: DataManager::randomData received invalid size n="
+                  << n << "." << std::endl;
 
         return;
     }
     if (minValue > maxValue) {
-        std::cerr << "Invalid range!" << std::endl;
+        std::cerr << "Error: DataManager::randomData received invalid range ["
+                  << minValue << ", " << maxValue << "]." << std::endl;
 
         return;
     }
