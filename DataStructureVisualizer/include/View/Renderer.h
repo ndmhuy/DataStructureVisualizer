@@ -7,7 +7,7 @@
 #include <string>
 
 #include "View/Window.h"
-#include "Model/Theme.h"
+#include "View/Theme.h"
 
 enum class TextPosition {
     TopLeft,

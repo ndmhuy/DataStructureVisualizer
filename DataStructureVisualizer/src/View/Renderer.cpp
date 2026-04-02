@@ -7,13 +7,13 @@ bool Renderer::loadAssets() {
     if (!mainFont.openFromFile(theme.fontPath)) return false;
     if (!bgTexture.loadFromFile(theme.bgImagePath)) return false;
     if (!nodeTexture.loadFromFile(theme.nodeImagePath)) return false;
-    if (!arrayTexture.loadFromFile(theme.ArrayImangePath)) return false;
+    if (!arrayTexture.loadFromFile(theme.arrayImagePath)) return false;
 
     bgTexture.setSmooth(true);
     bgSprite.setTexture(bgTexture, true);
 
     sf::Vector2u texSize = bgTexture.getSize();
-    sf::Vector2u winSize = window.GetWindow().getSize();
+    sf::Vector2u winSize = window.getWindow().getSize();
     bgSprite.setScale({static_cast<float>(winSize.x) / texSize.x, static_cast<float>(winSize.y) / texSize.y});
 
     nodeTexture.setSmooth(true);
@@ -22,7 +22,7 @@ bool Renderer::loadAssets() {
 }
 
 void Renderer::drawBackground() {
-    window.GetWindow().draw(bgSprite);
+    window.getWindow().draw(bgSprite);
 }
 
 void Renderer::drawImageNode(float x, float y, const std::string& text) {
@@ -33,16 +33,19 @@ void Renderer::drawImageNode(float x, float y, const std::string& text) {
     sf::FloatRect bounds = sprite.getLocalBounds();
     sprite.setOrigin({bounds.size.x / 2, bounds.size.y / 2});
     sprite.setPosition({x, y});
-    window.GetWindow().draw(sprite);
+    window.getWindow().draw(sprite);
 
     // text
-    unsigned int textSize = static_cast<unsigned int>(30 * theme.nodeScale);
+    unsigned int textSize = static_cast<unsigned int>(theme.nodeTextBaseSize * theme.nodeScale);
     sf::Text a(mainFont, text, textSize);
     a.setFillColor(theme.textColor);
     sf::FloatRect textRect = a.getLocalBounds();
-    a.setOrigin({textRect.position.x + textRect.size.x / 2, textRect.position.y + textRect.size.y - 10 * theme.nodeScale});
+    a.setOrigin({
+        textRect.position.x + textRect.size.x / 2,
+        textRect.position.y + textRect.size.y - theme.nodeTextVerticalOffset * theme.nodeScale
+    });
     a.setPosition({x, y});
-    window.GetWindow().draw(a);
+    window.getWindow().draw(a);
 }
 
 void Renderer::drawArrayCell(float x, float y, const std::string& text) {
@@ -52,15 +55,15 @@ void Renderer::drawArrayCell(float x, float y, const std::string& text) {
     sf::FloatRect bounds = sprite.getLocalBounds();
     sprite.setOrigin({bounds.size.x / 2, bounds.size.y / 2});
     sprite.setPosition({x, y});
-    window.GetWindow().draw(sprite);
+    window.getWindow().draw(sprite);
 
-    unsigned int textSize = static_cast<unsigned int>(30 * theme.arrayScale);
+    unsigned int textSize = static_cast<unsigned int>(theme.arrayTextBaseSize * theme.arrayScale);
     sf::Text a(mainFont, text, textSize);
     a.setFillColor(theme.textColor);
     sf::FloatRect textRect = a.getLocalBounds();
     a.setOrigin({textRect.position.x + textRect.size.x / 2, textRect.position.y + textRect.size.y / 2});
     a.setPosition({x, y});
-    window.GetWindow().draw(a);
+    window.getWindow().draw(a);
 }
 
 void Renderer::drawLineWithArrow(
@@ -96,7 +99,7 @@ void Renderer::drawLineWithArrow(
     line.setOrigin({0, thickness / 2.0f});
     line.setPosition(start);
     line.setRotation(sf::degrees(angleDegrees));
-    window.GetWindow().draw(line);
+    window.getWindow().draw(line);
 
     sf::ConvexShape arrowHead;
     arrowHead.setPointCount(3);
@@ -108,7 +111,7 @@ void Renderer::drawLineWithArrow(
     arrowHead.setPosition(end);
     arrowHead.setRotation(sf::degrees(angleDegrees));
     
-    window.GetWindow().draw(arrowHead);
+    window.getWindow().draw(arrowHead);
 }
 
 void Renderer::drawLine(float x1, float y1, float w1, float h1, ShapeType type1,float x2, float y2, float w2, float h2, ShapeType type2, float thickness) {
@@ -132,7 +135,7 @@ void Renderer::drawLine(float x1, float y1, float w1, float h1, ShapeType type1,
     line.setOrigin({0, thickness / 2.0f});
     line.setPosition(start);
     line.setRotation(sf::degrees(angleDegrees));
-    window.GetWindow().draw(line);
+    window.getWindow().draw(line);
 }
 
 sf::Vector2f Renderer::getBoundaryPoint(float cx, float cy, float width, float height, float angle, ShapeType type) {
@@ -202,7 +205,7 @@ void Renderer::drawText(float x, float y, const std::string& text, unsigned int 
     t.setPosition({x, y});
     t.setRotation(angle);
 
-    window.GetWindow().draw(t);
+    window.getWindow().draw(t);
 }
 
 void Renderer::drawTextUp(float cx, float cy, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {

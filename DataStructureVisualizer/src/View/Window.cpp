@@ -1,29 +1,29 @@
 #include "View/Window.h"
 
-Window::Window() : RenderWindow(sf::VideoMode({1920, 1080}), "Data Structure Visualization", sf::Style::Default) {
-    RenderWindow.setFramerateLimit(60);
+Window::Window() : renderWindow(sf::VideoMode({1920, 1080}), "Data Structure Visualization", sf::Style::Default) {
+    renderWindow.setFramerateLimit(60);
 }
 
-void Window::HandleEvent() {
-    while (std::optional<sf::Event> event = RenderWindow.pollEvent()) {
+void Window::handleEvent() {
+    while (std::optional<sf::Event> event = renderWindow.pollEvent()) {
         if (event->is<sf::Event::Closed>()) {
-            RenderWindow.close();
+            renderWindow.close();
         }
     }
 }
 
-void Window::clear() {
-    RenderWindow.clear(sf::Color({40, 44, 52}));
+void Window::clear(const sf::Color& clearColor) {
+    renderWindow.clear(clearColor);
 }
 
 void Window::display() {
-    RenderWindow.display();
+    renderWindow.display();
 }
 
-bool Window::IsOpen() const {
-    return RenderWindow.isOpen();
+bool Window::isOpen() const {
+    return renderWindow.isOpen();
 }
 
-sf::RenderWindow& Window::GetWindow() {
-    return RenderWindow;
+sf::RenderWindow& Window::getWindow() {
+    return renderWindow;
 }

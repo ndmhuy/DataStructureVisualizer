@@ -7,20 +7,20 @@
 
 class Window {
 private:
-    sf::RenderWindow RenderWindow;
+    sf::RenderWindow renderWindow;
 
 public:
     // Lifecycle and access.
     Window(); // Initializes the window with a size, title, and sets the framerate limit.
-    sf::RenderWindow& GetWindow();
+    sf::RenderWindow& getWindow();
 
     // Frame loop helpers.
-    void HandleEvent(); // Polls for events (like closing the window).
-    void clear();       // Clears the window screen with a specific color.
+    void handleEvent(); // Polls for events (like closing the window).
+    void clear(const sf::Color& clearColor); // Clears the window screen with a specific color.
     void display();     // Displays what has been rendered to the window.
 
     // Window state.
-    bool IsOpen() const; // Checks if the window is currently open.
+    bool isOpen() const; // Checks if the window is currently open.
 };
 
 #endif // WINDOW_H
