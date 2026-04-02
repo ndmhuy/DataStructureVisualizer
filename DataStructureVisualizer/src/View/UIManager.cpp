@@ -1,32 +1,38 @@
 #include <iostream>
-#include <SFML/Graphics.hpp>
-#include <SFML/System/Clock.hpp>
 
-#include "imgui.h"
-#include "imgui-SFML.h"
 #include "View/UIManager.h"
-#include "View/Button.h"
 
-bool UIManager::init(sf::RenderWindow& window) {
+bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
+    this->theme = theme;
+    initialized = false;
+
     if (!ImGui::SFML::Init(window)) {
-        std::cerr << "Can't ImGUI::SFML::Init(window)";
+        std::cerr << "Warning: UIManager::init failed to initialize ImGui-SFML." << std::endl;
         return false;
     }
 
-    if (!play.init("" /*stringpath*/)) {
-        std::cerr << "Can't load play image";
+    if (!play.init(theme.playIconPath, theme)) {
+        std::cerr << "Warning: UIManager::init failed to load play icon from '"
+                  << theme.playIconPath << "'." << std::endl;
+        ImGui::SFML::Shutdown();
         return false;
     }
-    if (!pause.init("" /*stringpath*/)) {
-        std::cerr << "Can't load pause image";
+    if (!pause.init(theme.pauseIconPath, theme)) {
+        std::cerr << "Warning: UIManager::init failed to load pause icon from '"
+                  << theme.pauseIconPath << "'." << std::endl;
+        ImGui::SFML::Shutdown();
         return false;
     }
-    if (!stepForward.init("" /*stringpath*/)) {
-        std::cerr << "Can't load step forward image";
+    if (!stepForward.init(theme.stepForwardIconPath, theme)) {
+        std::cerr << "Warning: UIManager::init failed to load step-forward icon from '"
+                  << theme.stepForwardIconPath << "'." << std::endl;
+        ImGui::SFML::Shutdown();
         return false;
     }
-    if (!stepBackward.init("" /*stringpath*/)) {
-        std::cerr << "Can't load play image";
+    if (!stepBackward.init(theme.stepBackwardIconPath, theme)) {
+        std::cerr << "Warning: UIManager::init failed to load step-backward icon from '"
+                  << theme.stepBackwardIconPath << "'." << std::endl;
+        ImGui::SFML::Shutdown();
         return false;
     }
 
@@ -37,6 +43,7 @@ bool UIManager::init(sf::RenderWindow& window) {
     pause.setActive(false);
     stepForward.setActive(false);
     stepBackward.setActive(false);
+    initialized = true;
 
     return true;
 }
@@ -80,12 +87,12 @@ void UIManager::resize(const sf::RenderWindow& window) {
     sf::Vector2u windowsize = window.getSize();
     float x = windowsize.x;
     float y = windowsize.y;
-    float rad = std::min(y / 10, x / 12);
+    float rad = std::min(y / theme.uiButtonRadiusYDivisor, x / theme.uiButtonRadiusXDivisor);
 
-    play.resize(sf::Vector2f{x / 4, 9 * y / 10}, rad);
-    pause.resize(sf::Vector2f{x / 4, 9 * y / 10}, rad);
-    stepForward.resize(sf::Vector2f{5 * x / 12, 9 * y / 10}, rad);
-    stepBackward.resize(sf::Vector2f{x / 12, 9 * y / 10}, rad);
+    play.resize(sf::Vector2f{theme.uiMainButtonXRatio * x, theme.uiButtonsYRatio * y}, rad);
+    pause.resize(sf::Vector2f{theme.uiMainButtonXRatio * x, theme.uiButtonsYRatio * y}, rad);
+    stepForward.resize(sf::Vector2f{theme.uiStepForwardButtonXRatio * x, theme.uiButtonsYRatio * y}, rad);
+    stepBackward.resize(sf::Vector2f{theme.uiStepBackwardButtonXRatio * x, theme.uiButtonsYRatio * y}, rad);
 }
 
 void UIManager::update(sf::RenderWindow& window, const sf::Time& deltatime) {
@@ -93,6 +100,42 @@ void UIManager::update(sf::RenderWindow& window, const sf::Time& deltatime) {
 }
 
 void UIManager::render(sf::RenderWindow& window) {
+    // ImGuiWindowFlags panelFlags = 
+    //     ImGuiWindowFlags_NoMove | 
+    //     ImGuiWindowFlags_NoResize | 
+    //     ImGuiWindowFlags_NoCollapse | 
+    //     ImGuiWindowFlags_NoTitleBar;
+
+    // // Get the exact size of the user's game window
+    // ImVec2 winSize = ImGui::GetIO().DisplaySize;
+
+    // // ==========================================
+    // // 1. TOP CONTROL BAR (Input Menu)
+    // // ==========================================
+    // float topBarHeight = 80.0f; // Adjust this based on your Theme
+    // ImGui::SetNextWindowPos(ImVec2(0, 0));
+    // ImGui::SetNextWindowSize(ImVec2(winSize.x, topBarHeight));
+    
+    // ImGui::Begin("TopControlBar", nullptr, panelFlags);
+    // // Call your InputMenu render function here!
+    // // e.g., inputMenu.render(window); 
+    // ImGui::End();
+
+    // // ==========================================
+    // // 2. RIGHT CODE PANEL (Pseudocode)
+    // // ==========================================
+    // float rightPanelWidth = 450.0f; // Width of the pseudocode box
+    // float bottomBarHeight = 100.0f; // Space to leave at the bottom for SFML buttons
+    
+    // // Position it under the Top Bar, and push it all the way to the right
+    // ImGui::SetNextWindowPos(ImVec2(winSize.x - rightPanelWidth, topBarHeight));
+    // // Its height stretches down to the playback bar
+    // ImGui::SetNextWindowSize(ImVec2(rightPanelWidth, winSize.y - topBarHeight - bottomBarHeight));
+    
+    // ImGui::Begin("RightCodePanel", nullptr, panelFlags);
+    // // Call your CodePanel render function here!
+    // // e.g., codePanel.render(window);
+    // ImGui::End();
     if (isPlay) {
         play.render(window);
     } else {
@@ -105,5 +148,10 @@ void UIManager::render(sf::RenderWindow& window) {
 }
 
 void UIManager::shutdown() {
+    if (!initialized) {
+        return;
+    }
+
     ImGui::SFML::Shutdown();
+    initialized = false;
 }

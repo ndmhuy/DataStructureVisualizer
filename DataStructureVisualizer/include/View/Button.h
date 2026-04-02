@@ -4,8 +4,11 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 
+#include "View/Theme.h"
+
 class Button {
 private:
+    Theme theme = Theme::getDefaultTheme();
     // status
     bool isActive = true;   // If the button is active (dim/light)
     bool isPressed = false; // If the button is clicked
@@ -13,13 +16,7 @@ private:
 
     // image
     sf::Texture texture;
-    sf::Sprite sprite;
-
-    // color
-    sf::Color normal{255, 255, 255, 255};
-    sf::Color hovered{200, 200, 200, 255};
-    sf::Color pressed{150, 150, 150, 255};
-    sf::Color notActive{150, 150, 150, 100};
+    sf::Sprite sprite{texture};
 
     // dimensions
     sf::Vector2f pos; // center position
@@ -27,7 +24,7 @@ private:
 
 public:
     // create a button with image
-    bool init(const std::string& imagepath);
+    bool init(const std::string& imagepath, const Theme& selectedTheme);
 
     // determine if the button is active or not
     void setActive(bool);

@@ -1,21 +1,27 @@
 #include <iostream>
-#include <SFML/Graphics.hpp>
-#include <SFML/System/Clock.hpp>
+
 #include "View/Button.h"
 
-bool Button::init(const std::string& imagepath) {
+bool Button::init(const std::string& imagepath, const Theme& selectedTheme) {
+    theme = selectedTheme;
+
     if (!texture.loadFromFile(imagepath)) {
-        std::cerr << "Can't load from file!";
-        return false;
+        std::cerr << "Warning: Can't load '" << imagepath << "'. Creating dummy texture!\n";
+
+        // If it fais, generate a 50x50 Magenta square in code
+        sf::Image dummyImage;
+        dummyImage.resize({50, 50}, theme.buttonFallbackColor);
+        
+        // Load the pink square into the texture
+        if (!texture.loadFromImage(dummyImage)) return false;
     }
 
     texture.setSmooth(true);
-    sprite.setTexture(texture);
+    sprite.setTexture(texture, true);
 
     sf::Vector2u textureSize = texture.getSize();
-    //set centre
     sprite.setOrigin({textureSize.x / 2.0f, textureSize.y / 2.0f});
-
+    
     return true;
 }
 
@@ -24,15 +30,15 @@ void Button::setActive(bool active) {
     if (!isActive) {
         isHovered = false;
         isPressed = false;
-        sprite.setColor(notActive);
+        sprite.setColor(theme.buttonInactiveColor);
     } else {
-        sprite.setColor(normal);
+        sprite.setColor(theme.buttonNormalColor);
     }
 }
 
 void Button::resize(sf::Vector2f position, float radius) {
     sf::Vector2u textureSize = texture.getSize();
-    // set position (is the position of the centre)
+    // set position (is the position of thentre)
     sprite.setPosition(position);
 
     //Scale
@@ -59,7 +65,7 @@ bool Button::handleEvent(const sf::RenderWindow& window, const sf::Event& event)
 
     if (!isHovered) {
         isPressed = false;
-        sprite.setColor(normal);
+        sprite.setColor(theme.buttonNormalColor);
         return false;
     }
 
@@ -67,7 +73,7 @@ bool Button::handleEvent(const sf::RenderWindow& window, const sf::Event& event)
         const auto* mouseEvent = event.getIf<sf::Event::MouseButtonPressed>();
         if (mouseEvent && mouseEvent->button == sf::Mouse::Button::Left && isHovered) {
             isPressed = true;
-            sprite.setColor(pressed);
+            sprite.setColor(theme.buttonPressedColor);
             return false;
         }
     }
@@ -76,15 +82,15 @@ bool Button::handleEvent(const sf::RenderWindow& window, const sf::Event& event)
         const auto* mouseEvent = event.getIf<sf::Event::MouseButtonReleased>();
         if (mouseEvent && mouseEvent->button == sf::Mouse::Button::Left && isPressed) {
             isPressed = false;
-            sprite.setColor(hovered);
+            sprite.setColor(theme.buttonHoveredColor);
             return true;
         }
     }
 
     if (!isPressed) {
-        sprite.setColor(hovered);
+        sprite.setColor(theme.buttonHoveredColor);
     } else {
-        sprite.setColor(pressed);
+        sprite.setColor(theme.buttonPressedColor);
     }
 
     return false;

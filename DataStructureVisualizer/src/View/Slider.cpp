@@ -1,53 +1,56 @@
 #include <cmath>
-#include <sstream>
 #include <iomanip>
-#include <string>
 #include <iostream>
-#include <SFML/Graphics.hpp>
-#include <SFML/System/Clock.hpp>
-#include "../../include/View/Slider.h"
+#include <sstream>
+#include <string>
 
-void Slider::init(float* value){
-    speed=value;
-    isDragging=false;
+#include "View/Slider.h"
+
+void Slider::init(float* value, const Theme& theme) {
+    this->theme = theme;
+    speed = value;
+    isDragging = false;
+    trackColor = theme.sliderTrackColor;
+    knobColor = theme.sliderKnobColor;
     track.setFillColor(trackColor);
     semiCircle1.setFillColor(trackColor);
     semiCircle2.setFillColor(trackColor);
     knob.setFillColor(knobColor);
     //shown text
-    *speed=round(10*(*speed))/10;
-    if (!font.openFromFile("../assets/retro-pixel-thick.ttf")){
-        std::cerr<<"Can't load font for speed text!";
+    *speed = std::round(10 * (*speed)) / 10;
+    if (!font.openFromFile(theme.fontPath)) {
+        std::cerr << "Warning: Slider::init failed to load font from '"
+                  << theme.fontPath << "'." << std::endl;
         return;
     }
     text.setFont(font);
-    text.setFillColor(sf::Color::Black);
+    text.setFillColor(theme.sliderTextColor);
     // set initial string
     std::stringstream ss;
     ss << std::fixed << std::setprecision(1) << *speed << "x";
     text.setString(ss.str());
 }
 
-void Slider::resize(const sf::RenderWindow& window){
+void Slider::resize(const sf::RenderWindow& window) {
     //calculate radius, points..
-    int x=window.getSize().x;
-    int y=window.getSize().y;
-    radius=std::round(y/90.f);
-    start=3*x/5.f;
-    end=9*x/10.f;
+    int x = window.getSize().x;
+    int y = window.getSize().y;
+    radius = std::round(y / theme.sliderRadiusYDivisor);
+    start = theme.sliderStartXRatio * x;
+    end = theme.sliderEndXRatio * x;
 
     //set size
-    track.setSize(sf::Vector2f{(end-start),radius*2});
+    track.setSize(sf::Vector2f{(end - start), radius * 2});
     semiCircle1.setRadius(radius);
     semiCircle2.setRadius(radius);
     knob.setRadius(radius);
-    text.setCharacterSize(radius*2);
+    text.setCharacterSize(radius * 2);
 
     //set origin
-    track.setOrigin(sf::Vector2f{(end-start)/2.f,radius});
-    semiCircle1.setOrigin(sf::Vector2f{radius,radius});
-    semiCircle2.setOrigin(sf::Vector2f{radius,radius});
-    knob.setOrigin(sf::Vector2f{radius,radius});
+    track.setOrigin(sf::Vector2f{(end - start) / 2.f, radius});
+    semiCircle1.setOrigin(sf::Vector2f{radius, radius});
+    semiCircle2.setOrigin(sf::Vector2f{radius, radius});
+    knob.setOrigin(sf::Vector2f{radius, radius});
 
     // set origin for text
     sf::FloatRect textRect = text.getLocalBounds();
@@ -58,52 +61,56 @@ void Slider::resize(const sf::RenderWindow& window){
     });
 
     //set position
-    track.setPosition(sf::Vector2f{3*x/4.f,15*y/16.f});
-    semiCircle1.setPosition(sf::Vector2f{start,15*y/16.f});
-    semiCircle2.setPosition(sf::Vector2f{end,15*y/16.f});
-    text.setPosition(sf::Vector2f{19*x/20.f,15*y/16.f});
+    track.setPosition(sf::Vector2f{theme.sliderCenterXRatio * x, theme.sliderCenterYRatio * y});
+    semiCircle1.setPosition(sf::Vector2f{start, theme.sliderCenterYRatio * y});
+    semiCircle2.setPosition(sf::Vector2f{end, theme.sliderCenterYRatio * y});
+    text.setPosition(sf::Vector2f{theme.sliderTextXRatio * x, theme.sliderCenterYRatio * y});
     // update position of knob based on speed
-    knobpos.y=15*y/16.f;
-    knobpos.x=start+(*speed-0.5)/3.5*(end-start);
+    knobpos.y = theme.sliderCenterYRatio * y;
+    float speedRange = theme.sliderMaxSpeed - theme.sliderMinSpeed;
+    knobpos.x = start + (*speed - theme.sliderMinSpeed) / speedRange * (end - start);
     knob.setPosition(knobpos);
 }
 
-void Slider::handleEvent(const sf::RenderWindow& window, const sf::Event& event){
+void Slider::handleEvent(const sf::RenderWindow& window, const sf::Event& event) {
     //when released the mouse
-    if (isDragging&&!sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)){
-        isDragging=false;
+    if (isDragging && !sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+        isDragging = false;
     }
     
     sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
     sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
-    if (isDragging){
-        if (event.getIf<sf::Event::MouseMoved>()){
+    if (isDragging) {
+        if (event.getIf<sf::Event::MouseMoved>()) {
             //logic moving mouse
-            knobpos.x=mouseWorldPos.x;
-            if (knobpos.x>end) knobpos.x=end;
-            else if (knobpos.x<start) knobpos.x=start;
+            knobpos.x = mouseWorldPos.x;
+            if (knobpos.x > end) {
+                knobpos.x = end;
+            } else if (knobpos.x < start) {
+                knobpos.x = start;
+            }
             //update position of knob
             knob.setPosition(knobpos);
             //logic update speed
-            *speed=0.5+(knobpos.x-start)/(end-start)*3.5;
+            float speedRange = theme.sliderMaxSpeed - theme.sliderMinSpeed;
+            *speed = theme.sliderMinSpeed + (knobpos.x - start) / (end - start) * speedRange;
             //round 1 decimal place
-            *speed=round(10*(*speed))/10;
+            *speed = std::round(10 * (*speed)) / 10;
             update(*speed,text);
         }
-    }
-    else{
-        float dx=mouseWorldPos.x-knobpos.x;
-        float dy=mouseWorldPos.y-knobpos.y;
-        if (dx*dx+dy*dy<=radius*radius){
+    } else {
+        float dx = mouseWorldPos.x - knobpos.x;
+        float dy = mouseWorldPos.y - knobpos.y;
+        if (dx * dx + dy * dy <= radius * radius) {
             const auto* mouseEvent = event.getIf<sf::Event::MouseButtonPressed>();
-            if (mouseEvent&&mouseEvent->button== sf::Mouse::Button::Left) {
-                isDragging=true;
+            if (mouseEvent && mouseEvent->button == sf::Mouse::Button::Left) {
+                isDragging = true;
             }
         }
     }
 }
 
-void Slider::render(sf::RenderWindow& window){
+void Slider::render(sf::RenderWindow& window) {
     window.draw(semiCircle1);
     window.draw(semiCircle2);
     window.draw(track);
@@ -111,13 +118,8 @@ void Slider::render(sf::RenderWindow& window){
     window.draw(text);
 }
 
-
-
-
-
-
 // when the speed is changed-> used this to change the text
-void update(float speed, sf::Text& text){
+void update(float speed, sf::Text& text) {
     sf::Vector2f pos = text.getPosition();
 
     std::stringstream ss;

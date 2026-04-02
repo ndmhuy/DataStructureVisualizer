@@ -6,20 +6,24 @@
 
 #include "imgui.h"
 #include "imgui-SFML.h"
-#include "Button.h"
+#include "View/Button.h"
+#include "View/Theme.h"
 
 class UIManager {
 private:
     // state values
+    bool initialized = false;
     bool isPlay = true; // Determine if it's play or pause button, initially play
+    Theme theme = Theme::getDefaultTheme();
     Button play;
     Button pause;
     Button stepForward;
     Button stepBackward;
 
 public:
+    UIManager() = default;
     // Setup and teardown.
-    bool init(sf::RenderWindow&); // Initial set up for ImGui + SFML
+    bool init(sf::RenderWindow&, const Theme& theme); // Initial set up for ImGui + SFML
 
     // Event and layout handling.
     void processEvent(sf::RenderWindow&, const sf::Event&); // Pass event from SFML to ImGui
