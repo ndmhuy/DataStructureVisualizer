@@ -1,11 +1,12 @@
 #ifndef AVLTREE_HPP
 #define AVLTREE_HPP
 
-#include "Model/IDataStructure.h"
+#include "Model/StandardStructure/IStandardStructure.h"
 #include "Model/Timeline.h"
 #include <vector>
+#include <unordered_map>
 
-class AVLTree : public IDataStructure {
+class AVLTree : public IStandardStructure {
     private:
 
     struct Node {
@@ -22,17 +23,18 @@ class AVLTree : public IDataStructure {
     };
     
     Node* root;
+    std::unordered_map<int, int> getNodeIndex; // value -> index -> highlighting
 
-    std::vector<int> toVector() const;
+    std::vector<int> toVector();
     void deleteNodes(Node*& root);
 
-    Node* rotateRight(Node* root);
-    Node* rotateLeft(Node* root);
-    void balance(Node*& root);
+    Node* rotateRight(Node* root, Timeline& timeline);
+    Node* rotateLeft(Node* root, Timeline& timeline);
+    void balance(Node*& root, Timeline& timeline);
 
     // Beta
-    bool initialInsert(int value, Node*& root);
-    bool initialRemove(int value, Node*& root);
+    bool initialInsert(int value, Node*& root, Timeline& timeline);
+    bool initialRemove(int value, Node*& root, Timeline& timeline);
 
     public:
     AVLTree();
@@ -46,6 +48,8 @@ class AVLTree : public IDataStructure {
     void remove(int value, Timeline& timeline) override;
     void search(int value, Timeline& timeline) override;
     void clear(Timeline& timeline) override;
+
+    StructureType getStructureType() const;
 };
 
 #endif
