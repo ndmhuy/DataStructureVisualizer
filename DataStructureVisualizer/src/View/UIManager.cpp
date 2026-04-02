@@ -14,21 +14,25 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     if (!play.init(theme.playIconPath, theme)) {
         std::cerr << "Warning: UIManager::init failed to load play icon from '"
                   << theme.playIconPath << "'." << std::endl;
+        ImGui::SFML::Shutdown();
         return false;
     }
     if (!pause.init(theme.pauseIconPath, theme)) {
         std::cerr << "Warning: UIManager::init failed to load pause icon from '"
                   << theme.pauseIconPath << "'." << std::endl;
+        ImGui::SFML::Shutdown();
         return false;
     }
     if (!stepForward.init(theme.stepForwardIconPath, theme)) {
         std::cerr << "Warning: UIManager::init failed to load step-forward icon from '"
                   << theme.stepForwardIconPath << "'." << std::endl;
+        ImGui::SFML::Shutdown();
         return false;
     }
     if (!stepBackward.init(theme.stepBackwardIconPath, theme)) {
         std::cerr << "Warning: UIManager::init failed to load step-backward icon from '"
                   << theme.stepBackwardIconPath << "'." << std::endl;
+        ImGui::SFML::Shutdown();
         return false;
     }
 
