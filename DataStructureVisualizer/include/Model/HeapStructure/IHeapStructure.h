@@ -16,11 +16,11 @@ class IHeapStructure : public IVisualizable {
     virtual bool compare(int idx1, int idx2) = 0;
 
     public:
-    virtual void initialize(const std::vector<int>& data, Timeline& timeline);
-    virtual void insert(int value, Timeline& timeline);
+    void initialize(const std::vector<int>& data, Timeline& timeline);
+    void insert(int value, Timeline& timeline);
 
-    virtual void extractTop(Timeline& timeline);
-    virtual void peek(Timeline& timeline) = 0;
+    void extractTop(Timeline& timeline);
+    void peek(Timeline& timeline);
 };
 
 #endif
