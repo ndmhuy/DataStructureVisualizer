@@ -75,8 +75,8 @@ AVLTree::Node* AVLTree::rotateRight(Node* root, Timeline& timeline) {
     std::vector<int> currentState = toVector();
 
     Node* curr = root->left;
-    int currIdx = getNodeIndex[curr->value];
-    int rootIdx = getNodeIndex[root->value];
+    unsigned long long currIdx = getNodeIndex[curr->value];
+    unsigned long long rootIdx = getNodeIndex[root->value];
     
     timeline.addFrame(Frame(currentState, {currIdx, rootIdx}, 1, "Changing the connection between" + std::to_string(root->value) + " and " + std::to_string(curr->value)));
     root->left = curr->right;
@@ -99,8 +99,8 @@ AVLTree::Node* AVLTree::rotateLeft(Node* root, Timeline& timeline) {
     std::vector<int> currentState = toVector();
 
     Node* curr = root->right;
-    int currIdx = getNodeIndex[curr->value];
-    int rootIdx = getNodeIndex[root->value];
+    unsigned long long currIdx = getNodeIndex[curr->value];
+    unsigned long long rootIdx = getNodeIndex[root->value];
     
     timeline.addFrame(Frame(currentState, {currIdx, rootIdx}, 1, "Changing the connection between" + std::to_string(root->value) + " and " + std::to_string(curr->value)));
     root->right = curr->left;
@@ -126,7 +126,7 @@ void AVLTree::balance(Node*& root, Timeline& timeline) {
 
     std::vector<int> currentState = toVector();
 
-    int rootIdx = getNodeIndex[root->value];
+    unsigned long long rootIdx = getNodeIndex[root->value];
     timeline.addFrame(Frame(currentState, {rootIdx}, 1, "Updating the height"));
     root->height = 1 + std::max(Node::heightOf(root->left), Node::heightOf(root->right));
     int balance_factor = root->balanceFactor();
@@ -170,14 +170,14 @@ bool AVLTree::initialInsert(int value, Node*& root, Timeline& timeline) {
         root = new Node(value);
 
         std::vector<int> currentState = toVector();
-        int newIdx = getNodeIndex[value];
+        unsigned long long newIdx = getNodeIndex[value];
         timeline.addFrame(Frame(currentState, {newIdx}, 1, "Inserted " + std::to_string(value)));
 
         return true; 
     }
 
     std::vector<int> currentState = toVector();
-    int currIdx = getNodeIndex[root->value];
+    unsigned long long currIdx = getNodeIndex[root->value];
 
     bool isPut = false;
     if (value < root->value) {
@@ -204,7 +204,7 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline& timeline) {
         return false;
 
     std::vector<int> currentState = toVector();
-    int currIdx = getNodeIndex[root->value];
+    unsigned long long currIdx = getNodeIndex[root->value];
 
     bool isRemove = false;
     if (value < root->value) {
@@ -234,13 +234,13 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline& timeline) {
             while (minRight->left)
                 minRight = minRight->left;
 
-            int minRightIdx = getNodeIndex[minRight->value];
+            unsigned long long minRightIdx = getNodeIndex[minRight->value];
             timeline.addFrame(Frame(currentState, {currIdx, minRightIdx}, 6, "Overwrite " + std::to_string(minRight->value) + " on " + std::to_string(root->value)));
 
             root->value = minRight->value;
 
             std::vector<int> stateAfterSwap = toVector();
-            int newRootIdx = getNodeIndex[root->value];
+            unsigned long long newRootIdx = getNodeIndex[root->value];
 
             timeline.addFrame(Frame(stateAfterSwap, {newRootIdx}, 7, "Calling a recursion to remove the alternative"));
             
@@ -301,7 +301,7 @@ void AVLTree::search(int value, Timeline& timeline) {
 
     Node* current = root;
     while (current) {
-        int index = getNodeIndex[current->value];
+        unsigned long long index = getNodeIndex[current->value];
         timeline.addFrame(Frame(currentState, {index}, 2, "Comparing with node value " + std::to_string(current->value)));
         if (current->value == value) {
             timeline.addFrame(Frame(currentState, {index}, 3, "Value found at index " + std::to_string(index)));

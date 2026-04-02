@@ -54,10 +54,10 @@ void IHeapStructure::insert(int value, Timeline& timeline) {
 
     heapArray.push_back(value);
     int heap_size = heapArray.size();
-    timeline.addFrame(Frame(heapArray, {heap_size-1}, 3, "Added at the end"));
+    timeline.addFrame(Frame(heapArray, {(unsigned long long)heap_size-1}, 3, "Added at the end"));
     
-    int idx = heap_size-1;
-    int currParent = parent(heap_size, heap_size-1);
+    unsigned long long idx = heap_size-1;
+    unsigned long long currParent = parent(heap_size, heap_size-1);
 
     while (idx > 0 && heapArray[idx] >= heapArray[currParent]) {
         timeline.addFrame(Frame(heapArray, {idx, currParent}, 4, "Comparing parent " + std::to_string(heapArray[currParent]) + " and child " + std::to_string(heapArray[idx])));
@@ -82,7 +82,7 @@ void IHeapStructure::extractTop(Timeline& timeline) {
 
     int extract_value = heapArray[0];
     timeline.addFrame(Frame(heapArray, {0}, 3, "Top value found: " + std::to_string(extract_value)));
-    timeline.addFrame(Frame(heapArray, {0, (int)heapArray.size()-1}, 4, "Swapping the top with the end"));
+    timeline.addFrame(Frame(heapArray, {0, (unsigned long long)heapArray.size()-1}, 4, "Swapping the top with the end"));
     std::swap(heapArray[0], heapArray[heapArray.size()-1]);
     timeline.addFrame(Frame(heapArray, {}, 5, "Removing the end"));
     heapArray.pop_back();

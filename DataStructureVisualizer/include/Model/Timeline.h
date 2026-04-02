@@ -5,15 +5,24 @@
 #include "Frame.h"
 
 class Timeline {
-    public:
+    private:
     std::vector<Frame> frames;
-    int currentFrameIndex;
+    size_t currentFrameIndex;
 
+    public:
     Timeline();
     void addFrame(const Frame& frame);
-    void nextFrame();
     void clear();
-    int getFrameCount() const;
+
+    void nextFrame();
+    void prevFrame();
+    void goToFrame(size_t index);
+    void goToFirstFrame();
+    void goToLastFrame();
+
+    bool isAtEnd() const;
+    size_t getFrameCount() const;
+    size_t getCurrentFrameIndex() const;
     const Frame* getCurrentFrame() const;
 };
 

@@ -20,6 +20,8 @@ class Playback {
     void pause();
     void stepForward();
     void stepBackward();
+    void goToStep(size_t index);
+    void goToFirstStep();
     void goToFinalStep();
     void setSpeed(float multiplier);
     void setBaseStepDuration(float seconds);
