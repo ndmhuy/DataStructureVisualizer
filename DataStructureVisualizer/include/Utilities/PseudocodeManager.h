@@ -16,6 +16,7 @@ enum class AlgorithmType {
     // AVL Tree
 
     // Graph algorithms
+    GraphGridBFSShortestPath,
     GraphDAGShortestPath,
     GraphDijkstra,
     GraphAStar,
@@ -29,6 +30,7 @@ class PseudocodeManager {
     static const std::vector<std::string> SinglyLinkedListInsertCode;
     static const std::vector<std::string> SinglyLinkedListDeleteCode;
     static const std::vector<std::string> SinglyLinkedListSearchCode;
+    static const std::vector<std::string> GraphGridBFSShortestPathCode;
     static const std::vector<std::string> GraphDAGShortestPathCode;
     static const std::vector<std::string> GraphDijkstraCode;
     static const std::vector<std::string> GraphAStarCode;
