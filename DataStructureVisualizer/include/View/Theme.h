@@ -29,6 +29,8 @@ class Theme {
     unsigned int nodeTextBaseSize = 30;
     unsigned int arrayTextBaseSize = 30;
     float nodeTextVerticalOffset = 10.0f;
+    sf::Color highlightColor;
+    sf::Color accentColor;
 
     // CodePanel theme values
     sf::Color codePanelBackgroundColor;
