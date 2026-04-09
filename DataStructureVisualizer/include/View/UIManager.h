@@ -8,6 +8,9 @@
 #include "imgui-SFML.h"
 #include "View/Button.h"
 #include "View/Theme.h"
+#include "View/CodePanel.h"
+#include "View/InputMenu.h"
+#include "View/Slider.h"
 
 class UIManager {
 private:
@@ -19,6 +22,17 @@ private:
     Button pause;
     Button stepForward;
     Button stepBackward;
+
+    bool playClicked = false;
+    bool pauseClicked = false;
+    bool stepForwardClicked = false;
+    bool stepBackwardClicked = false;
+
+    CodePanel codePanel;
+    InputMenu inputMenu;
+
+    Slider slider;
+    float speed=1.f; //init speed variable
 
 public:
     UIManager() = default;
@@ -36,6 +50,24 @@ public:
     void render(sf::RenderWindow&); // draw UI
 
     void shutdown(); // shutdown ImGui
+
+    // --- Interact InputMenu ---
+    int getInputAction() const; // 0: no action, 1: Add, 2: Delete, 3: Search, 4: Update.
+    int getInputK() const; //Add, Delete Search need K only, Update need both K and R
+    int getInputR() const;
+    void resetInputAction(); //Call after done getAction
+
+    // --- Interact CodePanel ---
+    void setCodePanelCode(std::vector<std::string>& code); //pass codes
+    void setCodePanelHighlightedLine(int line); //pass 0-indexed to highlight
+    void clearCodePanel(); //Clean after done showing code
+
+    // --- Interact Buttons ---
+    bool checkPlayClicked();
+    bool checkPauseClicked();
+    bool checkStepForwardClicked();
+    bool checkStepBackwardClicked();
+    float getSpeed() const;
 };
 
 #endif // UIMANAGER_H
