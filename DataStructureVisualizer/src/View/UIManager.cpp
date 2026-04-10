@@ -39,6 +39,7 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     inputMenu.init(theme);
     codePanel.applyTheme(theme);
     slider.init(&speed,theme);
+    navMenu.init(theme);
 
     // setup size and position for buttons
     resize(window);
@@ -62,6 +63,10 @@ void UIManager::processEvent(sf::RenderWindow& window, const sf::Event& event) {
 
     if (event.is<sf::Event::Resized>()) {
         resize(window);
+    }
+
+    if (isMainMenu) {
+        return; //Block interact with SFML functions
     }
 
     if (play.handleEvent(window, event)) {
@@ -108,6 +113,12 @@ void UIManager::update(sf::RenderWindow& window, const sf::Time& deltatime) {
 }
 
 void UIManager::render(sf::RenderWindow& window) {
+    if (isMainMenu) {
+        navMenu.render(window);
+        ImGui::SFML::Render(window);
+        return; // Dừng hàm lại, không render Workspace
+    }
+
     // ImGuiWindowFlags panelFlags = 
     //     ImGuiWindowFlags_NoMove | 
     //     ImGuiWindowFlags_NoResize | 
@@ -188,7 +199,22 @@ void UIManager::shutdown() {
 }
 
 // ==========================================
-// Giao tiếp với InputMenu
+// Interact with Navigation Menu
+// ==========================================
+int UIManager::getSelectedDS() const {
+    return navMenu.getSelectedDS();
+}
+
+void UIManager::resetDSSelection() {
+    navMenu.resetSelection();
+}
+
+void UIManager::setShowMainMenu(bool show) {
+    isMainMenu = show;
+}
+
+// ==========================================
+// Interact with InputMenu
 // ==========================================
 int UIManager::getInputAction() const {
     return inputMenu.getAction();
@@ -207,7 +233,7 @@ void UIManager::resetInputAction() {
 }
 
 // ==========================================
-// Giao tiếp với CodePanel
+// Interact with CodePanel
 // ==========================================
 void UIManager::setCodePanelCode(std::vector<std::string>& code) {
     codePanel.setCode(code);
@@ -222,7 +248,7 @@ void UIManager::clearCodePanel() {
 }
 
 // ==========================================
-// Giao tiếp với Playback Buttons & Slider
+// Interact with Playback Buttons & Slider
 // ==========================================
 bool UIManager::checkPlayClicked() {
     bool res = playClicked;

@@ -11,6 +11,7 @@
 #include "View/CodePanel.h"
 #include "View/InputMenu.h"
 #include "View/Slider.h"
+#include "View/NavigationMenu.h"
 
 class UIManager {
 private:
@@ -18,6 +19,7 @@ private:
     bool initialized = false;
     bool isPlay = true; // Determine if it's play or pause button, initially play
     Theme theme = Theme::getDefaultTheme();
+    bool isMainMenu = true; // Main menu is visible?
     Button play;
     Button pause;
     Button stepForward;
@@ -33,6 +35,8 @@ private:
 
     Slider slider;
     float speed=1.f; //init speed variable
+
+    NavigationMenu navMenu;
 
 public:
     UIManager() = default;
@@ -50,6 +54,11 @@ public:
     void render(sf::RenderWindow&); // draw UI
 
     void shutdown(); // shutdown ImGui
+
+    // --- Interact Navigation Menu ---
+    int getSelectedDS() const; // -1: none, 0: SSL, 1: Heap, 2: AVL, 3: SPA
+    void resetDSSelection(); // Call after getSelectedDS()
+    void setShowMainMenu(bool show);
 
     // --- Interact InputMenu ---
     int getInputAction() const; // 0: no action, 1: Add, 2: Delete, 3: Search, 4: Update.
