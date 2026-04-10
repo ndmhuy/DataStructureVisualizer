@@ -267,7 +267,10 @@ void Renderer::drawFrame(const Frame& frame, StructureType type, ...) {
         case StructureType::SinglyLinkedList:
             drawLinkedListFrame(frame);
             break;
-        case StructureType::Heap:
+        case StructureType::MaxHeap:
+            drawHeapFrame(frame)
+            break;
+        case StructureType::MinHeap:
             drawHeapFrame(frame);
             break;
         case StructureType::AVLTree:
