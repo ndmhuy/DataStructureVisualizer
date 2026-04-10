@@ -20,6 +20,8 @@ private:
     bool isPlay = true; // Determine if it's play or pause button, initially play
     Theme theme = Theme::getDefaultTheme();
     bool isMainMenu = true; // Main menu is visible?
+    bool isDarkMode = false;
+    bool backToMenuClicked = false;
     Button play;
     Button pause;
     Button stepForward;
@@ -59,6 +61,7 @@ public:
     int getSelectedDS() const; // -1: none, 0: SSL, 1: Heap, 2: AVL, 3: SPA
     void resetDSSelection(); // Call after getSelectedDS()
     void setShowMainMenu(bool show);
+    bool checkBackToMenuClicked(); // check if User back to Main menu
 
     // --- Interact InputMenu ---
     int getInputAction() const; // 0: no action, 1: Add, 2: Delete, 3: Search, 4: Update.
@@ -76,7 +79,13 @@ public:
     bool checkPauseClicked();
     bool checkStepForwardClicked();
     bool checkStepBackwardClicked();
+
+    //-Interact with Slider
     float getSpeed() const;
+    void resetSpeed();// Call after finishing a DS
+    
+    
+    const Theme& getTheme() const { return theme; }
 };
 
 #endif // UIMANAGER_H

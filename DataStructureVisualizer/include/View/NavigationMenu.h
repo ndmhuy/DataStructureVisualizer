@@ -20,6 +20,7 @@ public:
     NavigationMenu() = default;
     
     void init(const Theme& theme);
+    void applyTheme(const Theme& selectedTheme) { theme = selectedTheme; }
     void render(const sf::RenderWindow& window);
     
     int getSelectedDS() const { return selectedDS; }

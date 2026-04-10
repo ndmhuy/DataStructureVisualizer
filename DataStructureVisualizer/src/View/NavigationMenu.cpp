@@ -14,7 +14,8 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | 
-                             ImGuiWindowFlags_NoBackground; // Xóa nền mặc định của ImGui
+                             ImGuiWindowFlags_NoBackground | 
+                             ImGuiWindowFlags_NoBringToFrontOnFocus; // Tránh che khuất các nút Global
 
     ImGui::Begin("NavigationMenuScreen", nullptr, flags);
 
@@ -25,11 +26,20 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(theme.inputMenuAccentColor.r/255.f, theme.inputMenuAccentColor.g/255.f, theme.inputMenuAccentColor.b/255.f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(theme.inputMenuTextColor.r/255.f, theme.inputMenuTextColor.g/255.f, theme.inputMenuTextColor.b/255.f, 1.0f));
 
+    bool hasTitleFont = ImGui::GetIO().Fonts->Fonts.Size > 1;
+    if (hasTitleFont) {
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]); // Dùng font số 2 (size 36)
+    }
+
     // --- Vẽ Tiêu đề (Nằm ở top-center) ---
     const char* title = "DATA STRUCTURE VISUALIZER";
     ImVec2 titleSize = ImGui::CalcTextSize(title);
     ImGui::SetCursorPos(ImVec2((winSize.x - titleSize.x) * 0.5f, winSize.y * 0.25f));
     ImGui::Text("%s", title);
+
+    if (hasTitleFont) {
+        ImGui::PopFont();
+    }
 
     // --- Vẽ Lưới Nút Bấm 2x2 ---
     float btnWidth = 350.0f;

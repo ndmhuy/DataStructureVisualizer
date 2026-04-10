@@ -55,7 +55,8 @@ void InputMenu::render(const sf::RenderWindow& window){
     );
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
-                             ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove;
+                             ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | 
+                             ImGuiWindowFlags_NoBringToFrontOnFocus;
     
     // Begin Main Menu Window
     ImGui::Begin("FlatMenu", nullptr, flags);
@@ -131,7 +132,8 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
     ImGui::SetNextWindowSize(ImVec2(formWidth, height));
     
     ImGuiWindowFlags formFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
-                                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar;
+                                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                                 ImGuiWindowFlags_NoBringToFrontOnFocus;
                                          
     ImGui::Begin("SelectFormWindow", nullptr, formFlags);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(theme.inputMenuFormSpacing, 0.0f));

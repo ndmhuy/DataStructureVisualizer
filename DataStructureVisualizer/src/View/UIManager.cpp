@@ -11,6 +11,16 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
         return false;
     }
 
+    // Load Custom Fonts cho UI typography
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->Clear();
+    ImFont* regularFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 18.0f); // Font thường
+    ImFont* titleFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 36.0f);   // Font tiêu đề to
+    if (!regularFont || !titleFont) {
+        io.Fonts->AddFontDefault();
+    }
+    ImGui::SFML::UpdateFontTexture();
+
     if (!play.init(theme.playIconPath, theme)) {
         std::cerr << "Warning: UIManager::init failed to load play icon from '"
                   << theme.playIconPath << "'." << std::endl;
@@ -113,79 +123,111 @@ void UIManager::update(sf::RenderWindow& window, const sf::Time& deltatime) {
 }
 
 void UIManager::render(sf::RenderWindow& window) {
-    if (isMainMenu) {
-        navMenu.render(window);
-        ImGui::SFML::Render(window);
-        return; // Dừng hàm lại, không render Workspace
-    }
-
-    // ImGuiWindowFlags panelFlags = 
-    //     ImGuiWindowFlags_NoMove | 
-    //     ImGuiWindowFlags_NoResize | 
-    //     ImGuiWindowFlags_NoCollapse | 
-    //     ImGuiWindowFlags_NoTitleBar;
-    ImGuiWindowFlags panelFlags = 
-        ImGuiWindowFlags_NoMove | 
-        ImGuiWindowFlags_NoResize | 
-        ImGuiWindowFlags_NoCollapse | 
-        ImGuiWindowFlags_NoTitleBar;
-
-    // // Get the exact size of the user's game window
-    // ImVec2 winSize = ImGui::GetIO().DisplaySize;
     ImVec2 winSize = ImGui::GetIO().DisplaySize;
 
-    // // ==========================================
-    // // 1. TOP CONTROL BAR (Input Menu)
-    // // ==========================================
-    // float topBarHeight = 80.0f; // Adjust this based on your Theme
-    // ImGui::SetNextWindowPos(ImVec2(0, 0));
-    // ImGui::SetNextWindowSize(ImVec2(winSize.x, topBarHeight));
-    // ==========================================
-    // 1. TOP CONTROL BAR (Input Menu & Slider)
-    // ==========================================
-    float topBarHeight = 80.0f; // Bạn có thể lấy từ theme.inputMenuHeight
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(winSize.x, topBarHeight));
-    
-    // ImGui::Begin("TopControlBar", nullptr, panelFlags);
-    // // Call your InputMenu render function here!
-    // // e.g., inputMenu.render(window); 
-    // ImGui::End();
-    ImGui::Begin("TopControlBar", nullptr, panelFlags);
-    inputMenu.render(window);
-    slider.render(window);
-    ImGui::End();
+    // Style dùng chung cho nút Theme và Home
+    ImVec4 btnColor = ImVec4(theme.inputMenuPrimaryColor.r/255.f, theme.inputMenuPrimaryColor.g/255.f, theme.inputMenuPrimaryColor.b/255.f, 1.0f);
+    ImVec4 btnHover = ImVec4(theme.inputMenuAccentColor.r/255.f, theme.inputMenuAccentColor.g/255.f, theme.inputMenuAccentColor.b/255.f, 1.0f);
+    ImVec4 textColor = ImVec4(theme.inputMenuTextColor.r/255.f, theme.inputMenuTextColor.g/255.f, theme.inputMenuTextColor.b/255.f, 1.0f);
 
-    // // ==========================================
-    // // 2. RIGHT CODE PANEL (Pseudocode)
-    // // ==========================================
-    // float rightPanelWidth = 450.0f; // Width of the pseudocode box
-    // float bottomBarHeight = 100.0f; // Space to leave at the bottom for SFML buttons
-    
-    // // Position it under the Top Bar, and push it all the way to the right
-    // ImGui::SetNextWindowPos(ImVec2(winSize.x - rightPanelWidth, topBarHeight));
-    // // Its height stretches down to the playback bar
-    // ImGui::SetNextWindowSize(ImVec2(rightPanelWidth, winSize.y - topBarHeight - bottomBarHeight));
-    
-    // ImGui::Begin("RightCodePanel", nullptr, panelFlags);
-    // // Call your CodePanel render function here!
-    // // e.g., codePanel.render(window);
-    // ImGui::End();
-    // ==========================================
-    // 2. RIGHT CODE PANEL (Pseudocode)
-    // ==========================================
-    // Class CodePanel đã tự xử lý window size/pos bên trong file CodePanel.cpp
-    // Bạn chỉ cần gọi hàm render:
-    codePanel.render(window);
+    if (isMainMenu) {
+        navMenu.render(window);
 
-    if (isPlay) {
-        play.render(window);
+        // Vẽ nút Theme đè lên góc phải của Main Menu
+        ImGui::SetNextWindowPos(ImVec2(winSize.x - 110.0f, 10.0f));
+        ImGui::SetNextWindowSize(ImVec2(100.0f, 50.0f));
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
+                                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | 
+                                 ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
+        ImGui::Begin("ThemeMenu", nullptr, flags);
+        
+        ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnHover);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnHover);
+        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+        
+        if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
+            isDarkMode = !isDarkMode;
+            theme = isDarkMode ? Theme::getDarkTheme() : Theme::getDefaultTheme();
+            navMenu.applyTheme(theme);
+            inputMenu.applyTheme(theme);
+            codePanel.applyTheme(theme);
+            slider.applyTheme(theme);
+            play.init(theme.playIconPath, theme);
+            pause.init(theme.pauseIconPath, theme);
+            stepForward.init(theme.stepForwardIconPath, theme);
+            stepBackward.init(theme.stepBackwardIconPath, theme);
+            resize(window);
+        }
+        ImGui::PopStyleColor(4);
+        ImGui::PopStyleVar();
+        ImGui::End();
+
     } else {
-        pause.render(window);
+        ImGuiWindowFlags panelFlags = 
+            ImGuiWindowFlags_NoMove | 
+            ImGuiWindowFlags_NoResize | 
+            ImGuiWindowFlags_NoCollapse | 
+            ImGuiWindowFlags_NoTitleBar | 
+            ImGuiWindowFlags_NoBringToFrontOnFocus |
+            ImGuiWindowFlags_NoBackground | // Bar trong suốt
+            ImGuiWindowFlags_NoScrollbar;
+
+        // ==========================================
+        // 1. TOP CONTROL BAR (Chứa Home & Theme)
+        // ==========================================
+        float topBarHeight = 80.0f; 
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2(winSize.x, topBarHeight));
+        
+        ImGui::Begin("TopControlBar", nullptr, panelFlags);
+        
+        ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnHover);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnHover);
+        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+        
+        ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
+        if (ImGui::Button("Home", ImVec2(80.0f, 35.0f))) {
+            backToMenuClicked = true;
+            isMainMenu = true;
+        }
+
+        ImGui::SetCursorPos(ImVec2(winSize.x - 110.0f, 10.0f));
+        if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
+            isDarkMode = !isDarkMode;
+            theme = isDarkMode ? Theme::getDarkTheme() : Theme::getDefaultTheme();
+            navMenu.applyTheme(theme);
+            inputMenu.applyTheme(theme);
+            codePanel.applyTheme(theme);
+            slider.applyTheme(theme);
+            play.init(theme.playIconPath, theme);
+            pause.init(theme.pauseIconPath, theme);
+            stepForward.init(theme.stepForwardIconPath, theme);
+            stepBackward.init(theme.stepBackwardIconPath, theme);
+            resize(window);
+        }
+        
+        ImGui::PopStyleColor(4);
+        ImGui::PopStyleVar();
+        ImGui::End();
+
+        // Render Component
+        inputMenu.render(window);
+        codePanel.render(window);
+        slider.render(window);
+
+        if (isPlay) {
+            play.render(window);
+        } else {
+            pause.render(window);
+        }
+        stepForward.render(window);
+        stepBackward.render(window);
     }
 
-    stepForward.render(window);
-    stepBackward.render(window);
     ImGui::SFML::Render(window);
 }
 
@@ -276,4 +318,14 @@ bool UIManager::checkStepBackwardClicked() {
 
 float UIManager::getSpeed() const {
     return speed;
+}
+
+void UIManager::resetSpeed() {
+    slider.setValue(1.0f);
+}
+
+bool UIManager::checkBackToMenuClicked() {
+    bool res = backToMenuClicked;
+    backToMenuClicked = false;
+    return res;
 }

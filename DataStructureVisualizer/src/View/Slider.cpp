@@ -110,6 +110,26 @@ void Slider::handleEvent(const sf::RenderWindow& window, const sf::Event& event)
     }
 }
 
+void Slider::setValue(float val) {
+    *speed = val;
+    float speedRange = theme.sliderMaxSpeed - theme.sliderMinSpeed;
+    // Tính toán lại toạ độ x của cục knob dựa trên speed mới
+    knobpos.x = start + (*speed - theme.sliderMinSpeed) / speedRange * (end - start);
+    knob.setPosition(knobpos);
+    update(*speed, text); // Cập nhật lại text hiển thị (ví dụ: "1.0x")
+}
+
+void Slider::applyTheme(const Theme& selectedTheme) {
+    this->theme = selectedTheme;
+    trackColor = theme.sliderTrackColor;
+    knobColor = theme.sliderKnobColor;
+    track.setFillColor(trackColor);
+    semiCircle1.setFillColor(trackColor);
+    semiCircle2.setFillColor(trackColor);
+    knob.setFillColor(knobColor);
+    text.setFillColor(theme.sliderTextColor);
+}
+
 void Slider::render(sf::RenderWindow& window) {
     window.draw(semiCircle1);
     window.draw(semiCircle2);

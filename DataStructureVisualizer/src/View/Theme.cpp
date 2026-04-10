@@ -107,3 +107,33 @@ Theme Theme::getDefaultTheme() {
 
     return t;
 }
+
+Theme Theme::getDarkTheme() {
+    // Kế thừa các đường dẫn file, kích thước, toạ độ từ Default Theme
+    Theme t = getDefaultTheme(); 
+
+    // Ghi đè (Override) các màu sắc sang tông tối
+    t.textColor = sf::Color(220, 220, 255);
+    t.arrowColor = sf::Color(200, 200, 255);
+    t.windowClearColor = sf::Color(20, 22, 28, 255); // Nền xám đen
+
+    t.codePanelBackgroundColor = sf::Color(30, 30, 35, 255);
+    t.codePanelBorderColor = sf::Color(80, 80, 90, 255);
+    t.codePanelTextColor = sf::Color(220, 220, 220, 255);
+    t.codePanelTitleColor = sf::Color(255, 255, 255, 255);
+    t.codePanelHighlightColor = sf::Color(255, 80, 100, 255); // Đỏ nổi bật
+
+    t.inputMenuPrimaryColor = sf::Color(45, 40, 85, 255); // Tím sẫm hơn
+    t.inputMenuAccentColor = sf::Color(200, 100, 160, 255);
+    t.inputMenuTextColor = sf::Color(240, 240, 240, 255);
+
+    t.sliderTrackColor = sf::Color(120, 120, 120, 255);
+    t.sliderKnobColor = sf::Color(60, 160, 255, 255);
+    t.sliderTextColor = sf::Color::White;
+
+    t.buttonNormalColor = sf::Color(180, 180, 180, 255);
+    t.buttonHoveredColor = sf::Color(220, 220, 220, 255);
+    t.buttonPressedColor = sf::Color(100, 100, 100, 255);
+
+    return t;
+}

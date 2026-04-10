@@ -16,6 +16,7 @@ private:
     int currentOption = -1; // -1: Close, 0: Add, 1: Delete, 2: Search, 3: Update.
 
     Theme theme = Theme::getDefaultTheme();
+    bool backToMenuClicked = false;
 
     const char* menu[4] = {"Insert", "Delete", "Search", "Update"};
 
@@ -31,6 +32,7 @@ public:
     void render(const sf::RenderWindow& window);
     void renderinputform(const sf::RenderWindow& window, int cur, ImVec2 currentbttnPos);
 
+    void applyTheme(const Theme& selectedTheme) { theme = selectedTheme; }
     int getAction() const { return hasAction; }
     int getK() const { return k; }
     int getR() const { return r; }
