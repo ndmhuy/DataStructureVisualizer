@@ -3,7 +3,7 @@
 
 #include "Model/HeapStructure/IHeapStructure.h"
 
-class MaxHeap : public IHeapStructure {
+class MinHeap : public IHeapStructure {
     protected:
         bool compare(int idx1, int idx2) override;
 };

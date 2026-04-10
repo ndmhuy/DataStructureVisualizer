@@ -21,6 +21,7 @@ class IHeapStructure : public IVisualizable {
 
     void extractTop(Timeline& timeline);
     void peek(Timeline& timeline);
+    void clear(Timeline& timeline);
 };
 
 #endif

@@ -59,7 +59,7 @@ void IHeapStructure::insert(int value, Timeline& timeline) {
     unsigned long long idx = heap_size-1;
     unsigned long long currParent = parent(heap_size, heap_size-1);
 
-    while (idx > 0 && heapArray[idx] >= heapArray[currParent]) {
+    while (idx > 0 && !compare(heapArray[idx], heapArray[currParent])) {
         timeline.addFrame(Frame(heapArray, {idx, currParent}, 4, "Comparing parent " + std::to_string(heapArray[currParent]) + " and child " + std::to_string(heapArray[idx])));
         timeline.addFrame(Frame(heapArray, {currParent}, 5, "Heapifying node " + std::to_string(heapArray[currParent])));
         timeline.addFrame(Frame(heapArray, {idx, currParent}, 6, "Swapping"));
@@ -105,4 +105,12 @@ void IHeapStructure::peek(Timeline& timeline) {
     }
 
     timeline.addFrame(Frame(heapArray, {0}, 3, "Top value found: " + std::to_string(heapArray[0])));
+}
+
+void IHeapStructure::clear(Timeline& timeline) {
+    timeline.addFrame(Frame(heapArray, {}, 1, "Starting clearing"));
+
+    heapArray.clear();
+
+    timeline.addFrame(Frame(heapArray, {}, 2, "Clearing successfully"));
 }
