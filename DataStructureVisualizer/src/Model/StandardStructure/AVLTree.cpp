@@ -33,7 +33,7 @@ std::vector<int> AVLTree::toVector() {
         que.pop();
 
         if (current) {
-            result.push_back(currentIdx);
+            result.push_back(current->value);
             getNodeIndex[current->value] = currentIdx;
 
             que.push(current->left);
@@ -212,7 +212,7 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline& timeline) {
         isRemove = initialRemove(value, root->left, timeline);
     }
     else if (value > root->value) {
-        timeline.addFrame(Frame(currentState, {currIdx}, 2, std::to_string(value) + " < " + std::to_string(root->value) + ", go to the right branch"));
+        timeline.addFrame(Frame(currentState, {currIdx}, 2, std::to_string(value) + " > " + std::to_string(root->value) + ", go to the right branch"));
         isRemove = initialRemove(value, root->right, timeline);
     }
     else {
@@ -265,9 +265,8 @@ void AVLTree::initialize(const std::vector<int>& data, Timeline& timeline) {
     std::vector<int> currentState = toVector();
     timeline.addFrame(Frame(currentState, {}, 0, "Initializing AVL Tree from data..."));
 
-    Node* current;
     for (int value : data) {
-        initialInsert(value, current, timeline);
+        initialInsert(value, root, timeline);
     }
 
     for (int idx = 0; idx < currentState.size(); ++idx) {
@@ -280,7 +279,7 @@ void AVLTree::initialize(const std::vector<int>& data, Timeline& timeline) {
 void AVLTree::insert(int value, Timeline& timeline) {
     timeline.addFrame(Frame(toVector(), {}, 1, "Starting insertion of " + std::to_string(value)));
 
-    if (!initialInsert(value, root, timeline)) 
+    if (!initialInsert(value, root, timeline))
         return;
 
     timeline.addFrame(Frame(toVector(), {}, 2, "Successfully inserted " + std::to_string(value)));
