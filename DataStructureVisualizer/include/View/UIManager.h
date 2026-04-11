@@ -64,9 +64,10 @@ public:
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
     // --- Interact InputMenu ---
-    int getInputAction() const; // 0: no action, 1: Add, 2: Delete, 3: Search, 4: Update.
-    int getInputK() const; //Add, Delete Search need K only, Update need both K and R
-    int getInputR() const;
+    int getInputAction() const; // 0: no action, 1: Insert, 2: Delete, 3: Search, 4: Update, 5: Random.
+    int getInputMode() const; //Insert: 0. Single 1. Array 2. File //Random: 0.Single 1.Array //Delete,Search,Update: 0
+    std::string getInputString1() const;
+    std::string getInputString2() const; //Only get if Action 4, Mode 0
     void resetInputAction(); //Call after done getAction
 
     // --- Interact CodePanel ---

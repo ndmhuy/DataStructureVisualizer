@@ -262,12 +262,16 @@ int UIManager::getInputAction() const {
     return inputMenu.getAction();
 }
 
-int UIManager::getInputK() const {
-    return inputMenu.getK();
+int UIManager::getInputMode() const {
+    return inputMenu.getMode();
 }
 
-int UIManager::getInputR() const {
-    return inputMenu.getR();
+std::string UIManager::getInputString1() const {
+    return inputMenu.getString1();
+}
+
+std::string UIManager::getInputString2() const {
+    return inputMenu.getString2();
 }
 
 void UIManager::resetInputAction() {

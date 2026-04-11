@@ -45,7 +45,6 @@ Theme Theme::getDefaultTheme() {
     t.bgImagePath = assetsRoot + "/background.png";
     t.nodeImagePath = assetsRoot + "/node.png";
     t.arrayImagePath = assetsRoot + "/array.png";
-    t.randomboxPath = assetsRoot + "/randombox.png";
 
     t.playIconPath = assetsRoot + "/playbutton.png";
     t.pauseIconPath = assetsRoot + "/pausebutton.png";
@@ -72,9 +71,6 @@ Theme Theme::getDefaultTheme() {
     t.inputMenuTextColor = sf::Color::White;
     t.inputMenuAnchorYRatio = 7.0f / 8.0f;
     t.inputMenuAnchorHeightOffsetMultiplier = 5.0f;
-    t.inputMenuFormWidthMultiplierDefault = 1.05f;
-    t.inputMenuFormWidthMultiplierUpdate = 1.9f;
-    t.inputMenuIconScale = 0.65f;
     t.inputMenuOkButtonHeightRatio = 0.8f;
     t.inputMenuLabelXOffset = 8.0f;
     t.inputMenuUpdateLabelSpacing = 12.0f;
