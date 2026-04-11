@@ -30,19 +30,22 @@ void DataManager::inputFromFile(const std::string& filePath) {
         int value;
         bool lineHasValid = false;
 
-        while (ss >> value) {
-            data.push_back(value);
-            hasAnyValid = true;
-            lineHasValid = true;
+        while (true) {
+            if (ss >> value) {
+                data.push_back(value);
+                hasAnyValid = true;
+                lineHasValid = true;
+            } else if (ss.eof()) {
+                break;
+            } else {
+                // Clear fail state and skip invalid token
+                ss.clear();
+                ss.ignore(1);
+            }
         }
 
-        // When input file only contains non "specific" integer value
-        if (!lineHasValid && (ss.fail() || !ss.eof())) {
+        if (!lineHasValid) {
             std::cout << "Invalid data input text file! No valid integers found on current line; line ignored." << std::endl;
-        }
-        // Warning when there is some integer and some text
-        else if (lineHasValid && ss.fail() && !ss.eof()) {
-            std::cout << "Warning: Non-integer content after valid integers ignored on current line." << std::endl;
         }
     }
 
@@ -58,8 +61,16 @@ void DataManager::inputFromStream(std::istream& in) {
     data.clear();
     int value;
 
-    while (in >> value) {
-        data.push_back(value);
+    while (true) {
+        if (in >> value) {
+            data.push_back(value);
+        } else if (in.eof()) {
+            break;
+        } else {
+            // Clear fail state, skip one char
+            in.clear();
+            in.ignore(1);
+        }
     }
 }
 
