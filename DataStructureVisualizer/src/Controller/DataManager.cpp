@@ -54,11 +54,11 @@ void DataManager::inputFromFile(const std::string& filePath) {
     }
 }
 
-void DataManager::inputFromFile(const std::string& filePath) {
+void DataManager::inputFromFileGraph(const std::string& filePath) {
     std::ifstream fileIn(filePath);
 
     if (!fileIn.is_open()) {
-        std::cerr << "Error: DataManager::inputFromFile cannot open input file '"
+        std::cerr << "Error: DataManager::inputFromFileGraph cannot open input file '"
                   << filePath << "'." << std::endl;
         return;
     }
@@ -210,10 +210,39 @@ void DataManager::outputToFile(const std::string& filePath) const { // not chang
     fileOut.close();
 }
 
+void DataManager::outputToFileGraph(const std::string& filePath) const { // not changing class value
+    std::ofstream fileOut(filePath);
+
+    if (!fileOut.is_open()) {
+        std::cerr << "Error: DataManager::outputToFileGraph cannot open output file '"
+                  << filePath << "'." << std::endl;
+
+        return;
+    }
+
+    for (auto& next : dataGraph) {
+        for (std::pair<int, int> value : next.second) {
+            std::cout << next.first << " -> " << value.first << " : " << value.second;
+        }
+    }
+    
+    fileOut.close();
+}
+
 // Manual output
 void DataManager::outputToConsole() const { // not changing class value 
     for (int value : data) {
         std::cout << value << " ";
+    }
+
+    std::cout << std::endl;
+}
+
+void DataManager::outputToConsoleGraph() const { // not changing class value 
+    for (auto& next : dataGraph) {
+        for (std::pair<int, int> value : next.second) {
+            std::cout << next.first << " -> " << value.first << " : " << value.second;
+        }
     }
 
     std::cout << std::endl;
