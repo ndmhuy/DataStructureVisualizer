@@ -11,7 +11,7 @@ class IHeapStructure : public IVisualizable {
     int parent(int n, int idx);
     int left(int n, int idx);
     int right(int n, int idx);
-    void heapify(int n, int idx);
+    void heapify(int n, int idx, Timeline& timeline);
 
     virtual bool compare(int idx1, int idx2) = 0;
 
