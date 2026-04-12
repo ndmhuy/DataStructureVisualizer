@@ -3,7 +3,7 @@
 #include <string>
 
 int IHeapStructure::parent(int n, int i) {
-    return (i >= 0 && i < n) ? ((i-1)/2) : (-1);
+    return (i > 0 && i < n) ? ((i-1)/2) : (-1);
 }
 
 int IHeapStructure::left(int n, int i) {
@@ -19,8 +19,11 @@ void IHeapStructure::heapify(int n, int i, Timeline& timeline) {
 
     std::vector<unsigned long long> highlights;
     highlights.push_back((unsigned long long)i);
-    if (l < n) highlights.push_back((unsigned long long)l);
-    if (r < n) highlights.push_back((unsigned long long)r);
+    if (l < n) 
+        highlights.push_back((unsigned long long)l);
+    if (r < n) 
+        highlights.push_back((unsigned long long)r);
+    timeline.addFrame(Frame(heapArray, highlights, 0, "Comparing node " + std::to_string(heapArray[i]) + " with its children"));
 
     if (l < n && compare(l, curr))
         curr = l;
