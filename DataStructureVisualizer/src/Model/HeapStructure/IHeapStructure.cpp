@@ -1,4 +1,4 @@
-#include "Model\HeapStructure\IHeapStructure.h"
+#include "Model/HeapStructure/IHeapStructure.h"
 #include <utility>
 #include <string>
 
@@ -59,13 +59,21 @@ void IHeapStructure::insert(int value, Timeline& timeline) {
     unsigned long long idx = heap_size-1;
     unsigned long long currParent = parent(heap_size, heap_size-1);
 
-    while (idx > 0 && !compare(heapArray[idx], heapArray[currParent])) {
-        timeline.addFrame(Frame(heapArray, {idx, currParent}, 4, "Comparing parent " + std::to_string(heapArray[currParent]) + " and child " + std::to_string(heapArray[idx])));
-        timeline.addFrame(Frame(heapArray, {currParent}, 5, "Heapifying node " + std::to_string(heapArray[currParent])));
-        timeline.addFrame(Frame(heapArray, {idx, currParent}, 6, "Swapping"));
-        heapify(heap_size, currParent);
+    while (idx > 0 && compare(idx, currParent)) {
+        timeline.addFrame(Frame(heapArray, {(unsigned long long)idx, (unsigned long long)currParent}, 4, 
+            "Comparing parent " + std::to_string(heapArray[currParent]) + 
+            " and child " + std::to_string(heapArray[idx])));
+            
+        timeline.addFrame(Frame(heapArray, {(unsigned long long)idx, (unsigned long long)currParent}, 5, 
+            "Child should precede parent, swapping..."));
+
+        std::swap(heapArray[idx], heapArray[currParent]);
+        
+        timeline.addFrame(Frame(heapArray, {(unsigned long long)idx, (unsigned long long)currParent}, 6, "Swapped"));
+
         idx = currParent;
-        currParent = parent(heap_size, currParent);
+        if (parent(heap_size, idx) >= 0) 
+            currParent = parent(heap_size, idx);
     }
 
     // This should include the highlighting

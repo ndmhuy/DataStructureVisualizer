@@ -55,6 +55,9 @@ std::vector<int> AVLTree::toVector() {
 }
 
 void AVLTree::deleteNodes(Node*& root) {
+    if (!root)
+        return;
+
     std::queue<Node*> que;
     que.push(root);
     
@@ -69,6 +72,8 @@ void AVLTree::deleteNodes(Node*& root) {
 
         delete current;
     }
+
+    root = nullptr;
 }
 
 AVLTree::Node* AVLTree::rotateRight(Node* root, Timeline& timeline) {
@@ -238,13 +243,12 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline& timeline) {
             timeline.addFrame(Frame(currentState, {currIdx, minRightIdx}, 6, "Overwrite " + std::to_string(minRight->value) + " on " + std::to_string(root->value)));
 
             root->value = minRight->value;
-
-            std::vector<int> stateAfterSwap = toVector();
-            unsigned long long newRootIdx = getNodeIndex[root->value];
-
-            timeline.addFrame(Frame(stateAfterSwap, {newRootIdx}, 7, "Calling a recursion to remove the alternative"));
             
             initialRemove(root->value, root->right, timeline);
+
+            std::vector<int> afterState = toVector();
+            unsigned long long newRootIdx = getNodeIndex[root->value];
+            timeline.addFrame(Frame(afterState, {newRootIdx}, 7, "Removed the inorder successor"));
         }
     }
 
@@ -269,11 +273,13 @@ void AVLTree::initialize(const std::vector<int>& data, Timeline& timeline) {
         initialInsert(value, root, timeline);
     }
 
-    for (int idx = 0; idx < currentState.size(); ++idx) {
-        getNodeIndex[currentState[idx]] = idx;
+    std::vector<int> finalState = toVector();
+    getNodeIndex.clear();
+    for (int idx = 0; idx < finalState.size(); ++idx) {
+        getNodeIndex[finalState[idx]] = idx;
     }
 
-    timeline.addFrame(Frame(toVector(), {}, 0, "Initialization complete."));
+    timeline.addFrame(Frame(finalState, {}, 0, "Initialization complete."));
 }
 
 void AVLTree::insert(int value, Timeline& timeline) {
