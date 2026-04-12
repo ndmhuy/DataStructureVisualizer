@@ -49,7 +49,7 @@ class AVLTree : public IStandardStructure {
     void search(int value, Timeline& timeline) override;
     void clear(Timeline& timeline) override;
 
-    StructureType getStructureType() const;
+    StructureType getStructureType() const override;
 };
 
 #endif
