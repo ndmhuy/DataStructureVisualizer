@@ -14,8 +14,13 @@ int IHeapStructure::right(int n, int i) {
     return (i >= 0 && i < n) ? (2*i+2) : (-1);
 }
 
-void IHeapStructure::heapify(int n, int i) {
+void IHeapStructure::heapify(int n, int i, Timeline& timeline) {
     int curr = i, l = left(n, i), r = right(n, i);
+
+    std::vector<unsigned long long> highlights;
+    highlights.push_back((unsigned long long)i);
+    if (l < n) highlights.push_back((unsigned long long)l);
+    if (r < n) highlights.push_back((unsigned long long)r);
 
     if (l < n && compare(l, curr))
         curr = l;
@@ -24,9 +29,14 @@ void IHeapStructure::heapify(int n, int i) {
         curr = r;
 
     if (curr != i) {
-        // This should include the Frame
+        timeline.addFrame(Frame(heapArray, {(unsigned long long)i, (unsigned long long)curr}, 1, "Violation found! Swapping " + std::to_string(heapArray[i]) + " and " + std::to_string(heapArray[curr])));
         std::swap(heapArray[i], heapArray[curr]);
-        heapify(n, curr);
+
+        timeline.addFrame(Frame(heapArray, {(unsigned long long)curr}, 2, "Heapifying " + std::to_string(heapArray[curr])));
+        heapify(n, curr, timeline);
+    }
+    else {
+        timeline.addFrame(Frame(heapArray, {}, 3, "Node " + std::to_string(heapArray[i]) + " is in correct position."));
     }
 }
 
@@ -38,7 +48,7 @@ void IHeapStructure::initialize(const std::vector<int>& data, Timeline& timeline
     heapArray = data;
     int heap_size = data.size();
     for (int idx = heap_size/2-1; idx >= 0; idx--)
-        heapify(heap_size, idx);
+        heapify(heap_size, idx, timeline);
 
     timeline.addFrame(Frame(heapArray, {}, 0, "Initialization complete."));
 }
@@ -76,8 +86,7 @@ void IHeapStructure::insert(int value, Timeline& timeline) {
             currParent = parent(heap_size, idx);
     }
 
-    // This should include the highlighting
-    timeline.addFrame(Frame(heapArray, {}, 7, "Successfully inserted " + std::to_string(value) + " in the heap"));
+    timeline.addFrame(Frame(heapArray, {idx}, 7, "Successfully inserted " + std::to_string(value) + " in the heap"));
 }
 
 void IHeapStructure::extractTop(Timeline& timeline) {
@@ -97,7 +106,7 @@ void IHeapStructure::extractTop(Timeline& timeline) {
 
     if (!heapArray.empty()) {
         timeline.addFrame(Frame(heapArray, {0}, 6, "Heapifying the top"));
-        heapify(heapArray.size(), 0);
+        heapify(heapArray.size(), 0, timeline);
     }
 
     timeline.addFrame(Frame(heapArray, {}, 7, "Successfully extracted " + std::to_string(extract_value) + " in the heap"));
