@@ -39,14 +39,16 @@ public:
     // Getter
     const std::vector<int>& getData() const;
 
-    const std::unordered_map<int, std::vector<std::pair<int, int>>>& getDataGraph() const;;
+    const std::unordered_map<int, std::vector<std::pair<int, int>>>& getDataGraph() const;
+
+    const std::unordered_map<int, sf::Vector2f>& getNodePositions() const;
 
     // Data randomizer
     int get_random_in_range(int min, int max);
 
     void randomData(int n, int minValue, int maxValue);
 
-    void DataManager::randomDataGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight);
+    void randomDataGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight);
 };
 
 #endif
