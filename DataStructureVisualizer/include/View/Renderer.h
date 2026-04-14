@@ -8,6 +8,9 @@
 
 #include "View/Window.h"
 #include "View/Theme.h"
+#include "Model/Frame.h"
+#include "Controller/StructureType.h"
+#include "Model/Timeline.h"
 
 enum class TextPosition {
     TopLeft,
@@ -74,6 +77,8 @@ public:
     void drawTextTopRight(float cx, float cy, float objWidth, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color);
     void drawTextBottomLeft(float cx, float cy, float objWidth, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color);
     void drawTextBottomRight(float cx, float cy, float objWidth, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color);
+
+    void drawAVLTreeFrame(const Frame& frame);
 };
 
 #endif // RENDERER_H
