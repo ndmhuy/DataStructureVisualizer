@@ -80,6 +80,7 @@ public:
 
     void drawFrame(const Frame& frame, StructureType type, Timeline& timeline);
     void drawHeapFrame(const Frame& frame);
+    void drawAVLTreeFrame(const Frame& frame);
 };
 
 #endif // RENDERER_H
