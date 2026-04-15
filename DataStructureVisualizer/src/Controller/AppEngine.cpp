@@ -51,6 +51,16 @@ void AppEngine::processInput(const sf::Event& event) {
 
 void AppEngine::update(sf::Time deltaTime) {
     uiManager.update(window.getWindow(), deltaTime);
+
+    if (uiManager.consumeThemeToggleRequest()) {
+        isDarkMode = !isDarkMode;
+        theme = isDarkMode ? Theme::getDarkTheme() : Theme::getDefaultTheme();
+        if (!uiManager.applyTheme(theme)) {
+            std::cerr << "Warning: AppEngine::update failed to apply theme to UIManager." << std::endl;
+        }
+        uiManager.resize(window.getWindow());
+    }
+
     playbackController.update(deltaTime.asSeconds());
 }
 

@@ -4,6 +4,8 @@
 
 bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     this->theme = theme;
+    isDarkMode = false;
+    themeToggleRequested = false;
     initialized = false;
 
     if (!ImGui::SFML::Init(window)) {
@@ -61,6 +63,48 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     initialized = true;
 
     return true;
+}
+
+bool UIManager::applyTheme(const Theme& selectedTheme) {
+    theme = selectedTheme;
+
+    navMenu.applyTheme(theme);
+    inputMenu.applyTheme(theme);
+    codePanel.applyTheme(theme);
+    slider.applyTheme(theme);
+
+    bool ok = true;
+    if (!play.init(theme.playIconPath, theme)) {
+        std::cerr << "Warning: UIManager::applyTheme failed to load play icon from '"
+                  << theme.playIconPath << "'." << std::endl;
+        ok = false;
+    }
+    if (!pause.init(theme.pauseIconPath, theme)) {
+        std::cerr << "Warning: UIManager::applyTheme failed to load pause icon from '"
+                  << theme.pauseIconPath << "'." << std::endl;
+        ok = false;
+    }
+    if (!stepForward.init(theme.stepForwardIconPath, theme)) {
+        std::cerr << "Warning: UIManager::applyTheme failed to load step-forward icon from '"
+                  << theme.stepForwardIconPath << "'." << std::endl;
+        ok = false;
+    }
+    if (!stepBackward.init(theme.stepBackwardIconPath, theme)) {
+        std::cerr << "Warning: UIManager::applyTheme failed to load step-backward icon from '"
+                  << theme.stepBackwardIconPath << "'." << std::endl;
+        ok = false;
+    }
+
+    play.setActive(isPlay);
+    pause.setActive(!isPlay);
+
+    return ok;
+}
+
+bool UIManager::consumeThemeToggleRequest() {
+    bool res = themeToggleRequested;
+    themeToggleRequested = false;
+    return res;
 }
 
 void UIManager::processEvent(sf::RenderWindow& window, const sf::Event& event) {
@@ -143,16 +187,7 @@ void UIManager::render(sf::RenderWindow& window) {
         
         if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
-            theme = isDarkMode ? Theme::getDarkTheme() : Theme::getDefaultTheme();
-            navMenu.applyTheme(theme);
-            inputMenu.applyTheme(theme);
-            codePanel.applyTheme(theme);
-            slider.applyTheme(theme);
-            play.init(theme.playIconPath, theme);
-            pause.init(theme.pauseIconPath, theme);
-            stepForward.init(theme.stepForwardIconPath, theme);
-            stepBackward.init(theme.stepBackwardIconPath, theme);
-            resize(window);
+            themeToggleRequested = true;
         }
         ImGui::PopStyleColor(4);
         ImGui::PopStyleVar();
@@ -192,16 +227,7 @@ void UIManager::render(sf::RenderWindow& window) {
         ImGui::SetCursorPos(ImVec2(winSize.x - 110.0f, 10.0f));
         if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
-            theme = isDarkMode ? Theme::getDarkTheme() : Theme::getDefaultTheme();
-            navMenu.applyTheme(theme);
-            inputMenu.applyTheme(theme);
-            codePanel.applyTheme(theme);
-            slider.applyTheme(theme);
-            play.init(theme.playIconPath, theme);
-            pause.init(theme.pauseIconPath, theme);
-            stepForward.init(theme.stepForwardIconPath, theme);
-            stepBackward.init(theme.stepBackwardIconPath, theme);
-            resize(window);
+            themeToggleRequested = true;
         }
         
         ImGui::PopStyleColor(4);
