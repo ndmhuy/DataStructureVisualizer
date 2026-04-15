@@ -55,6 +55,8 @@ Theme Theme::getDefaultTheme() {
     t.nodeTintColor = sf::Color::White; 
     t.arrayTintColor = sf::Color::White; 
     t.arrowColor = sf::Color({0, 71, 171});
+    t.highlightColor = sf::Color(255, 215, 0, 255); // Màu vàng cho Node/Array được highlight
+    t.accentColor = sf::Color(230, 50, 80, 255);    // Màu đỏ cho Edge được highlight
     t.windowClearColor = sf::Color(40, 44, 52, 255);
     t.nodeTextBaseSize = 30;
     t.arrayTextBaseSize = 30;
