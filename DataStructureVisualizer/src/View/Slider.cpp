@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
@@ -111,10 +112,26 @@ void Slider::handleEvent(const sf::RenderWindow& window, const sf::Event& event)
 }
 
 void Slider::setValue(float val) {
-    *speed = val;
+    if (!speed) {
+        return;
+    }
+
+    const float minSpeed = theme.sliderMinSpeed;
+    const float maxSpeed = theme.sliderMaxSpeed;
+    *speed = std::clamp(val, minSpeed, maxSpeed);
+
+    // Keep display precision consistent with drag behavior.
+    *speed = std::round(10 * (*speed)) / 10;
+
     float speedRange = theme.sliderMaxSpeed - theme.sliderMinSpeed;
+    if (speedRange <= 0.0f || end <= start) {
+        update(*speed, text);
+        return;
+    }
+
     // Tính toán lại toạ độ x của cục knob dựa trên speed mới
     knobpos.x = start + (*speed - theme.sliderMinSpeed) / speedRange * (end - start);
+    knobpos.x = std::clamp(knobpos.x, start, end);
     knob.setPosition(knobpos);
     update(*speed, text); // Cập nhật lại text hiển thị (ví dụ: "1.0x")
 }
