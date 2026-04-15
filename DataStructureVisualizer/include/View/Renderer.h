@@ -17,6 +17,16 @@ enum class TextPosition {
     Top,
     Bottom,
 };
+enum class TextPositionMode {
+    Absolute,   // Direct position with alignment
+    Up,         // Above object (requires objHeight, padding)
+    Down,       // Below object (requires objHeight, padding)
+    OnLine,     // Along a line (requires lineEnd, padding)
+    TopLeft,    // Corner position (requires objSize, padding)
+    TopRight,   // Corner position (requires objSize, padding)
+    BottomLeft, // Corner position (requires objSize, padding)
+    BottomRight // Corner position (requires objSize, padding)
+};
 enum class ShapeType {
     Circle,
     Rectangle
@@ -69,12 +79,24 @@ public:
         TextPosition align = TextPosition::TopLeft,
         sf::Angle angle = sf::degrees(0.f));
 
+    // Unified text positioning function.
+    void drawTextPositioned(
+        sf::Vector2f basePosition,
+        const std::string& text,
+        unsigned int size,
+        sf::Color color,
+        TextPositionMode mode = TextPositionMode::Absolute,
+        float objHeight = 0.0f,
+        float objWidth = 0.0f,
+        float padding = 0.0f,
+        sf::Vector2f lineEnd = {0.0f, 0.0f},
+        TextPosition align = TextPosition::TopLeft,
+        sf::Angle angle = sf::degrees(0.f));
+
+    // Convenience wrappers for common positioning modes (use drawTextPositioned for more control).
     void drawTextUp(sf::Vector2f center, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color);
     void drawTextDown(sf::Vector2f center, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color);
-
-    // draw on the arrow or line
     void drawTextOnLine(sf::Vector2f p1, sf::Vector2f p2, float padding, const std::string& text, unsigned int size, sf::Color color);
-
     void drawTextTopLeft(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color);
     void drawTextTopRight(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color);
     void drawTextBottomLeft(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color);

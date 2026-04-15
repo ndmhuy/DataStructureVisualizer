@@ -209,43 +209,97 @@ void Renderer::drawText(sf::Vector2f pos, const std::string& text, unsigned int 
     window.getWindow().draw(t);
 }
 
+void Renderer::drawTextPositioned(
+    sf::Vector2f basePosition,
+    const std::string& text,
+    unsigned int size,
+    sf::Color color,
+    TextPositionMode mode,
+    float objHeight,
+    float objWidth,
+    float padding,
+    sf::Vector2f lineEnd,
+    TextPosition align,
+    sf::Angle angle) {
+
+    sf::Vector2f finalPos = basePosition;
+    TextPosition finalAlign = align;
+    sf::Angle finalAngle = angle;
+
+    switch (mode) {
+        case TextPositionMode::Absolute:
+            // Use basePosition as is with provided alignment
+            break;
+        case TextPositionMode::Up:
+            finalPos.y -= (objHeight / 2.0f) + padding;
+            finalAlign = TextPosition::Bottom;
+            break;
+        case TextPositionMode::Down:
+            finalPos.y += (objHeight / 2.0f) + padding;
+            finalAlign = TextPosition::Top;
+            break;
+        case TextPositionMode::OnLine: {
+            float midX = (basePosition.x + lineEnd.x) / 2.0f;
+            float midY = (basePosition.y + lineEnd.y) / 2.0f;
+            float lineAngle = std::atan2(lineEnd.y - basePosition.y, lineEnd.x - basePosition.x);
+            float perpAngle = lineAngle - M_PI / 2.0f;
+            float angleDeg = lineAngle * 180.0f / M_PI;
+            if (angleDeg > 90.0f || angleDeg < -90.0f) {
+                angleDeg += 180.0f;
+            }
+            finalPos = {midX + std::cos(perpAngle) * padding, midY + std::sin(perpAngle) * padding};
+            finalAlign = TextPosition::Bottom;
+            finalAngle = sf::degrees(angleDeg);
+            break;
+        }
+        case TextPositionMode::TopLeft:
+            finalPos = {basePosition.x - (objWidth / 2.0f) - padding, basePosition.y - (objHeight / 2.0f) - padding};
+            finalAlign = TextPosition::BottomRight;
+            break;
+        case TextPositionMode::TopRight:
+            finalPos = {basePosition.x + (objWidth / 2.0f) + padding, basePosition.y - (objHeight / 2.0f) - padding};
+            finalAlign = TextPosition::BottomLeft;
+            break;
+        case TextPositionMode::BottomLeft:
+            finalPos = {basePosition.x - (objWidth / 2.0f) - padding, basePosition.y + (objHeight / 2.0f) + padding};
+            finalAlign = TextPosition::TopRight;
+            break;
+        case TextPositionMode::BottomRight:
+            finalPos = {basePosition.x + (objWidth / 2.0f) + padding, basePosition.y + (objHeight / 2.0f) + padding};
+            finalAlign = TextPosition::TopLeft;
+            break;
+    }
+
+    drawText(finalPos, text, size, color, finalAlign, finalAngle);
+}
+
+// Convenience wrappers for common positioning modes
 void Renderer::drawTextUp(sf::Vector2f center, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    drawText({center.x, center.y - (objHeight / 2.0f) - padding}, text, size, color, TextPosition::Bottom);
+    drawTextPositioned(center, text, size, color, TextPositionMode::Up, objHeight, 0.0f, padding);
 }
 
 void Renderer::drawTextDown(sf::Vector2f center, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    drawText({center.x, center.y + (objHeight / 2.0f) + padding}, text, size, color, TextPosition::Top);
+    drawTextPositioned(center, text, size, color, TextPositionMode::Down, objHeight, 0.0f, padding);
 }
 
 void Renderer::drawTextOnLine(sf::Vector2f p1, sf::Vector2f p2, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    float midX = (p1.x + p2.x) / 2.0f;
-    float midY = (p1.y + p2.y) / 2.0f;
-    
-    float angle = std::atan2(p2.y - p1.y, p2.x - p1.x);
-    float perpAngle = angle - M_PI / 2.0f;
-    float angleDeg = angle * 180.0f / M_PI;
-    if (angleDeg > 90.0f || angleDeg < -90.0f) {
-        angleDeg += 180.0f;
-    }
-    
-    sf::Vector2f pos(midX + std::cos(perpAngle) * padding, midY + std::sin(perpAngle) * padding);
-    drawText(pos, text, size, color, TextPosition::Bottom, sf::degrees(angleDeg));
+    drawTextPositioned(p1, text, size, color, TextPositionMode::OnLine, 0.0f, 0.0f, padding, p2);
 }
 
 void Renderer::drawTextTopLeft(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    drawText({center.x - (objSize.x / 2.0f) - padding, center.y - (objSize.y / 2.0f) - padding}, text, size, color, TextPosition::BottomRight);
+    drawTextPositioned(center, text, size, color, TextPositionMode::TopLeft, objSize.y, objSize.x, padding);
 }
 
 void Renderer::drawTextTopRight(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    drawText({center.x + (objSize.x / 2.0f) + padding, center.y - (objSize.y / 2.0f) - padding}, text, size, color, TextPosition::BottomLeft);
+    drawTextPositioned(center, text, size, color, TextPositionMode::TopRight, objSize.y, objSize.x, padding);
 }
 
 void Renderer::drawTextBottomLeft(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    drawText({center.x - (objSize.x / 2.0f) - padding, center.y + (objSize.y / 2.0f) + padding}, text, size, color, TextPosition::TopRight);
+    drawTextPositioned(center, text, size, color, TextPositionMode::BottomLeft, objSize.y, objSize.x, padding);
 }
 
 void Renderer::drawTextBottomRight(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    drawText({center.x + (objSize.x / 2.0f) + padding, center.y + (objSize.y / 2.0f) + padding}, text, size, color, TextPosition::TopLeft);
+    drawTextPositioned(center, text, size, color, TextPositionMode::BottomRight, objSize.y, objSize.x, padding);
 }
 
 void Renderer::drawFrame(const Frame* frame) {
@@ -314,7 +368,7 @@ void Renderer::drawGraphData(const Frame* frame) {
                 break;
             }
         }
-        if (edge.from >= 0 && edge.from < vertices.size() && edge.to >= 0 && edge.to < vertices.size()) {
+        if (edge.from < vertices.size() && edge.to < vertices.size()) {
             drawLineWithArrow(positions[edge.from], nodeSize, ShapeType::Circle, positions[edge.to], nodeSize, ShapeType::Circle, 3.0f, 15.0f, highlighted);
         }
     }
