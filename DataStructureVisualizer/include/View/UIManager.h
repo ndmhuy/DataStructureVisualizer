@@ -21,6 +21,7 @@ private:
     Theme theme = Theme::getDefaultTheme();
     bool isMainMenu = true; // Main menu is visible?
     bool isDarkMode = false;
+    bool themeToggleRequested = false;
     bool backToMenuClicked = false;
     Button play;
     Button pause;
@@ -54,6 +55,9 @@ public:
     void update(sf::RenderWindow&, const sf::Time&); // Update UI status
 
     void render(sf::RenderWindow&); // draw UI
+
+    bool applyTheme(const Theme& selectedTheme);
+    bool consumeThemeToggleRequest();
 
     void shutdown(); // shutdown ImGui
 
