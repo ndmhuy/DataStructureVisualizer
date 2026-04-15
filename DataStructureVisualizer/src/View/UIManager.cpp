@@ -95,8 +95,8 @@ bool UIManager::applyTheme(const Theme& selectedTheme) {
         ok = false;
     }
 
-    play.setActive(isPlay);
-    pause.setActive(!isPlay);
+    play.setActive(isshowingPlay);
+    pause.setActive(!isshowingPlay);
 
     return ok;
 }
