@@ -80,16 +80,10 @@ void UIManager::processEvent(sf::RenderWindow& window, const sf::Event& event) {
     }
 
     if (play.handleEvent(window, event)) {
-        isPlay = false;
-        play.setActive(isPlay);
-        pause.setActive(!isPlay);
         playClicked = true;
     }
 
     if (pause.handleEvent(window, event)) {
-        isPlay = true;
-        play.setActive(isPlay);
-        pause.setActive(!isPlay);
         pauseClicked = true;
     }
 
@@ -219,7 +213,7 @@ void UIManager::render(sf::RenderWindow& window) {
         codePanel.render(window);
         slider.render(window);
 
-        if (isPlay) {
+        if (isshowingPlay) {
             play.render(window);
         } else {
             pause.render(window);
@@ -306,6 +300,23 @@ bool UIManager::checkPauseClicked() {
     bool res = pauseClicked;
     pauseClicked = false;
     return res;
+}
+
+void UIManager::syncPlaybackUI(bool currentIsPlaying, bool isAtBeginning, bool isAtEnd, bool isEmpty) {
+    if (isEmpty) {
+        isshowingPlay = true;
+        play.setActive(false);
+        pause.setActive(false);
+        stepForward.setActive(false);
+        stepBackward.setActive(false);
+        return;
+    }
+
+    isshowingPlay = !currentIsPlaying;
+    play.setActive(isshowingPlay && !isAtEnd); // Nếu đã đến end thì disable Play
+    pause.setActive(!isshowingPlay);           // Nếu đang chạy thì Pause active
+    stepForward.setActive(!isAtEnd && !currentIsPlaying);           // Không thể forward nếu đã ở cuối
+    stepBackward.setActive(!isAtBeginning && !currentIsPlaying);    // Không thể backward nếu ở đầu
 }
 
 bool UIManager::checkStepForwardClicked() {

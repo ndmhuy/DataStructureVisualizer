@@ -17,7 +17,7 @@ class UIManager {
 private:
     // state values
     bool initialized = false;
-    bool isPlay = true; // Determine if it's play or pause button, initially play
+    bool isshowingPlay = true; // Determine if it's play or pause button, initially play
     Theme theme = Theme::getDefaultTheme();
     bool isMainMenu = true; // Main menu is visible?
     bool isDarkMode = false;
@@ -76,10 +76,14 @@ public:
     void clearCodePanel(); //Clean after done showing code
 
     // --- Interact Buttons ---
+    
     bool checkPlayClicked();
     bool checkPauseClicked();
     bool checkStepForwardClicked();
     bool checkStepBackwardClicked();
+    
+    void syncPlaybackUI(bool currentIsPlaying, bool isAtBeginning, bool isAtEnd, bool isEmpty);
+
 
     //-Interact with Slider
     float getSpeed() const;
