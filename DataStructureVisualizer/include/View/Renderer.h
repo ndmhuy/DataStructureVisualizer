@@ -8,6 +8,9 @@
 
 #include "View/Window.h"
 #include "View/Theme.h"
+#include "Model/Frame.h"
+#include "Controller/StructureType.h"
+#include "Model/Timeline.h"
 
 enum class TextPosition {
     TopLeft,
