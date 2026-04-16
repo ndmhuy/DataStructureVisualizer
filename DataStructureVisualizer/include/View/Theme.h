@@ -14,7 +14,6 @@ class Theme {
     std::string nodeImagePath;
     std::string bgImagePath;
     std::string arrayImagePath;
-    std::string randomboxPath;
 
     std::string playIconPath;
     std::string pauseIconPath;
@@ -29,6 +28,8 @@ class Theme {
     unsigned int nodeTextBaseSize = 30;
     unsigned int arrayTextBaseSize = 30;
     float nodeTextVerticalOffset = 10.0f;
+    sf::Color highlightColor;
+    sf::Color accentColor;
 
     // CodePanel theme values
     sf::Color codePanelBackgroundColor;
@@ -48,9 +49,6 @@ class Theme {
     float inputMenuFormSpacing = 6.0f;
     float inputMenuAnchorYRatio = 7.0f / 8.0f;
     float inputMenuAnchorHeightOffsetMultiplier = 5.0f;
-    float inputMenuFormWidthMultiplierDefault = 1.05f;
-    float inputMenuFormWidthMultiplierUpdate = 1.9f;
-    float inputMenuIconScale = 0.65f;
     float inputMenuOkButtonHeightRatio = 0.8f;
     float inputMenuLabelXOffset = 8.0f;
     float inputMenuUpdateLabelSpacing = 12.0f;

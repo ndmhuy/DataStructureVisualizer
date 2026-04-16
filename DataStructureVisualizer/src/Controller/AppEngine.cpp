@@ -51,6 +51,16 @@ void AppEngine::processInput(const sf::Event& event) {
 
 void AppEngine::update(sf::Time deltaTime) {
     uiManager.update(window.getWindow(), deltaTime);
+
+    if (uiManager.consumeThemeToggleRequest()) {
+        isDarkMode = !isDarkMode;
+        theme = isDarkMode ? Theme::getDarkTheme() : Theme::getDefaultTheme();
+        if (!uiManager.applyTheme(theme)) {
+            std::cerr << "Warning: AppEngine::update failed to apply theme to UIManager." << std::endl;
+        }
+        uiManager.resize(window.getWindow());
+    }
+
     playbackController.update(deltaTime.asSeconds());
 }
 
@@ -65,10 +75,10 @@ void AppEngine::render() {
         // e.g., renderer.drawFrame(currentFrame);
     } else {
         // TEMPORARY TEST: If no timeline exists yet, draw this to prove SFML works!
-        renderer.drawImageNode(400, 300, "5");
-        renderer.drawArrayCell(600, 300, "42");
-        renderer.drawLineWithArrow(400, 300, 50, 50, ShapeType::Circle, 
-                                   600, 300, 50, 50, ShapeType::Rectangle, 3.0f, 15.0f);
+        renderer.drawImageNode(sf::Vector2f(400, 300), "5");
+        renderer.drawArrayCell(sf::Vector2f(600, 300), "42");
+        renderer.drawLineWithArrow(sf::Vector2f(400, 300), sf::Vector2f(50, 50), ShapeType::Circle, 
+                                   sf::Vector2f(600, 300), sf::Vector2f(50, 50), ShapeType::Rectangle, 3.0f, 15.0f);
     }
 
     // 3. Draw the ImGui UI on top

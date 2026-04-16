@@ -11,6 +11,7 @@ class AppEngine {
     private:
     Window window;
     bool shouldClose = false;
+    bool isDarkMode = false;
     Theme theme;
     Renderer renderer;
     UIManager uiManager;
