@@ -44,6 +44,19 @@ void AppEngine::processInput(const sf::Event& event) {
         sf::FloatRect visibleArea({0.f, 0.f}, {(float)resized->size.x, (float)resized->size.y});
         window.getWindow().setView(sf::View(visibleArea));
     }
+    if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
+        if (mousePressed->button == sf::Mouse::Button::Left) {
+            sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mousePressed->position);
+            renderer.handleMousePress(worldPos);
+        }
+    } else if (const auto* mouseMoved = event.getIf<sf::Event::MouseMoved>()) {
+        sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mouseMoved->position);
+        renderer.handleMouseMove(worldPos);
+    } else if (const auto* mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
+        if (mouseReleased->button == sf::Mouse::Button::Left) {
+            renderer.handleMouseRelease();
+        }
+    }
 
     // Pass the event to Dear ImGui and your custom buttons
     uiManager.processEvent(window.getWindow(), event);
@@ -72,13 +85,16 @@ void AppEngine::render() {
     const Frame* currentFrame = timeline.getCurrentFrame();
     if (currentFrame) {
         // We will add logic here later to tell the Renderer to draw Arrays/Graphs
-        // e.g., renderer.drawFrame(currentFrame);
+        renderer.drawFrame(currentFrame);
     } else {
         // TEMPORARY TEST: If no timeline exists yet, draw this to prove SFML works!
         renderer.drawImageNode(sf::Vector2f(400, 300), "5");
         renderer.drawArrayCell(sf::Vector2f(600, 300), "42");
         renderer.drawLineWithArrow(sf::Vector2f(400, 300), sf::Vector2f(50, 50), ShapeType::Circle, 
                                    sf::Vector2f(600, 300), sf::Vector2f(50, 50), ShapeType::Rectangle, 3.0f, 15.0f);
+        // TEMPORARY TEST: Tạo một Frame đồ thị giả (dummy) để test kéo thả node!
+        Frame dummyFrame({0, 1, 2}, {{0, 1, 1}, {1, 2, 1}, {2, 0, 1}}, {}, {}, 0, "Testing Drag & Drop");
+        renderer.drawFrame(&dummyFrame);
     }
 
     // 3. Draw the ImGui UI on top
