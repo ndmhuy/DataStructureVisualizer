@@ -5,6 +5,7 @@
 #include <cmath>
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <map>
 
 #include "View/Window.h"
 #include "View/Theme.h"
@@ -46,7 +47,10 @@ private:
     sf::Texture bgTexture;
     sf::Texture nodeTexture;
     sf::Texture arrayTexture;
-
+    std::map<size_t, sf::Vector2f> customNodePositions;
+    std::map<size_t, sf::Vector2f> defaultNodePositions; 
+    int draggedNodeIndex = -1;
+    sf::Vector2f dragOffset;
     sf::Sprite bgSprite;
 
 public:
@@ -68,10 +72,17 @@ public:
     void drawFrame(const Frame* frame);
     void drawArrayData(const Frame* frame);
     void drawGraphData(const Frame* frame);
+    void drawHeapFrame(const Frame* frame);
 
     // Texture-based size queries.
     sf::Vector2f getNodeSize() const;  // in main.cpp have to use to access nodeW
     sf::Vector2f getArraySize() const; // in main.cpp have to use to access nodeH
+
+    // Drag and Drop handlers
+    void handleMousePress(sf::Vector2f mousePos);
+    void handleMouseMove(sf::Vector2f mousePos);
+    void handleMouseRelease();
+    void resetCustomPositions();
 
     // Generic and positional text helpers.
     void drawText(
