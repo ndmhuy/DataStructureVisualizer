@@ -1,4 +1,4 @@
-#include "View/NavigationMenu.h"
+#include "View/Screens/NavigationMenu.h"
 
 void NavigationMenu::init(const Theme& theme) {
     this->theme = theme;

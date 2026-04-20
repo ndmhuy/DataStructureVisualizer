@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "View/Theme.h"
+#include "View/Core/Theme.h"
 #include "imgui-SFML.h"
 #include "imgui.h"
 

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "View/Button.h"
+#include "View/Widgets/Sfml/Button.h"
 
 bool Button::init(const std::string& imagepath, const Theme& selectedTheme) {
     theme = selectedTheme;

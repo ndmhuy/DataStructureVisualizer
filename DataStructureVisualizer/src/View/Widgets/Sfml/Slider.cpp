@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 
-#include "View/Slider.h"
+#include "View/Widgets/Sfml/Slider.h"
 
 void Slider::init(float* value, const Theme& theme) {
     this->theme = theme;

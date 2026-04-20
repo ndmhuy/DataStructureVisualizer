@@ -9,7 +9,7 @@
 #include "imgui.h"
 #include "imfilebrowser.h"
 
-#include "View/Theme.h"
+#include "View/Core/Theme.h"
 
 class InputMenu {
 private:

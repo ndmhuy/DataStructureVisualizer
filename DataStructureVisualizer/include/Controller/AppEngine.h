@@ -2,10 +2,21 @@
 #define APPENGINE_H
 
 #include "Controller/Playback.h"
-#include "View/Window.h"
-#include "View/Theme.h"
-#include "View/Renderer.h"
-#include "View/UIManager.h"
+
+#include "Model/IVisualizable.h"
+#include "Model/StandardStructure/SinglyLinkedList.h"
+#include "Model/HeapStructure/MinHeap.h"
+#include "Model/HeapStructure/MaxHeap.h"
+#include "Model/StandardStructure/AVLTree.h"
+#include "Model/GraphStructure/AdjacencyList.h"
+#include "Model/GraphStructure/AdjacencyMatrix.h"
+
+#include "Utilities/StructureType.h"
+
+#include "View/Core/Window.h"
+#include "View/Core/Theme.h"
+#include "View/Render/Renderer.h"
+#include "View/UI/UIManager.h"
 
 class AppEngine {
     private:
@@ -16,6 +27,14 @@ class AppEngine {
     Renderer renderer;
     UIManager uiManager;
     Playback playbackController;
+
+    IVisualizable* activeStructure = nullptr;
+    StructureType activeStructureType = StructureType::None;
+
+    static StructureType mapMenuSelectionToStructureType(int selectedDS);
+    IVisualizable* resolveStructure(StructureType structureType);
+    void switchActiveStructure(StructureType structureType);
+    void handleStructureSwitchRequest();
 
     public:
     AppEngine();

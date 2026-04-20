@@ -1,4 +1,4 @@
-#include "View/Window.h"
+#include "View/Core/Window.h"
 
 Window::Window() : renderWindow(sf::VideoMode({1920, 1080}), "Data Structure Visualization", sf::Style::Default) {
     renderWindow.setFramerateLimit(60);

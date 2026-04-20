@@ -9,9 +9,8 @@
 #include "View/Core/Window.h"
 #include "View/Core/Theme.h"
 #include "Model/Frame.h"
-#include "Model/Timeline.h"
 #include "Utilities/StructureType.h"
-
+#include "Model/Timeline.h"
 
 enum class TextPosition {
     TopLeft,
@@ -35,6 +34,8 @@ enum class ShapeType {
     Circle,
     Rectangle
 };
+
+struct Frame; // Forward declaration
 
 class Renderer {
 private:

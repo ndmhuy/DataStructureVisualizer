@@ -6,12 +6,12 @@
 
 #include "imgui.h"
 #include "imgui-SFML.h"
-#include "View/Button.h"
-#include "View/Theme.h"
-#include "View/CodePanel.h"
-#include "View/InputMenu.h"
-#include "View/Slider.h"
-#include "View/NavigationMenu.h"
+#include "View/Widgets/Sfml/Button.h"
+#include "View/Core/Theme.h"
+#include "View/Panels/CodePanel.h"
+#include "View/Panels/InputMenu.h"
+#include "View/Widgets/Sfml/Slider.h"
+#include "View/Screens/NavigationMenu.h"
 
 class UIManager {
 private:

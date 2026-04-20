@@ -2,6 +2,84 @@
 
 AppEngine::AppEngine() : window(), theme(Theme::getDefaultTheme()), renderer(window, theme), uiManager(), playbackController() {}
 
+StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
+    switch (selectedDS) {
+        case 0:
+            return StructureType::SinglyLinkedList;
+        case 1:
+            return StructureType::MinHeap;
+        case 2:
+            return StructureType::AVLTree;
+        case 3:
+            return StructureType::AdjacencyList;
+        default:
+            return StructureType::None;
+    }
+}
+
+IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
+    switch (structureType) {
+        case StructureType::SinglyLinkedList:
+            return new SinglyLinkedList();
+        case StructureType::MinHeap:
+            return new MinHeap();
+        case StructureType::MaxHeap:
+            return new MaxHeap();
+        case StructureType::AVLTree:
+            return new AVLTree();
+        case StructureType::AdjacencyList:
+            return new AdjacencyList();
+        case StructureType::AdjacencyMatrix:
+            return new AdjacencyMatrix();
+        default:
+            return nullptr;
+    }
+}
+
+void AppEngine::switchActiveStructure(StructureType structureType) {
+    if (activeStructureType == structureType) {
+        return;
+    }
+
+    if (activeStructure) {
+        delete activeStructure;
+        activeStructure = nullptr;
+    }
+
+    activeStructureType = structureType;
+    activeStructure = resolveStructure(structureType);
+
+    Timeline timeline;
+    if (activeStructure) {
+        activeStructure->clear(timeline);
+    } else {
+        timeline.clear();
+    }
+
+    playbackController.setTimeline(timeline);
+    playbackController.pause();
+    uiManager.resetSpeed();
+    uiManager.clearCodePanel();
+    uiManager.resetInputAction();
+}
+
+void AppEngine::handleStructureSwitchRequest() {
+    const int selectedDS = uiManager.getSelectedDS();
+    if (selectedDS < 0) {
+        return;
+    }
+
+    const StructureType targetStructure = mapMenuSelectionToStructureType(selectedDS);
+    uiManager.resetDSSelection();
+
+    if (targetStructure == StructureType::None) {
+        return;
+    }
+
+    switchActiveStructure(targetStructure);
+    uiManager.setShowMainMenu(false);
+}
+
 void AppEngine::run() {
     if (!uiManager.init(window.getWindow(), theme)) {
         std::cerr << "Fatal Error: AppEngine::run failed to initialize UIManager." << std::endl;
@@ -51,6 +129,12 @@ void AppEngine::processInput(const sf::Event& event) {
 
 void AppEngine::update(sf::Time deltaTime) {
     uiManager.update(window.getWindow(), deltaTime);
+    handleStructureSwitchRequest();
+
+    if (uiManager.checkBackToMenuClicked()) {
+        uiManager.setShowMainMenu(true);
+        switchActiveStructure(StructureType::None);
+    }
 
     if (uiManager.consumeThemeToggleRequest()) {
         isDarkMode = !isDarkMode;
@@ -59,6 +143,21 @@ void AppEngine::update(sf::Time deltaTime) {
             std::cerr << "Warning: AppEngine::update failed to apply theme to UIManager." << std::endl;
         }
         uiManager.resize(window.getWindow());
+    }
+
+    playbackController.setSpeed(uiManager.getSpeed());
+
+    if (uiManager.checkPlayClicked()) {
+        playbackController.play();
+    }
+    if (uiManager.checkPauseClicked()) {
+        playbackController.pause();
+    }
+    if (uiManager.checkStepForwardClicked()) {
+        playbackController.stepForward();
+    }
+    if (uiManager.checkStepBackwardClicked()) {
+        playbackController.stepBackward();
     }
 
     playbackController.update(deltaTime.asSeconds());
@@ -71,8 +170,7 @@ void AppEngine::render() {
     const Timeline& timeline = playbackController.getTimeline();
     const Frame* currentFrame = timeline.getCurrentFrame();
     if (currentFrame) {
-        // We will add logic here later to tell the Renderer to draw Arrays/Graphs
-        // e.g., renderer.drawFrame(currentFrame);
+        renderer.drawFrame(currentFrame);
     } else {
         // TEMPORARY TEST: If no timeline exists yet, draw this to prove SFML works!
         renderer.drawImageNode(sf::Vector2f(400, 300), "5");

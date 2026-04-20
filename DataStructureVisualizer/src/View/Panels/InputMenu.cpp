@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "View/InputMenu.h"
+#include "View/Panels/InputMenu.h"
 
 namespace {
     int NumberSpaceFilter(ImGuiInputTextCallbackData* data) {

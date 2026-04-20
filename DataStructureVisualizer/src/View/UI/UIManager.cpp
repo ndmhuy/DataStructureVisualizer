@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "View/UIManager.h"
+#include "View/UI/UIManager.h"
 
 bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     this->theme = theme;

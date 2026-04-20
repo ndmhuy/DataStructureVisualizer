@@ -4,7 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 
-#include "View/Theme.h"
+#include "View/Core/Theme.h"
 
 class Slider {
 private:
