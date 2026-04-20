@@ -309,6 +309,7 @@ void Renderer::resetCustomPositions() {
 void Renderer::handleMousePress(sf::Vector2f mousePos) {
     sf::Vector2f nodeSize = getNodeSize();
     float radius = std::max(nodeSize.x, nodeSize.y) / 2.0f;
+    if (radius < 20.0f) radius = 35.0f; 
 
     for (const auto& pair : defaultNodePositions) {
         size_t id = pair.first;
@@ -388,10 +389,10 @@ void Renderer::drawGraphData(const Frame* frame) {
             float angle = i * (2.0f * M_PI / vertices.size()) - M_PI / 2.0f;
             positions[i] = {cx + radius * std::cos(angle), cy + radius * std::sin(angle)};
         }
-        defaultNodePositions[i] = positions[i]; // Lưu vị trí lý thuyết
+        defaultNodePositions[i] = positions[i];
 
         if (customNodePositions.find(i) != customNodePositions.end()) {
-            positions[i] = customNodePositions[i]; // Ghi đè bằng vị trí được kéo thả
+            positions[i] = customNodePositions[i];
         }
     }
 

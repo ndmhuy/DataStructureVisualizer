@@ -44,8 +44,11 @@ void AppEngine::processInput(const sf::Event& event) {
         sf::FloatRect visibleArea({0.f, 0.f}, {(float)resized->size.x, (float)resized->size.y});
         window.getWindow().setView(sf::View(visibleArea));
     }
+
+    // Pass the event to Dear ImGui and your custom buttons
+    uiManager.processEvent(window.getWindow(), event);
     if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
-        if (mousePressed->button == sf::Mouse::Button::Left) {
+        if (mousePressed->button == sf::Mouse::Button::Left && !uiManager.isMouseOverUI()) {
             sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mousePressed->position);
             renderer.handleMousePress(worldPos);
         }
@@ -57,9 +60,6 @@ void AppEngine::processInput(const sf::Event& event) {
             renderer.handleMouseRelease();
         }
     }
-
-    // Pass the event to Dear ImGui and your custom buttons
-    uiManager.processEvent(window.getWindow(), event);
 }
 
 void AppEngine::update(sf::Time deltaTime) {
@@ -92,9 +92,6 @@ void AppEngine::render() {
         renderer.drawArrayCell(sf::Vector2f(600, 300), "42");
         renderer.drawLineWithArrow(sf::Vector2f(400, 300), sf::Vector2f(50, 50), ShapeType::Circle, 
                                    sf::Vector2f(600, 300), sf::Vector2f(50, 50), ShapeType::Rectangle, 3.0f, 15.0f);
-        // TEMPORARY TEST: Tạo một Frame đồ thị giả (dummy) để test kéo thả node!
-        Frame dummyFrame({0, 1, 2}, {{0, 1, 1}, {1, 2, 1}, {2, 0, 1}}, {}, {}, 0, "Testing Drag & Drop");
-        renderer.drawFrame(&dummyFrame);
     }
 
     // 3. Draw the ImGui UI on top
