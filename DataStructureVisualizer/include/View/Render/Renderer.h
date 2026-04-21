@@ -9,8 +9,10 @@
 #include "View/Core/Window.h"
 #include "View/Core/Theme.h"
 #include "Model/Frame.h"
-#include "Utilities/StructureType.h"
 #include "Model/Timeline.h"
+#include "Utilities/StructureType.h"
+#include "Model/Payloads/IPayloadVisitor.h"
+
 
 enum class TextPosition {
     TopLeft,
@@ -35,9 +37,7 @@ enum class ShapeType {
     Rectangle
 };
 
-struct Frame; // Forward declaration
-
-class Renderer {
+class Renderer : public IPayloadVisitor {
 private:
     Window& window;
     const Theme& theme;
@@ -65,9 +65,16 @@ public:
     void drawLineWithArrow(sf::Vector2f p1, sf::Vector2f size1, ShapeType type1, sf::Vector2f p2, sf::Vector2f size2, ShapeType type2, float thickness, float arrowSize = 12.0f, bool isHighlighted = false);
     void drawLine(sf::Vector2f p1, sf::Vector2f size1, ShapeType type1, sf::Vector2f p2, sf::Vector2f size2, ShapeType type2, float thickness, bool isHighlighted = false);
 
-    void drawFrame(const Frame* frame);
-    void drawArrayData(const Frame* frame);
-    void drawGraphData(const Frame* frame);
+    void renderActiveState(const Frame* currentFrame);
+    
+    // IPayloadVisitor overrides
+    void visit(const LinkedListPayload& payload) override;
+    void visit(const TreePayload& payload) override;
+    void visit(const HeapPayload& payload) override;
+    void visit(const GraphPayload& payload) override;
+    void visit(const SingleSourcePayload& payload) override;
+    void visit(const AStarPayload& payload) override;
+    void visit(const AllPairsPayload& payload) override;
 
     // Texture-based size queries.
     sf::Vector2f getNodeSize() const;  // in main.cpp have to use to access nodeW

@@ -302,63 +302,134 @@ void Renderer::drawTextBottomRight(sf::Vector2f center, sf::Vector2f objSize, fl
     drawTextPositioned(center, text, size, color, TextPositionMode::BottomRight, objSize.y, objSize.x, padding);
 }
 
-void Renderer::drawFrame(const Frame* frame) {
-    if (!frame) return;
+void Renderer::renderActiveState(const Frame* currentFrame) {
+    if (!currentFrame || !currentFrame->getPayload()) return;
     
-    drawGraphData(frame);
-    drawArrayData(frame);
+    currentFrame->getPayload()->accept(*this);
 }
 
-void Renderer::drawArrayData(const Frame* frame) {
-    const auto& arr = frame->getArrayData();
-    if (arr.empty()) return;
-
-    sf::Vector2f cellSize = getArraySize();
-    float spacing = 10.0f;
-    float totalWidth = arr.size() * (cellSize.x + spacing) - spacing;
-
-    sf::Vector2u winSize = window.getWindow().getSize();
-    float startX = (winSize.x - totalWidth) / 2.0f + cellSize.x / 2.0f;
-    float startY = winSize.y - cellSize.y - 50.0f;
-
-    const auto& highlights = frame->getHighlightIndices();
-
-    for (size_t i = 0; i < arr.size(); ++i) {
-        bool highlighted = std::find(highlights.begin(), highlights.end(), i) != highlights.end();
-        
-        sf::Vector2f pos(startX + i * (cellSize.x + spacing), startY);
-        drawArrayCell(pos, std::to_string(arr[i]), highlighted);
-        
-        // Draw array index below the cell
-        drawTextDown(pos, cellSize.y, 5.0f, std::to_string(i), 18, theme.textColor);
-    }
-}
-
-void Renderer::drawGraphData(const Frame* frame) {
-    const auto& vertices = frame->getVerticesData();
-    const auto& edges = frame->getEdgeData();
-    if (vertices.empty()) return;
-
-    sf::Vector2u winSize = window.getWindow().getSize();
-    float cx = winSize.x / 2.0f;
-    float cy = winSize.y / 2.0f - 50.0f; 
-    
-    float radius = std::min(cx, cy) - 100.0f;
-    if (radius < 50.0f) radius = 50.0f;
-
-    std::vector<sf::Vector2f> positions(vertices.size());
-    for (size_t i = 0; i < vertices.size(); ++i) {
-        if (vertices.size() == 1) {
-            positions[i] = {cx, cy};
-        } else {
-            float angle = i * (2.0f * M_PI / vertices.size()) - M_PI / 2.0f;
-            positions[i] = {cx + radius * std::cos(angle), cy + radius * std::sin(angle)};
-        }
-    }
+void Renderer::visit(const LinkedListPayload& payload) {
+    // Basic implementation for linked list rendering (you can expand this later)
+    if (payload.values.empty()) return;
 
     sf::Vector2f nodeSize = getNodeSize();
-    const auto& hEdges = frame->getHighlightEdges();
-    const auto& hIndices = frame->getHighlightIndices();
+    float spacing = 50.0f;
+    float totalWidth = payload.values.size() * (nodeSize.x + spacing) - spacing;
+
+    sf::Vector2u winSize = window.getWindow().getSize();
+    float startX = (winSize.x - totalWidth) / 2.0f + nodeSize.x / 2.0f;
+    float startY = winSize.y / 2.0f;
+
+    std::vector<sf::Vector2f> positions(payload.values.size());
+    for (size_t i = 0; i < payload.values.size(); ++i) {
+        positions[i] = {startX + i * (nodeSize.x + spacing), startY};
+    }
+
+    // Draw edges
+    for (size_t i = 0; i < payload.values.size() - 1; ++i) {
+        drawLineWithArrow(positions[i], nodeSize, ShapeType::Circle, positions[i+1], nodeSize, ShapeType::Circle, 3.0f, 15.0f, false);
+    }
+
+    // Draw nodes
+    for (size_t i = 0; i < payload.values.size(); ++i) {
+        bool highlighted = std::find(payload.highlightedNodes.begin(), payload.highlightedNodes.end(), i) != payload.highlightedNodes.end();
+        drawImageNode(positions[i], std::to_string(payload.values[i]), highlighted);
+    }
+}
+
+void Renderer::visit(const TreePayload& payload) {
+    // Tree rendering logic (to be expanded with payload.positions)
+}
+
+void Renderer::visit(const HeapPayload& payload) {
+    const auto& heapArray = payload.arrayData;
+    const auto& highlights = payload.highlightedIndices;
+    
+    if (heapArray.empty())
+        return;
+    
+    // Coordinates temp buffer
+    std::vector<sf::Vector2f> positions(heapArray.size());
+
+    // Assume the resolution is 1600:900, otherwise we have to use the current resolution
+    // to compute the suitable values
+    float startX = 800;
+    float startY = 225;
+    float distanceHorizontal = 30; // Deepest leaf nodes
+    float distanceVertical = 50;
+    float height = ceil(log2(heapArray.size()));
+
+    for (size_t i = 0; i < heapArray.size(); i++) {
+        // Coordinates calculation
+        int level = std::floor(log2(i + 1));
+        int posInLevel = i - (std::pow(2, level) - 1);
+        float levelSpacing = distanceHorizontal * std::pow(2, height - level);
+        int nodesInLevel = std::pow(2, level);
+        float levelWidth = levelSpacing * nodesInLevel;
+
+        float currentY = startY + level * distanceVertical;
+        float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
+
+        positions[i] = {currentX, currentY};
+    }
+
+    // Draw edges then draw nodes
+    sf::Vector2f nodeSize = getNodeSize();
+    for (size_t i = 0; i < heapArray.size(); ++i) {
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), i) != highlights.end();
+        size_t parentIdx = (i > 0) ? ((i - 1) / 2) : SIZE_MAX;
+
+        if (parentIdx != SIZE_MAX) {
+            // Highlighting
+            bool isHighlightedParent = std::find(highlights.begin(), highlights.end(), parentIdx) != highlights.end();
+            drawLine(
+                positions[i], nodeSize, ShapeType::Circle,
+                positions[parentIdx], nodeSize, ShapeType::Circle,
+                3.0f, isHighlighted && isHighlightedParent
+            );
+        }
+    } 
+
+    for (size_t i = 0; i < heapArray.size(); ++i) {
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), i) != highlights.end();
+        drawImageNode(positions[i], std::to_string(heapArray[i]), isHighlighted);
+    }
+}
+
+
+
+void Renderer::visit(const GraphPayload& payload) {
+    const auto& vertices = payload.vertices;
+    const auto& edges = payload.edges;
+    if (vertices.empty()) return;
+
+    sf::Vector2f nodeSize = getNodeSize();
+    const auto& hEdges = payload.highlightedEdges;
+    const auto& hIndices = payload.highlightedVertices;
+
+    // Use payload.positions if available, otherwise fallback to circular layout for now
+    std::vector<sf::Vector2f> positions(vertices.size());
+    if (payload.positions.size() == vertices.size()) {
+        for (size_t i = 0; i < vertices.size(); ++i) {
+            positions[i] = {payload.positions[i].x, payload.positions[i].y};
+        }
+    } else {
+        sf::Vector2u winSize = window.getWindow().getSize();
+        float cx = winSize.x / 2.0f;
+        float cy = winSize.y / 2.0f - 50.0f; 
+        
+        float radius = std::min(cx, cy) - 100.0f;
+        if (radius < 50.0f) radius = 50.0f;
+
+        for (size_t i = 0; i < vertices.size(); ++i) {
+            if (vertices.size() == 1) {
+                positions[i] = {cx, cy};
+            } else {
+                float angle = i * (2.0f * M_PI / vertices.size()) - M_PI / 2.0f;
+                positions[i] = {cx + radius * std::cos(angle), cy + radius * std::sin(angle)};
+            }
+        }
+    }
 
     for (const auto& edge : edges) {
         bool highlighted = false;
@@ -377,4 +448,16 @@ void Renderer::drawGraphData(const Frame* frame) {
         bool highlighted = std::find(hIndices.begin(), hIndices.end(), i) != hIndices.end();
         drawImageNode(positions[i], std::to_string(vertices[i]), highlighted);
     }
+}
+
+void Renderer::visit(const SingleSourcePayload& payload) {
+    // Similar to GraphPayload but might include distance labels
+}
+
+void Renderer::visit(const AStarPayload& payload) {
+    // Similar to GraphPayload but might include heuristics
+}
+
+void Renderer::visit(const AllPairsPayload& payload) {
+    // Similar to GraphPayload but for all-pairs (e.g. Floyd-Warshall)
 }
