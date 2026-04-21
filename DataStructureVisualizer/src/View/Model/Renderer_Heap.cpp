@@ -21,13 +21,11 @@ void Renderer::drawHeapFrame(const Frame& frame) {
     float startY = 225;
     float distanceHorizontal = 30; // Deepest leaf nodes
     float distanceVertical = 50;
-    float height = std::ceil(std::log2(heapArray.size()));
-
-    defaultNodePositions.clear(); // Xóa dữ liệu cũ phục vụ Drag & Drop
+    float height = ceil(log2(heapArray.size()));
 
     for (size_t i = 0; i < heapArray.size(); i++) {
         // Coordinates calculation
-        int level = std::floor(std::log2(i + 1));
+        int level = std::floor(log2(i + 1));
         int posInLevel = i - (std::pow(2, level) - 1);
         float levelSpacing = distanceHorizontal * std::pow(2, height - level);
         int nodesInLevel = std::pow(2, level);
@@ -37,18 +35,13 @@ void Renderer::drawHeapFrame(const Frame& frame) {
         float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
 
         positions[i] = {currentX, currentY};
-
-        defaultNodePositions[i] = positions[i]; // Lưu lại phục vụ hit-box
-        if (customNodePositions.find(i) != customNodePositions.end()) {
-            positions[i] = customNodePositions[i]; // Dùng vị trí tùy chỉnh nếu có
-        }
     }
 
     // Draw edges then draw nodes
     sf::Vector2f nodeSize = getNodeSize();
     for (size_t i = 0; i < heapArray.size(); ++i) {
         bool isHighlighted = std::find(highlights.begin(), highlights.end(), i) != highlights.end();
-        size_t parentIdx = parent(i); // parent should return INT_MAX if there is no parent
+        size_t parentIdx = parent(heapArray.size(), i); // parent should return INT_MAX if there is no parent
 
         if (parentIdx != INT_MAX) {
             // Highlighting
