@@ -26,9 +26,6 @@ void Renderer::drawHeapFrame(const Frame& frame) {
     float height = std::ceil(log2(heapArray.size()+1));
 
     for (size_t idx = 0; idx < heapArray.size(); idx++) {
-        if (heapArray[idx] == INT_MAX)
-            continue;
-
         // Coordinates calculation
         int level = std::floor(log2(idx + 1));
         int posInLevel = idx - (std::pow(2, level) - 1);
@@ -47,13 +44,13 @@ void Renderer::drawHeapFrame(const Frame& frame) {
     for (size_t idx = 0; idx < heapArray.size(); ++idx) {
         size_t parentIdx = parent(heapArray.size(), idx); // parent return INT_MAX if there is no parent
 
-        if (parentIdx == INT_MAX || heapArray[parentIdx] == INT_MAX || heapArray[idx] == INT_MAX)
+        if (parentIdx == INT_MAX)
             continue;
 
         // Highlighting
         bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
         bool isHighlightedParent = std::find(highlights.begin(), highlights.end(), parentIdx) != highlights.end();
-        
+
         drawLine(
             positions[idx], nodeSize, ShapeType::Circle,
             positions[parentIdx], nodeSize, ShapeType::Circle,
@@ -62,9 +59,6 @@ void Renderer::drawHeapFrame(const Frame& frame) {
     } 
 
     for (size_t idx = 0; idx < heapArray.size(); ++idx) {
-        if (heapArray[idx] == INT_MAX)
-            continue;
-
         bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
         drawImageNode(positions[idx], std::to_string(heapArray[idx]), isHighlighted);
     }
