@@ -1,11 +1,11 @@
 #include <iostream>
 #include <sstream>
-#include <random>
 #include <algorithm>
 #include <queue>
+#include <limits>
 
 #include "Controller/DataManager.h"
-#include "Controller/Coordinate.h"
+#include "Utilities/MathUtils.h"
 
 // File input
 void DataManager::inputFromFile(const std::string& filePath) {
@@ -251,16 +251,6 @@ void DataManager::outputToConsoleGraph() const { // not changing class value
 }
 
 // Randomizer
-int get_random_in_range(int min, int max) {
-    if (min > max) std::swap(min, max);
-
-    static thread_local std::random_device rd;
-    static thread_local std::mt19937 gen(rd());
-
-    std::uniform_int_distribution<int> dis(min, max);
-    return dis(gen);
-}
-
 void DataManager::randomData(int n, int minValue, int maxValue) {
     if (n <= 0) {
         std::cerr << "Error: DataManager::randomData received invalid size n="
@@ -278,7 +268,7 @@ void DataManager::randomData(int n, int minValue, int maxValue) {
     data.clear();
 
     for (int i = 0; i < n; i++) {
-        data.push_back(get_random_in_range(minValue, maxValue));
+        data.push_back(MathUtils::getRandomInRange(minValue, maxValue));
     }
 }
 
@@ -306,9 +296,9 @@ void DataManager::randomDataGraph(int n, int minValue, int maxValue, float scree
 
     // int ptr = 1;
     // while (ptr < n) {
-    //     int currIdx = get_random_in_range(0, ptr-1);
-    //     int nextIdx = get_random_in_range(ptr, n-1);
-    //     int weight = get_random_in_range(minValue, maxValue);
+    //     int currIdx = MathUtils::getRandomInRange(0, ptr-1);
+    //     int nextIdx = MathUtils::getRandomInRange(ptr, n-1);
+    //     int weight = MathUtils::getRandomInRange(minValue, maxValue);
 
     //     dataGraph[prim[currIdx]].push_back({prim[nextIdx], weight});
     //     std::swap(prim[currIdx], prim[nextIdx]);
@@ -320,8 +310,8 @@ void DataManager::randomDataGraph(int n, int minValue, int maxValue, float scree
     std::priority_queue<std::vector<int>> que;
     for (int i = 0; i < n; ++i) {
         // Range should be (padding, screen - padding)
-        int x = get_random_in_range(0, screenWidth);
-        int y = get_random_in_range(0, screenHeight);
+        int x = MathUtils::getRandomInRange(0, static_cast<int>(screenWidth));
+        int y = MathUtils::getRandomInRange(0, static_cast<int>(screenHeight));
         nodePositions[i] = {x, y};
         que.push({x, y, i});
     }
@@ -332,7 +322,7 @@ void DataManager::randomDataGraph(int n, int minValue, int maxValue, float scree
         std::vector<int> nextVertice = que.top();
         que.pop();
 
-        int weight = get_random_in_range(minValue, maxValue);
+        int weight = MathUtils::getRandomInRange(minValue, maxValue);
         dataGraph[initialVertice[2]].push_back({nextVertice[2], weight});
 
         initialVertice = nextVertice;
@@ -360,9 +350,9 @@ void DataManager::randomDataGraph(int n, int minValue, int maxValue, float scree
         } 
     }
 
-    int edge_addition = get_random_in_range(0, 2*n-5) ; // (3n-6) - (n-1)
+    int edge_addition = MathUtils::getRandomInRange(0, 2*n-5) ; // (3n-6) - (n-1)
     while (edge_addition > 0 && !nodeBuffer.empty()) {
-        int randIdx = get_random_in_range(0, nodeBuffer.size() - 1);
+        int randIdx = MathUtils::getRandomInRange(0, nodeBuffer.size() - 1);
         bool hasIntersect = false;
 
         int idx1 = nodeBuffer[randIdx].first, idx2 = nodeBuffer[randIdx].second;
@@ -374,7 +364,7 @@ void DataManager::randomDataGraph(int n, int minValue, int maxValue, float scree
                 if (idx1 == u || idx1 == v || idx2 == u || idx2 == v) 
                     continue;
 
-                if (doIntersect(nodePositions[idx1], nodePositions[idx2], nodePositions[u], nodePositions[v])) {
+                if (MathUtils::doIntersect(nodePositions[idx1], nodePositions[idx2], nodePositions[u], nodePositions[v])) {
                     hasIntersect = true;
                     break;
                 }
@@ -382,14 +372,14 @@ void DataManager::randomDataGraph(int n, int minValue, int maxValue, float scree
         }
 
         if (!hasIntersect) {
-            int weight = get_random_in_range(minValue, maxValue);
+            int weight = MathUtils::getRandomInRange(minValue, maxValue);
             dataGraph[idx1].push_back({idx2, weight});
+            edge_addition--; 
         }
 
         // The graph may not store more edge_addition edges
         nodeBuffer[randIdx] = nodeBuffer.back();
         nodeBuffer.pop_back();
-        edge_addition--; 
     }
 }
 
@@ -399,7 +389,7 @@ const std::vector<int>& DataManager::getData() const {
     return data; 
 }
 
-const std::unordered_map<int, std::vector<std::pair<int, int>>>& DataManager::getDataGraph() const {
+const DataManager::GraphData& DataManager::getDataGraph() const {
     return dataGraph;
 }
 
