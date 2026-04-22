@@ -33,6 +33,8 @@ public:
     Slider() : text(font) {}
 
     void init(float* value, const Theme& theme);
+    void applyTheme(const Theme& selectedTheme);
+    void setValue(float val);
     void resize(const sf::RenderWindow& window);
     void handleEvent(const sf::RenderWindow& window, const sf::Event& event);
     void render(sf::RenderWindow& window);

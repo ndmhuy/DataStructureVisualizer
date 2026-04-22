@@ -1,4 +1,6 @@
 #include "View/Renderer.h"
+#include "Model/Frame.h"
+#include <algorithm>
 
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
@@ -25,14 +27,14 @@ void Renderer::drawBackground() {
     window.getWindow().draw(bgSprite);
 }
 
-void Renderer::drawImageNode(float x, float y, const std::string& text) {
+void Renderer::drawImageNode(sf::Vector2f pos, const std::string& text, bool isHighlighted) {
     // node
     sf::Sprite sprite(nodeTexture);
-    sprite.setColor(theme.nodeTintColor);
+    sprite.setColor(isHighlighted ? theme.highlightColor : theme.nodeTintColor);
     sprite.setScale({theme.nodeScale, theme.nodeScale});
     sf::FloatRect bounds = sprite.getLocalBounds();
     sprite.setOrigin({bounds.size.x / 2, bounds.size.y / 2});
-    sprite.setPosition({x, y});
+    sprite.setPosition(pos);
     window.getWindow().draw(sprite);
 
     // text
@@ -44,17 +46,17 @@ void Renderer::drawImageNode(float x, float y, const std::string& text) {
         textRect.position.x + textRect.size.x / 2,
         textRect.position.y + textRect.size.y - theme.nodeTextVerticalOffset * theme.nodeScale
     });
-    a.setPosition({x, y});
+    a.setPosition(pos);
     window.getWindow().draw(a);
 }
 
-void Renderer::drawArrayCell(float x, float y, const std::string& text) {
+void Renderer::drawArrayCell(sf::Vector2f pos, const std::string& text, bool isHighlighted) {
     sf::Sprite sprite(arrayTexture);
-    sprite.setColor(theme.arrayTintColor);
+    sprite.setColor(isHighlighted ? theme.highlightColor : theme.arrayTintColor);
     sprite.setScale({theme.arrayScale, theme.arrayScale});
     sf::FloatRect bounds = sprite.getLocalBounds();
     sprite.setOrigin({bounds.size.x / 2, bounds.size.y / 2});
-    sprite.setPosition({x, y});
+    sprite.setPosition(pos);
     window.getWindow().draw(sprite);
 
     unsigned int textSize = static_cast<unsigned int>(theme.arrayTextBaseSize * theme.arrayScale);
@@ -62,40 +64,37 @@ void Renderer::drawArrayCell(float x, float y, const std::string& text) {
     a.setFillColor(theme.textColor);
     sf::FloatRect textRect = a.getLocalBounds();
     a.setOrigin({textRect.position.x + textRect.size.x / 2, textRect.position.y + textRect.size.y / 2});
-    a.setPosition({x, y});
+    a.setPosition(pos);
     window.getWindow().draw(a);
 }
 
 void Renderer::drawLineWithArrow(
-    float x1,
-    float y1,
-    float w1,
-    float h1,
+    sf::Vector2f p1,
+    sf::Vector2f size1,
     ShapeType type1,
-    float x2,
-    float y2,
-    float w2,
-    float h2,
+    sf::Vector2f p2,
+    sf::Vector2f size2,
     ShapeType type2,
     float thickness,
-    float arrowSize) {
-    float dx = x2 - x1;
-    float dy = y2 - y1;
+    float arrowSize,
+    bool isHighlighted) {
+    float dx = p2.x - p1.x;
+    float dy = p2.y - p1.y;
     float distance = std::sqrt(dx * dx + dy * dy);
 
     float angle = std::atan2(dy, dx);
     float angleDegrees = angle * 180.0f / M_PI;
 
-    sf::Vector2f start = getBoundaryPoint(x1, y1, w1, h1, angle, type1);
+    sf::Vector2f start = getBoundaryPoint(p1, size1, angle, type1);
     
-    sf::Vector2f end = getBoundaryPoint(x2, y2, w2, h2, angle + M_PI, type2);
+    sf::Vector2f end = getBoundaryPoint(p2, size2, angle + M_PI, type2);
 
     float lineLength = std::sqrt(std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2));
 
-    if (distance < (w1 / 2 + w2 / 2)) return;
+    if (distance < (size1.x / 2 + size2.x / 2)) return;
 
     sf::RectangleShape line({lineLength, thickness});
-    line.setFillColor(theme.arrowColor);
+    line.setFillColor(isHighlighted ? theme.accentColor : theme.arrowColor);
     line.setOrigin({0, thickness / 2.0f});
     line.setPosition(start);
     line.setRotation(sf::degrees(angleDegrees));
@@ -107,38 +106,40 @@ void Renderer::drawLineWithArrow(
     arrowHead.setPoint(1, {-arrowSize, -arrowSize / 1.5f});
     arrowHead.setPoint(2, {-arrowSize, arrowSize / 1.5f});
 
-    arrowHead.setFillColor(theme.arrowColor);
+    arrowHead.setFillColor(isHighlighted ? theme.accentColor : theme.arrowColor);
     arrowHead.setPosition(end);
     arrowHead.setRotation(sf::degrees(angleDegrees));
     
     window.getWindow().draw(arrowHead);
 }
 
-void Renderer::drawLine(float x1, float y1, float w1, float h1, ShapeType type1,float x2, float y2, float w2, float h2, ShapeType type2, float thickness) {
-    float dx = x2 - x1;
-    float dy = y2 - y1;
+void Renderer::drawLine(sf::Vector2f p1, sf::Vector2f size1, ShapeType type1, sf::Vector2f p2, sf::Vector2f size2, ShapeType type2, float thickness, bool isHighlighted) {
+    float dx = p2.x - p1.x;
+    float dy = p2.y - p1.y;
     float distance = std::sqrt(dx * dx + dy * dy);
 
     float angle = std::atan2(dy, dx);
     float angleDegrees = angle * 180.0f / M_PI;
 
-    sf::Vector2f start = getBoundaryPoint(x1, y1, w1, h1, angle, type1);
+    sf::Vector2f start = getBoundaryPoint(p1, size1, angle, type1);
     
-    sf::Vector2f end = getBoundaryPoint(x2, y2, w2, h2, angle + M_PI, type2);
+    sf::Vector2f end = getBoundaryPoint(p2, size2, angle + M_PI, type2);
 
     float lineLength = std::sqrt(std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2));
 
-    if (distance < (w1 / 2 + w2 / 2)) return;
+    if (distance < (size1.x / 2 + size2.x / 2)) return;
 
     sf::RectangleShape line({lineLength, thickness});
-    line.setFillColor(theme.arrowColor);
+    line.setFillColor(isHighlighted ? theme.accentColor : theme.arrowColor);
     line.setOrigin({0, thickness / 2.0f});
     line.setPosition(start);
     line.setRotation(sf::degrees(angleDegrees));
     window.getWindow().draw(line);
 }
 
-sf::Vector2f Renderer::getBoundaryPoint(float cx, float cy, float width, float height, float angle, ShapeType type) {
+sf::Vector2f Renderer::getBoundaryPoint(sf::Vector2f center, sf::Vector2f size, float angle, ShapeType type) {
+    float cx = center.x, cy = center.y;
+    float width = size.x, height = size.y;
     if (type == ShapeType::Circle) {
         float radius = width / 2.0f;
         return {cx + radius * std::cos(angle), cy + radius * std::sin(angle)};
@@ -170,7 +171,7 @@ sf::Vector2f Renderer::getArraySize() const {
             arrayTexture.getSize().y * theme.arrayScale};
 }
 
-void Renderer::drawText(float x, float y, const std::string& text, unsigned int size, sf::Color color, TextPosition align, sf::Angle angle) {
+void Renderer::drawText(sf::Vector2f pos, const std::string& text, unsigned int size, sf::Color color, TextPosition align, sf::Angle angle) {
     sf::Text t(mainFont, text, size);
     t.setFillColor(color);
     
@@ -202,79 +203,178 @@ void Renderer::drawText(float x, float y, const std::string& text, unsigned int 
     }
 
     t.setOrigin({originX, originY});
-    t.setPosition({x, y});
+    t.setPosition(pos);
     t.setRotation(angle);
 
     window.getWindow().draw(t);
 }
 
-void Renderer::drawTextUp(float cx, float cy, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    float textX = cx;
-    float textY = cy - (objHeight / 2.0f) - padding;
-    drawText(textX, textY, text, size, color, TextPosition::Bottom);
-}
+void Renderer::drawTextPositioned(
+    sf::Vector2f basePosition,
+    const std::string& text,
+    unsigned int size,
+    sf::Color color,
+    TextPositionMode mode,
+    float objHeight,
+    float objWidth,
+    float padding,
+    sf::Vector2f lineEnd,
+    TextPosition align,
+    sf::Angle angle) {
 
-void Renderer::drawTextDown(float cx, float cy, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    float textX = cx;
-    float textY = cy + (objHeight / 2.0f) + padding;
-    drawText(textX, textY, text, size, color, TextPosition::Top);
-}
+    sf::Vector2f finalPos = basePosition;
+    TextPosition finalAlign = align;
+    sf::Angle finalAngle = angle;
 
-void Renderer::drawTextOnLine(float x1, float y1, float x2, float y2, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    float midX = (x1 + x2) / 2.0f;
-    float midY = (y1 + y2) / 2.0f;
-    
-    float angle = std::atan2(y2 - y1, x2 - x1);
-    float perpAngle = angle - M_PI / 2.0f;
-    float angleDeg = angle * 180.0f / M_PI;
-    if (angleDeg > 90.0f || angleDeg < -90.0f) {
-        angleDeg += 180.0f;
-    }
-    
-    float textX = midX + std::cos(perpAngle) * padding;
-    float textY = midY + std::sin(perpAngle) * padding;
-    
-    drawText(textX, textY, text, size, color, TextPosition::Bottom, sf::degrees(angleDeg));
-}
-
-void Renderer::drawTextTopLeft(float cx, float cy, float objWidth, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    float textX = cx - (objWidth / 2.0f) - padding;
-    float textY = cy - (objHeight / 2.0f) - padding;
-    drawText(textX, textY, text, size, color, TextPosition::BottomRight);
-}
-
-void Renderer::drawTextTopRight(float cx, float cy, float objWidth, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    float textX = cx + (objWidth / 2.0f) + padding;
-    float textY = cy - (objHeight / 2.0f) - padding;
-    drawText(textX, textY, text, size, color, TextPosition::BottomLeft);
-}
-
-void Renderer::drawTextBottomLeft(float cx, float cy, float objWidth, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    float textX = cx - (objWidth / 2.0f) - padding;
-    float textY = cy + (objHeight / 2.0f) + padding;
-    drawText(textX, textY, text, size, color, TextPosition::TopRight);
-}
-
-void Renderer::drawTextBottomRight(float cx, float cy, float objWidth, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
-    float textX = cx + (objWidth / 2.0f) + padding;
-    float textY = cy + (objHeight / 2.0f) + padding;
-    drawText(textX, textY, text, size, color, TextPosition::TopLeft);
-}
-
-void Renderer::drawFrame(const Frame& frame, StructureType type, Timeline& timeline) {
-    switch(type) {
-        case StructureType::SinglyLinkedList:
-            drawLinkedListFrame(frame);
+    switch (mode) {
+        case TextPositionMode::Absolute:
+            // Use basePosition as is with provided alignment
             break;
-        case StructureType::MaxHeap:
-            drawHeapFrame(frame);
+        case TextPositionMode::Up:
+            finalPos.y -= (objHeight / 2.0f) + padding;
+            finalAlign = TextPosition::Bottom;
             break;
-        case StructureType::MinHeap:
-            drawHeapFrame(frame);
+        case TextPositionMode::Down:
+            finalPos.y += (objHeight / 2.0f) + padding;
+            finalAlign = TextPosition::Top;
             break;
-        case StructureType::AVLTree:
-            drawAVLTreeFrame(frame);
+        case TextPositionMode::OnLine: {
+            float midX = (basePosition.x + lineEnd.x) / 2.0f;
+            float midY = (basePosition.y + lineEnd.y) / 2.0f;
+            float lineAngle = std::atan2(lineEnd.y - basePosition.y, lineEnd.x - basePosition.x);
+            float perpAngle = lineAngle - M_PI / 2.0f;
+            float angleDeg = lineAngle * 180.0f / M_PI;
+            if (angleDeg > 90.0f || angleDeg < -90.0f) {
+                angleDeg += 180.0f;
+            }
+            finalPos = {midX + std::cos(perpAngle) * padding, midY + std::sin(perpAngle) * padding};
+            finalAlign = TextPosition::Bottom;
+            finalAngle = sf::degrees(angleDeg);
+            break;
+        }
+        case TextPositionMode::TopLeft:
+            finalPos = {basePosition.x - (objWidth / 2.0f) - padding, basePosition.y - (objHeight / 2.0f) - padding};
+            finalAlign = TextPosition::BottomRight;
+            break;
+        case TextPositionMode::TopRight:
+            finalPos = {basePosition.x + (objWidth / 2.0f) + padding, basePosition.y - (objHeight / 2.0f) - padding};
+            finalAlign = TextPosition::BottomLeft;
+            break;
+        case TextPositionMode::BottomLeft:
+            finalPos = {basePosition.x - (objWidth / 2.0f) - padding, basePosition.y + (objHeight / 2.0f) + padding};
+            finalAlign = TextPosition::TopRight;
+            break;
+        case TextPositionMode::BottomRight:
+            finalPos = {basePosition.x + (objWidth / 2.0f) + padding, basePosition.y + (objHeight / 2.0f) + padding};
+            finalAlign = TextPosition::TopLeft;
             break;
     }
+
+    drawText(finalPos, text, size, color, finalAlign, finalAngle);
 }
 
+// Convenience wrappers for common positioning modes
+void Renderer::drawTextUp(sf::Vector2f center, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
+    drawTextPositioned(center, text, size, color, TextPositionMode::Up, objHeight, 0.0f, padding);
+}
+
+void Renderer::drawTextDown(sf::Vector2f center, float objHeight, float padding, const std::string& text, unsigned int size, sf::Color color) {
+    drawTextPositioned(center, text, size, color, TextPositionMode::Down, objHeight, 0.0f, padding);
+}
+
+void Renderer::drawTextOnLine(sf::Vector2f p1, sf::Vector2f p2, float padding, const std::string& text, unsigned int size, sf::Color color) {
+    drawTextPositioned(p1, text, size, color, TextPositionMode::OnLine, 0.0f, 0.0f, padding, p2);
+}
+
+void Renderer::drawTextTopLeft(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color) {
+    drawTextPositioned(center, text, size, color, TextPositionMode::TopLeft, objSize.y, objSize.x, padding);
+}
+
+void Renderer::drawTextTopRight(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color) {
+    drawTextPositioned(center, text, size, color, TextPositionMode::TopRight, objSize.y, objSize.x, padding);
+}
+
+void Renderer::drawTextBottomLeft(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color) {
+    drawTextPositioned(center, text, size, color, TextPositionMode::BottomLeft, objSize.y, objSize.x, padding);
+}
+
+void Renderer::drawTextBottomRight(sf::Vector2f center, sf::Vector2f objSize, float padding, const std::string& text, unsigned int size, sf::Color color) {
+    drawTextPositioned(center, text, size, color, TextPositionMode::BottomRight, objSize.y, objSize.x, padding);
+}
+
+void Renderer::drawFrame(const Frame* frame) {
+    if (!frame) return;
+    
+    drawGraphData(frame);
+    drawArrayData(frame);
+}
+
+void Renderer::drawArrayData(const Frame* frame) {
+    const auto& arr = frame->getArrayData();
+    if (arr.empty()) return;
+
+    sf::Vector2f cellSize = getArraySize();
+    float spacing = 10.0f;
+    float totalWidth = arr.size() * (cellSize.x + spacing) - spacing;
+
+    sf::Vector2u winSize = window.getWindow().getSize();
+    float startX = (winSize.x - totalWidth) / 2.0f + cellSize.x / 2.0f;
+    float startY = winSize.y - cellSize.y - 50.0f;
+
+    const auto& highlights = frame->getHighlightIndices();
+
+    for (size_t i = 0; i < arr.size(); ++i) {
+        bool highlighted = std::find(highlights.begin(), highlights.end(), i) != highlights.end();
+        
+        sf::Vector2f pos(startX + i * (cellSize.x + spacing), startY);
+        drawArrayCell(pos, std::to_string(arr[i]), highlighted);
+        
+        // Draw array index below the cell
+        drawTextDown(pos, cellSize.y, 5.0f, std::to_string(i), 18, theme.textColor);
+    }
+}
+
+void Renderer::drawGraphData(const Frame* frame) {
+    const auto& vertices = frame->getVerticesData();
+    const auto& edges = frame->getEdgeData();
+    if (vertices.empty()) return;
+
+    sf::Vector2u winSize = window.getWindow().getSize();
+    float cx = winSize.x / 2.0f;
+    float cy = winSize.y / 2.0f - 50.0f; 
+    
+    float radius = std::min(cx, cy) - 100.0f;
+    if (radius < 50.0f) radius = 50.0f;
+
+    std::vector<sf::Vector2f> positions(vertices.size());
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        if (vertices.size() == 1) {
+            positions[i] = {cx, cy};
+        } else {
+            float angle = i * (2.0f * M_PI / vertices.size()) - M_PI / 2.0f;
+            positions[i] = {cx + radius * std::cos(angle), cy + radius * std::sin(angle)};
+        }
+    }
+
+    sf::Vector2f nodeSize = getNodeSize();
+    const auto& hEdges = frame->getHighlightEdges();
+    const auto& hIndices = frame->getHighlightIndices();
+
+    for (const auto& edge : edges) {
+        bool highlighted = false;
+        for (const auto& he : hEdges) {
+            if (he.from == edge.from && he.to == edge.to) {
+                highlighted = true;
+                break;
+            }
+        }
+        if (edge.from < vertices.size() && edge.to < vertices.size()) {
+            drawLineWithArrow(positions[edge.from], nodeSize, ShapeType::Circle, positions[edge.to], nodeSize, ShapeType::Circle, 3.0f, 15.0f, highlighted);
+        }
+    }
+
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        bool highlighted = std::find(hIndices.begin(), hIndices.end(), i) != hIndices.end();
+        drawImageNode(positions[i], std::to_string(vertices[i]), highlighted);
+    }
+}
