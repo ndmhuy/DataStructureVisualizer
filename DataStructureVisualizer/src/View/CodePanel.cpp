@@ -70,7 +70,8 @@ void CodePanel::render(const sf::RenderWindow& window){
     // 3. Remove default ImGui window styling
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | 
                              ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | 
-                             ImGuiWindowFlags_NoMove;
+                             ImGuiWindowFlags_NoMove | 
+                             ImGuiWindowFlags_NoBringToFrontOnFocus;
     
     ImGui::Begin("CustomCodePanel", nullptr, flags);
 

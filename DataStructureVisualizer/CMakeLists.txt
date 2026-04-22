@@ -37,6 +37,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui-sfml)
 
+FetchContent_Declare(
+    imgui_filebrowser
+    GIT_REPOSITORY https://github.com/AirGuanZ/imgui-filebrowser.git
+    GIT_TAG        master
+)
+FetchContent_MakeAvailable(imgui_filebrowser)
+
 # ---------------------------------------------------------
 # 2. CẤU HÌNH MÃ NGUỒN VÀ BIÊN DỊCH
 # ---------------------------------------------------------
@@ -45,6 +52,7 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${imgui_filebrowser_SOURCE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     SFML::Graphics 
