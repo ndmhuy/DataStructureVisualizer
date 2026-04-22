@@ -4,22 +4,16 @@
 #include "Controller/Playback.h"
 
 #include "Model/IVisualizable.h"
-#include "Model/StandardStructure/SinglyLinkedList.h"
-#include "Model/HeapStructure/MinHeap.h"
-#include "Model/HeapStructure/MaxHeap.h"
-#include "Model/StandardStructure/AVLTree.h"
-#include "Model/GraphStructure/AdjacencyList.h"
-#include "Model/GraphStructure/AdjacencyMatrix.h"
 
 #include "Utilities/StructureType.h"
 
-#include "View/Core/Window.h"
 #include "View/Core/Theme.h"
+#include "View/Core/Window.h"
 #include "View/Render/Renderer.h"
 #include "View/UI/UIManager.h"
 
 class AppEngine {
-    private:
+private:
     Window window;
     bool shouldClose = false;
     bool isDarkMode = false;
@@ -33,11 +27,13 @@ class AppEngine {
 
     static StructureType mapMenuSelectionToStructureType(int selectedDS);
     IVisualizable* resolveStructure(StructureType structureType);
-    void switchActiveStructure(StructureType structureType);
     void handleStructureSwitchRequest();
+    void switchActiveStructure(StructureType structureType);
+    void handleDataActionRequest();
 
-    public:
+public:
     AppEngine();
+    ~AppEngine();
 
     void run();
 

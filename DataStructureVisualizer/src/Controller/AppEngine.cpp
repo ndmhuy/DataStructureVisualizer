@@ -1,6 +1,164 @@
 #include "Controller/AppEngine.h"
 
+#include <fstream>
+#include <random>
+#include <sstream>
+
+#include "Model/GraphStructure/AdjacencyList.h"
+#include "Model/GraphStructure/AdjacencyMatrix.h"
+#include "Model/GraphStructure/IGraphStructure.h"
+#include "Model/HeapStructure/MaxHeap.h"
+#include "Model/HeapStructure/IHeapStructure.h"
+#include "Model/HeapStructure/MinHeap.h"
+#include "Model/StandardStructure/AVLTree.h"
+#include "Model/StandardStructure/SinglyLinkedList.h"
+#include "Model/StandardStructure/IStandardStructure.h"
+#include "Utilities/PseudocodeManager.h"
+
+namespace {
+bool tryParseInt(const std::string& text, int& outValue) {
+    if (text.empty()) {
+        return false;
+    }
+
+    std::stringstream ss(text);
+    int value = 0;
+    ss >> value;
+    if (ss.fail()) {
+        return false;
+    }
+
+    // Reject trailing non-space content.
+    std::string remaining;
+    ss >> remaining;
+    if (!remaining.empty()) {
+        return false;
+    }
+
+    outValue = value;
+    return true;
+}
+
+std::vector<int> parseIntList(const std::string& text) {
+    std::vector<int> values;
+    std::stringstream ss(text);
+    int value = 0;
+
+    while (ss >> value) {
+        values.push_back(value);
+    }
+
+    return values;
+}
+
+std::vector<int> readIntListFromFile(const std::string& path) {
+    std::vector<int> values;
+    std::ifstream input(path);
+    if (!input.is_open()) {
+        return values;
+    }
+
+    int value = 0;
+    while (input >> value) {
+        values.push_back(value);
+    }
+
+    return values;
+}
+
+std::vector<Edge> parseEdgesFromInts(const std::vector<int>& values) {
+    std::vector<Edge> edges;
+
+    // Accept triplets (from,to,weight) first, then fallback to pairs with weight=1.
+    if (values.size() >= 3 && values.size() % 3 == 0) {
+        for (size_t i = 0; i < values.size(); i += 3) {
+            if (values[i] < 0 || values[i + 1] < 0) {
+                continue;
+            }
+            edges.emplace_back(static_cast<size_t>(values[i]), static_cast<size_t>(values[i + 1]), values[i + 2]);
+        }
+        return edges;
+    }
+
+    if (values.size() >= 2 && values.size() % 2 == 0) {
+        for (size_t i = 0; i < values.size(); i += 2) {
+            if (values[i] < 0 || values[i + 1] < 0) {
+                continue;
+            }
+            edges.emplace_back(static_cast<size_t>(values[i]), static_cast<size_t>(values[i + 1]), 1);
+        }
+    }
+
+    return edges;
+}
+
+std::vector<int> generateRandomValues(int count, int minValue, int maxValue) {
+    std::vector<int> values;
+    values.reserve(static_cast<size_t>(count));
+
+    static thread_local std::mt19937 engine(std::random_device{}());
+    std::uniform_int_distribution<int> dist(minValue, maxValue);
+    for (int i = 0; i < count; ++i) {
+        values.push_back(dist(engine));
+    }
+
+    return values;
+}
+
+std::vector<Edge> generateRandomEdges(int vertexCount, int edgeCount, int minWeight, int maxWeight) {
+    std::vector<Edge> edges;
+    edges.reserve(static_cast<size_t>(edgeCount));
+
+    static thread_local std::mt19937 engine(std::random_device{}());
+    std::uniform_int_distribution<int> vertexDist(0, vertexCount - 1);
+    std::uniform_int_distribution<int> weightDist(minWeight, maxWeight);
+
+    for (int i = 0; i < edgeCount; ++i) {
+        int from = vertexDist(engine);
+        int to = vertexDist(engine);
+        int weight = weightDist(engine);
+        edges.emplace_back(static_cast<size_t>(from), static_cast<size_t>(to), weight);
+    }
+
+    return edges;
+}
+
+AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action) {
+    switch (structureType) {
+        case StructureType::SinglyLinkedList:
+            if (action == 1 || action == 5) {
+                return AlgorithmType::SinglyLinkedListInsert;
+            }
+            if (action == 2 || action == 4) {
+                return AlgorithmType::SinglyLinkedListDelete;
+            }
+            if (action == 3) {
+                return AlgorithmType::SinglyLinkedListSearch;
+            }
+            break;
+        default:
+            break;
+    }
+
+    return AlgorithmType::None;
+}
+
+void syncCodePanelWithCurrentFrame(UIManager& uiManager, const Timeline& timeline) {
+    const Frame* currentFrame = timeline.getCurrentFrame();
+    if (!currentFrame) {
+        uiManager.setCodePanelHighlightedLine(-1);
+        return;
+    }
+
+    uiManager.setCodePanelHighlightedLine(currentFrame->getCodeLineId());
+}
+} // namespace
+
 AppEngine::AppEngine() : window(), theme(Theme::getDefaultTheme()), renderer(window, theme), uiManager(), playbackController() {}
+
+AppEngine::~AppEngine() {
+    delete activeStructure;
+}
 
 StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
     switch (selectedDS) {
@@ -58,8 +216,156 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
 
     playbackController.setTimeline(timeline);
     playbackController.pause();
+    uiManager.setPlaybackControlsEnabled(structureType != StructureType::None);
     uiManager.resetSpeed();
     uiManager.clearCodePanel();
+    uiManager.resetInputAction();
+}
+
+void AppEngine::handleDataActionRequest() {
+    const int action = uiManager.getInputAction();
+    if (action == 0) {
+        return;
+    }
+
+    if (!activeStructure) {
+        uiManager.resetInputAction();
+        return;
+    }
+
+    const int mode = uiManager.getInputMode();
+    const std::string input1 = uiManager.getInputString1();
+    const std::string input2 = uiManager.getInputString2();
+
+    const AlgorithmType algorithmType = resolveAlgorithmForAction(activeStructureType, action);
+    if (algorithmType == AlgorithmType::None) {
+        uiManager.clearCodePanel();
+    } else {
+        std::vector<std::string> pseudocode = PseudocodeManager::getPseudocode(algorithmType);
+        uiManager.setCodePanelCode(pseudocode);
+    }
+
+    Timeline timeline;
+    bool handled = false;
+
+    auto* standard = dynamic_cast<IStandardStructure*>(activeStructure);
+    auto* heap = dynamic_cast<IHeapStructure*>(activeStructure);
+    auto* graph = dynamic_cast<IGraphStructure*>(activeStructure);
+
+    switch (action) {
+        case 1: { // Insert
+            if (standard) {
+                if (mode == 0) {
+                    int value = 0;
+                    if (tryParseInt(input1, value)) {
+                        standard->insert(value, timeline);
+                        handled = true;
+                    }
+                } else if (mode == 1 || mode == 2) {
+                    std::vector<int> values = (mode == 1) ? parseIntList(input1) : readIntListFromFile(input1);
+                    if (!values.empty()) {
+                        standard->initialize(values, timeline);
+                        handled = true;
+                    }
+                }
+            } else if (heap) {
+                if (mode == 0) {
+                    int value = 0;
+                    if (tryParseInt(input1, value)) {
+                        heap->insert(value, timeline);
+                        handled = true;
+                    }
+                } else if (mode == 1 || mode == 2) {
+                    std::vector<int> values = (mode == 1) ? parseIntList(input1) : readIntListFromFile(input1);
+                    if (!values.empty()) {
+                        heap->initialize(values, timeline);
+                        handled = true;
+                    }
+                }
+            } else if (graph) {
+                if (mode == 1 || mode == 2) {
+                    std::vector<int> rawValues = (mode == 1) ? parseIntList(input1) : readIntListFromFile(input1);
+                    std::vector<Edge> edges = parseEdgesFromInts(rawValues);
+                    if (!edges.empty()) {
+                        graph->initialize(edges, timeline);
+                        handled = true;
+                    }
+                }
+            }
+            break;
+        }
+        case 2: { // Delete
+            if (standard) {
+                int value = 0;
+                if (tryParseInt(input1, value)) {
+                    standard->remove(value, timeline);
+                    handled = true;
+                }
+            } else if (heap) {
+                heap->extractTop(timeline);
+                handled = true;
+            }
+            break;
+        }
+        case 3: { // Search
+            if (standard) {
+                int value = 0;
+                if (tryParseInt(input1, value)) {
+                    standard->search(value, timeline);
+                    handled = true;
+                }
+            } else if (heap) {
+                heap->peek(timeline);
+                handled = true;
+            }
+            break;
+        }
+        case 4: { // Update
+            if (standard) {
+                int fromValue = 0;
+                int toValue = 0;
+                if (tryParseInt(input1, fromValue) && tryParseInt(input2, toValue)) {
+                    standard->remove(fromValue, timeline);
+                    standard->insert(toValue, timeline);
+                    handled = true;
+                }
+            }
+            break;
+        }
+        case 5: { // Random
+            if (standard || heap) {
+                if (mode == 0) {
+                    std::vector<int> oneValue = generateRandomValues(1, 1, 99);
+                    if (standard) {
+                        standard->insert(oneValue[0], timeline);
+                    } else {
+                        heap->insert(oneValue[0], timeline);
+                    }
+                    handled = true;
+                } else if (mode == 1) {
+                    std::vector<int> values = generateRandomValues(10, 1, 99);
+                    if (standard) {
+                        standard->initialize(values, timeline);
+                    } else {
+                        heap->initialize(values, timeline);
+                    }
+                    handled = true;
+                }
+            } else if (graph && mode == 1) {
+                std::vector<Edge> edges = generateRandomEdges(8, 12, 1, 20);
+                graph->initialize(edges, timeline);
+                handled = true;
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    if (handled && timeline.getFrameCount() > 0) {
+        playbackController.setTimeline(timeline);
+    }
+
     uiManager.resetInputAction();
 }
 
@@ -130,6 +436,7 @@ void AppEngine::processInput(const sf::Event& event) {
 void AppEngine::update(sf::Time deltaTime) {
     uiManager.update(window.getWindow(), deltaTime);
     handleStructureSwitchRequest();
+    handleDataActionRequest();
 
     if (uiManager.checkBackToMenuClicked()) {
         uiManager.setShowMainMenu(true);
@@ -161,6 +468,8 @@ void AppEngine::update(sf::Time deltaTime) {
     }
 
     playbackController.update(deltaTime.asSeconds());
+
+    syncCodePanelWithCurrentFrame(uiManager, playbackController.getTimeline());
 }
 
 void AppEngine::render() {
@@ -170,13 +479,7 @@ void AppEngine::render() {
     const Timeline& timeline = playbackController.getTimeline();
     const Frame* currentFrame = timeline.getCurrentFrame();
     if (currentFrame) {
-        renderer.drawFrame(currentFrame);
-    } else {
-        // TEMPORARY TEST: If no timeline exists yet, draw this to prove SFML works!
-        renderer.drawImageNode(sf::Vector2f(400, 300), "5");
-        renderer.drawArrayCell(sf::Vector2f(600, 300), "42");
-        renderer.drawLineWithArrow(sf::Vector2f(400, 300), sf::Vector2f(50, 50), ShapeType::Circle, 
-                                   sf::Vector2f(600, 300), sf::Vector2f(50, 50), ShapeType::Rectangle, 3.0f, 15.0f);
+        renderer.renderActiveState(currentFrame);
     }
 
     // 3. Draw the ImGui UI on top

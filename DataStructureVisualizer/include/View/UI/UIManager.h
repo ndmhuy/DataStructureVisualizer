@@ -84,6 +84,7 @@ public:
     bool checkPauseClicked();
     bool checkStepForwardClicked();
     bool checkStepBackwardClicked();
+    void setPlaybackControlsEnabled(bool enabled);
 
     //-Interact with Slider
     float getSpeed() const;
