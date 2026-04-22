@@ -9,11 +9,10 @@
 
 class DataManager
 {
-private:
-    std::vector<int> data;
-    std::unordered_map<int, std::vector<std::pair<int, int>>> dataGraph;
-    std::unordered_map<int, sf::Vector2f> nodePositions;
 public:
+    using Edge = std::pair<int, int>; 
+    using GraphData = std::unordered_map<int, std::vector<Edge>>;
+
     // Input
     void inputFromFile(const std::string& filePath);
 
@@ -39,16 +38,19 @@ public:
     // Getter
     const std::vector<int>& getData() const;
 
-    const std::unordered_map<int, std::vector<std::pair<int, int>>>& getDataGraph() const;
+    const GraphData& getDataGraph() const;
 
     const std::unordered_map<int, sf::Vector2f>& getNodePositions() const;
 
     // Data randomizer
-    int get_random_in_range(int min, int max);
-
     void randomData(int n, int minValue, int maxValue);
 
     void randomDataGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight);
+
+private:
+    std::vector<int> data;
+    GraphData dataGraph;
+    std::unordered_map<int, sf::Vector2f> nodePositions;
 };
 
 #endif
