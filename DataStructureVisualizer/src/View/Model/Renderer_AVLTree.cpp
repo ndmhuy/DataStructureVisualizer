@@ -1,5 +1,5 @@
 #include "Renderer.h"
-// #include "Model/StandardStructure/AVLTree.h"
+#include "Model/StandardStructure/AVLTree.h"
 
 #include <algorithm>
 

@@ -1,8 +1,6 @@
 #include "View/Renderer.h"
-#include "Model/Frame.h"
 #include "Model/HeapStructure/IHeapStructure.h"
 
-#include <string>
 #include <algorithm>
 
 void Renderer::drawHeapFrame(const Frame& frame) {
@@ -21,8 +19,6 @@ void Renderer::drawHeapFrame(const Frame& frame) {
     float startY = 150;
     float distanceHorizontal = 35; // Deepest leaf nodes
     float distanceVertical = 70;
-    int heap_size = heapArray.size();
-    
     float height = std::ceil(log2(heapArray.size()+1));
 
     for (size_t idx = 0; idx < heapArray.size(); idx++) {
@@ -41,11 +37,8 @@ void Renderer::drawHeapFrame(const Frame& frame) {
 
     // Draw edges then draw nodes
     sf::Vector2f nodeSize = getNodeSize();
-    for (size_t idx = 0; idx < heapArray.size(); ++idx) {
-        size_t parentIdx = parent(heapArray.size(), idx); // parent return INT_MAX if there is no parent
-
-        if (parentIdx == INT_MAX)
-            continue;
+    for (size_t idx = 1; idx < heapArray.size(); ++idx) {
+        size_t parentIdx = (idx - 1) / 2;
 
         // Highlighting
         bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
