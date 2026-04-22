@@ -228,6 +228,7 @@ void UIManager::render(sf::RenderWindow& window) {
         if (ImGui::Button("Home", ImVec2(80.0f, 35.0f))) {
             backToMenuClicked = true;
             isMainMenu = true;
+            navMenu.resetState();
         }
 
         ImGui::SetCursorPos(ImVec2(winSize.x - 110.0f, 10.0f));
@@ -279,6 +280,9 @@ void UIManager::resetDSSelection() {
 
 void UIManager::setShowMainMenu(bool show) {
     isMainMenu = show;
+    if (show) {
+        navMenu.resetState();
+    }
 }
 
 // ==========================================

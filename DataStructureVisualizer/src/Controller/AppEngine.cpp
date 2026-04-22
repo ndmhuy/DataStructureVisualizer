@@ -61,6 +61,22 @@ void AppEngine::update(sf::Time deltaTime) {
         uiManager.resize(window.getWindow());
     }
 
+    // 1. Khi đang ở Main Menu và người dùng chọn một Data Structure
+    if (uiManager.getSelectedDS() != -1) {
+        currentDS = uiManager.getSelectedDS();        
+        // a. Thiết lập dữ liệu cho Data Structure mới tương ứng (TODO)
+        
+        uiManager.resetDSSelection();       // b. Khôi phục cờ chọn
+        uiManager.setShowMainMenu(false);   // c. Chuyển giao diện sang Workspace
+    }
+
+    // 2. Khi đang ở trong vòng lặp xử lý Workspace Data Structure
+    if (uiManager.checkBackToMenuClicked()) {
+        // a. Xóa/Giải phóng dữ liệu của Data Structure hiện tại (TODO)
+        currentDS = -1;
+        uiManager.setShowMainMenu(true);    // b. Trở về Main Menu
+    }
+
     playbackController.update(deltaTime.asSeconds());
 }
 
