@@ -23,32 +23,34 @@ int AVLTree::Node::balanceFactor() {
 std::vector<int> AVLTree::toVector() {
     std::vector<int> result;
     getNodeIndex.clear();
-    // BFS
-    std::queue<Node*> que;
-    que.push(root);
     
-    int currentIdx = 0;
+    if (!root) return result;
+
+    std::queue<std::pair<Node*, long long>> que;
+    que.push({root, 0});
+    
+    long long maxIdx = 0;
+
     while (!que.empty()) {
-        Node* current = que.front();
+        auto [current, idx] = que.front();
         que.pop();
 
-        if (current) {
-            result.push_back(current->value);
-            getNodeIndex[current->value] = currentIdx;
+        if (idx > maxIdx) maxIdx = idx;
 
-            que.push(current->left);
-            que.push(current->right);
-        }
-        else {
-            result.push_back(-1);
+        if (idx >= (long long)result.size()) {
+            // INT_MAX is nullptr instead of -1
+            result.resize(idx + 1, INT_MAX);
         }
 
-        currentIdx++;
-    }
+        result[idx] = current->value;
+        getNodeIndex[current->value] = (int)idx;
 
-    // Remove redundant -1 (nullptr)
-    while (!result.empty() && result.back() == -1) {
-        result.pop_back();
+        if (current->left) {
+            que.push({current->left, 2 * idx + 1});
+        }
+        if (current->right) {
+            que.push({current->right, 2 * idx + 2});
+        }
     }
 
     return result;
@@ -316,6 +318,23 @@ void AVLTree::search(int value, Timeline& timeline) {
         current = (value < current->value) ? current->left : current->right;
     }
     timeline.addFrame(Frame(currentState, {}, 4, "Value " + std::to_string(value) + " was not found in the tree."));
+}
+
+void AVLTree::update(int oldValue, int newValue, Timeline& timeline) {
+    timeline.addFrame(Frame(toVector(), {}, 1, "Starting update: " + std::to_string(oldValue) + " -> " + std::to_string(newValue)));
+    
+    if (getNodeIndex.find(oldValue) == getNodeIndex.end()) {
+        timeline.addFrame(Frame(toVector(), {}, 2, "Value " + std::to_string(oldValue) + " not found. Update canceled."));
+        return;
+    }
+
+    timeline.addFrame(Frame(toVector(), {(unsigned long long)getNodeIndex[oldValue]}, 3, "Found old value. Removing it first..."));
+    remove(oldValue, timeline);
+
+    timeline.addFrame(Frame(toVector(), {}, 4, "Now inserting the new value..."));
+    insert(newValue, timeline);
+
+    timeline.addFrame(Frame(toVector(), {}, 5, "Update successfully completed!"));
 }
 
 void AVLTree::clear(Timeline& timeline) {
