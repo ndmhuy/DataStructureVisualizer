@@ -48,9 +48,9 @@ void Renderer::drawAVLTreeFrame(const Frame& frame) {
                 bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
                 bool isHighlightedParent = std::find(highlights.begin(), highlights.end(), parentIdx) != highlights.end();
                 
-                drawLine(positions[idx], nodeSize, ShapeType::Circle,
+                drawLineWithArrow(positions[idx], nodeSize, ShapeType::Circle,
                         positions[parentIdx], nodeSize, ShapeType::Circle,
-                        3.0f, isHighlighted && isHighlightedParent);
+                        3.0f, 12.0f, isHighlighted && isHighlightedParent);
             }
         }
     } 
