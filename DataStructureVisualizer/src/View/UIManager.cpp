@@ -4,12 +4,24 @@
 
 bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     this->theme = theme;
+    isDarkMode = false;
+    themeToggleRequested = false;
     initialized = false;
 
     if (!ImGui::SFML::Init(window)) {
         std::cerr << "Warning: UIManager::init failed to initialize ImGui-SFML." << std::endl;
         return false;
     }
+
+    // Load Custom Fonts cho UI typography
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->Clear();
+    ImFont* regularFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 18.0f); // Font thường
+    ImFont* titleFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 36.0f);   // Font tiêu đề to
+    if (!regularFont || !titleFont) {
+        io.Fonts->AddFontDefault();
+    }
+    ImGui::SFML::UpdateFontTexture();
 
     if (!play.init(theme.playIconPath, theme)) {
         std::cerr << "Warning: UIManager::init failed to load play icon from '"
@@ -36,6 +48,11 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
         return false;
     }
 
+    inputMenu.init(theme);
+    codePanel.applyTheme(theme);
+    slider.init(&speed,theme);
+    navMenu.init(theme);
+
     // setup size and position for buttons
     resize(window);
 
@@ -46,6 +63,48 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     initialized = true;
 
     return true;
+}
+
+bool UIManager::applyTheme(const Theme& selectedTheme) {
+    theme = selectedTheme;
+
+    navMenu.applyTheme(theme);
+    inputMenu.applyTheme(theme);
+    codePanel.applyTheme(theme);
+    slider.applyTheme(theme);
+
+    bool ok = true;
+    if (!play.init(theme.playIconPath, theme)) {
+        std::cerr << "Warning: UIManager::applyTheme failed to load play icon from '"
+                  << theme.playIconPath << "'." << std::endl;
+        ok = false;
+    }
+    if (!pause.init(theme.pauseIconPath, theme)) {
+        std::cerr << "Warning: UIManager::applyTheme failed to load pause icon from '"
+                  << theme.pauseIconPath << "'." << std::endl;
+        ok = false;
+    }
+    if (!stepForward.init(theme.stepForwardIconPath, theme)) {
+        std::cerr << "Warning: UIManager::applyTheme failed to load step-forward icon from '"
+                  << theme.stepForwardIconPath << "'." << std::endl;
+        ok = false;
+    }
+    if (!stepBackward.init(theme.stepBackwardIconPath, theme)) {
+        std::cerr << "Warning: UIManager::applyTheme failed to load step-backward icon from '"
+                  << theme.stepBackwardIconPath << "'." << std::endl;
+        ok = false;
+    }
+
+    play.setActive(isPlay);
+    pause.setActive(!isPlay);
+
+    return ok;
+}
+
+bool UIManager::consumeThemeToggleRequest() {
+    bool res = themeToggleRequested;
+    themeToggleRequested = false;
+    return res;
 }
 
 void UIManager::processEvent(sf::RenderWindow& window, const sf::Event& event) {
@@ -60,27 +119,33 @@ void UIManager::processEvent(sf::RenderWindow& window, const sf::Event& event) {
         resize(window);
     }
 
+    if (isMainMenu) {
+        return; //Block interact with SFML functions
+    }
+
     if (play.handleEvent(window, event)) {
-        // do sth when play butt is clicked
         isPlay = false;
         play.setActive(isPlay);
         pause.setActive(!isPlay);
+        playClicked = true;
     }
 
     if (pause.handleEvent(window, event)) {
-        // do sth when pause butt iss clicked
         isPlay = true;
         play.setActive(isPlay);
         pause.setActive(!isPlay);
+        pauseClicked = true;
     }
 
     if (stepForward.handleEvent(window, event)) {
-        // stepForward logic
+        stepForwardClicked = true;
     }
 
     if (stepBackward.handleEvent(window, event)) {
-        // stepBackward logic
+        stepBackwardClicked = true;
     }
+
+    slider.handleEvent(window, event);
 }
 
 void UIManager::resize(const sf::RenderWindow& window) {
@@ -93,6 +158,8 @@ void UIManager::resize(const sf::RenderWindow& window) {
     pause.resize(sf::Vector2f{theme.uiMainButtonXRatio * x, theme.uiButtonsYRatio * y}, rad);
     stepForward.resize(sf::Vector2f{theme.uiStepForwardButtonXRatio * x, theme.uiButtonsYRatio * y}, rad);
     stepBackward.resize(sf::Vector2f{theme.uiStepBackwardButtonXRatio * x, theme.uiButtonsYRatio * y}, rad);
+    
+    slider.resize(window);
 }
 
 void UIManager::update(sf::RenderWindow& window, const sf::Time& deltatime) {
@@ -100,50 +167,93 @@ void UIManager::update(sf::RenderWindow& window, const sf::Time& deltatime) {
 }
 
 void UIManager::render(sf::RenderWindow& window) {
-    // ImGuiWindowFlags panelFlags = 
-    //     ImGuiWindowFlags_NoMove | 
-    //     ImGuiWindowFlags_NoResize | 
-    //     ImGuiWindowFlags_NoCollapse | 
-    //     ImGuiWindowFlags_NoTitleBar;
+    ImVec2 winSize = ImGui::GetIO().DisplaySize;
 
-    // // Get the exact size of the user's game window
-    // ImVec2 winSize = ImGui::GetIO().DisplaySize;
+    // Style dùng chung cho nút Theme và Home
+    ImVec4 btnColor = ImVec4(theme.inputMenuPrimaryColor.r/255.f, theme.inputMenuPrimaryColor.g/255.f, theme.inputMenuPrimaryColor.b/255.f, 1.0f);
+    ImVec4 btnHover = ImVec4(theme.inputMenuAccentColor.r/255.f, theme.inputMenuAccentColor.g/255.f, theme.inputMenuAccentColor.b/255.f, 1.0f);
+    ImVec4 textColor = ImVec4(theme.inputMenuTextColor.r/255.f, theme.inputMenuTextColor.g/255.f, theme.inputMenuTextColor.b/255.f, 1.0f);
 
-    // // ==========================================
-    // // 1. TOP CONTROL BAR (Input Menu)
-    // // ==========================================
-    // float topBarHeight = 80.0f; // Adjust this based on your Theme
-    // ImGui::SetNextWindowPos(ImVec2(0, 0));
-    // ImGui::SetNextWindowSize(ImVec2(winSize.x, topBarHeight));
-    
-    // ImGui::Begin("TopControlBar", nullptr, panelFlags);
-    // // Call your InputMenu render function here!
-    // // e.g., inputMenu.render(window); 
-    // ImGui::End();
+    if (isMainMenu) {
+        navMenu.render(window);
 
-    // // ==========================================
-    // // 2. RIGHT CODE PANEL (Pseudocode)
-    // // ==========================================
-    // float rightPanelWidth = 450.0f; // Width of the pseudocode box
-    // float bottomBarHeight = 100.0f; // Space to leave at the bottom for SFML buttons
-    
-    // // Position it under the Top Bar, and push it all the way to the right
-    // ImGui::SetNextWindowPos(ImVec2(winSize.x - rightPanelWidth, topBarHeight));
-    // // Its height stretches down to the playback bar
-    // ImGui::SetNextWindowSize(ImVec2(rightPanelWidth, winSize.y - topBarHeight - bottomBarHeight));
-    
-    // ImGui::Begin("RightCodePanel", nullptr, panelFlags);
-    // // Call your CodePanel render function here!
-    // // e.g., codePanel.render(window);
-    // ImGui::End();
-    if (isPlay) {
-        play.render(window);
+        // Vẽ nút Theme đè lên góc phải của Main Menu
+        ImGui::SetNextWindowPos(ImVec2(winSize.x - 110.0f, 10.0f));
+        ImGui::SetNextWindowSize(ImVec2(100.0f, 50.0f));
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
+                                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | 
+                                 ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
+        ImGui::Begin("ThemeMenu", nullptr, flags);
+        
+        ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnHover);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnHover);
+        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+        
+        if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
+            isDarkMode = !isDarkMode;
+            themeToggleRequested = true;
+        }
+        ImGui::PopStyleColor(4);
+        ImGui::PopStyleVar();
+        ImGui::End();
+
     } else {
-        pause.render(window);
+        ImGuiWindowFlags panelFlags = 
+            ImGuiWindowFlags_NoMove | 
+            ImGuiWindowFlags_NoResize | 
+            ImGuiWindowFlags_NoCollapse | 
+            ImGuiWindowFlags_NoTitleBar | 
+            ImGuiWindowFlags_NoBringToFrontOnFocus |
+            ImGuiWindowFlags_NoBackground | // Bar trong suốt
+            ImGuiWindowFlags_NoScrollbar;
+
+        // ==========================================
+        // 1. TOP CONTROL BAR (Chứa Home & Theme)
+        // ==========================================
+        float topBarHeight = 80.0f; 
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2(winSize.x, topBarHeight));
+        
+        ImGui::Begin("TopControlBar", nullptr, panelFlags);
+        
+        ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnHover);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnHover);
+        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+        
+        ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
+        if (ImGui::Button("Home", ImVec2(80.0f, 35.0f))) {
+            backToMenuClicked = true;
+            isMainMenu = true;
+        }
+
+        ImGui::SetCursorPos(ImVec2(winSize.x - 110.0f, 10.0f));
+        if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
+            isDarkMode = !isDarkMode;
+            themeToggleRequested = true;
+        }
+        
+        ImGui::PopStyleColor(4);
+        ImGui::PopStyleVar();
+        ImGui::End();
+
+        // Render Component
+        inputMenu.render(window);
+        codePanel.render(window);
+        slider.render(window);
+
+        if (isPlay) {
+            play.render(window);
+        } else {
+            pause.render(window);
+        }
+        stepForward.render(window);
+        stepBackward.render(window);
     }
 
-    stepForward.render(window);
-    stepBackward.render(window);
     ImGui::SFML::Render(window);
 }
 
@@ -154,4 +264,98 @@ void UIManager::shutdown() {
 
     ImGui::SFML::Shutdown();
     initialized = false;
+}
+
+// ==========================================
+// Interact with Navigation Menu
+// ==========================================
+int UIManager::getSelectedDS() const {
+    return navMenu.getSelectedDS();
+}
+
+void UIManager::resetDSSelection() {
+    navMenu.resetSelection();
+}
+
+void UIManager::setShowMainMenu(bool show) {
+    isMainMenu = show;
+}
+
+// ==========================================
+// Interact with InputMenu
+// ==========================================
+int UIManager::getInputAction() const {
+    return inputMenu.getAction();
+}
+
+int UIManager::getInputMode() const {
+    return inputMenu.getMode();
+}
+
+std::string UIManager::getInputString1() const {
+    return inputMenu.getString1();
+}
+
+std::string UIManager::getInputString2() const {
+    return inputMenu.getString2();
+}
+
+void UIManager::resetInputAction() {
+    inputMenu.resetAction();
+}
+
+// ==========================================
+// Interact with CodePanel
+// ==========================================
+void UIManager::setCodePanelCode(std::vector<std::string>& code) {
+    codePanel.setCode(code);
+}
+
+void UIManager::setCodePanelHighlightedLine(int line) {
+    codePanel.setHighlightedLine(line);
+}
+
+void UIManager::clearCodePanel() {
+    codePanel.clearCode();
+}
+
+// ==========================================
+// Interact with Playback Buttons & Slider
+// ==========================================
+bool UIManager::checkPlayClicked() {
+    bool res = playClicked;
+    playClicked = false;
+    return res;
+}
+
+bool UIManager::checkPauseClicked() {
+    bool res = pauseClicked;
+    pauseClicked = false;
+    return res;
+}
+
+bool UIManager::checkStepForwardClicked() {
+    bool res = stepForwardClicked;
+    stepForwardClicked = false;
+    return res;
+}
+
+bool UIManager::checkStepBackwardClicked() {
+    bool res = stepBackwardClicked;
+    stepBackwardClicked = false;
+    return res;
+}
+
+float UIManager::getSpeed() const {
+    return speed;
+}
+
+void UIManager::resetSpeed() {
+    slider.setValue(1.0f);
+}
+
+bool UIManager::checkBackToMenuClicked() {
+    bool res = backToMenuClicked;
+    backToMenuClicked = false;
+    return res;
 }
