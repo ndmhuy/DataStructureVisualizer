@@ -235,6 +235,7 @@ void UIManager::render(sf::RenderWindow& window) {
         ImGui::End();
 
         // Render Component
+        inputMenu.setDS(navMenu.getSelectedDS());
         inputMenu.render(window);
         codePanel.render(window);
         slider.render(window);
@@ -263,6 +264,24 @@ void UIManager::shutdown() {
 // ==========================================
 // Interact with Navigation Menu
 // ==========================================
+void UIManager::reset() {
+    isMainMenu = true;          // Bật lại màn hình Main Menu
+    resetDSSelection();         // Xóa cờ chọn Data Structure hiện tại
+    inputMenu.setDS(-1);        // Xóa menu nhập liệu của DS cũ
+    inputMenu.resetState();     // Xóa toàn bộ popup, form, textbox đang hiện
+    resetInputAction();         // Đặt lại action
+    clearCodePanel();           // Xóa mảng mã giả
+    resetSpeed();               // Trả Speed Slider về 1.0x
+
+    // Xóa cờ các nút điều khiển
+    playClicked = false;
+    pauseClicked = false;
+    stepForwardClicked = false;
+    stepBackwardClicked = false;
+
+    syncPlaybackUI(false, true, true, true); // Đặt nút Playback về trạng thái vô hiệu hóa (Rỗng)
+}
+
 int UIManager::getSelectedDS() const {
     return navMenu.getSelectedDS();
 }

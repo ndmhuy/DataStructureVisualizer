@@ -13,7 +13,7 @@ private:
     int selectedDS = -1; // -1: None, 0: Singly Linked List, 1: Heap, 2: AVL Tree, 3: Shortest Path
     std::vector<std::string> dsNames = {
         "Singly Linked List", "Heap", 
-        "AVL tree", "Shortest Path Algorithm"
+        "AVL Tree", "Shortest Path Algorithm"
     };
 
 public:

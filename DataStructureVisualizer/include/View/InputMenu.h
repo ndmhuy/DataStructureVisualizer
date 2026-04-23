@@ -8,28 +8,32 @@
 #include "imgui-SFML.h"
 #include "imgui.h"
 #include "imfilebrowser.h"
+#include <vector>
 
 #include "View/Theme.h"
 
 class InputMenu {
 private:
     bool isopenMenu = false; // Is the menu visible or not.
-    int hasAction = 0; // 0: no action, 1: Insert, 2: Delete, 3: Search, 4: Update, 5: Random.
-    int currentOption = -1; // -1: Close, 0: Insert, 1: Delete, 2: Search, 3: Update, 4: Random.
+    int currentDS= -1;
+    int hasAction = 0; 
+    int currentOption = -1; 
 
     Theme theme = Theme::getDefaultTheme();
     bool backToMenuClicked = false;
 
-    const char* menu[5] = {"Insert", "Random", "Delete", "Search", "Update"};
+    std::vector<std::string> getCurrentMenu() const;
 
-    int insertSubMode = 0; // 0: Single, 1: Array, 2: File
+    int insertSubMode = 0; 
 
     int outMode = -1;
     std::string outString1 = "";
     std::string outString2 = "";
+    std::string outString3 = "";
 
     char inputBuf1[256] = "";
     char inputBuf2[256] = "";
+    char inputBuf3[256] = "";
     
     ImGui::FileBrowser fileDialog;
 
@@ -41,11 +45,22 @@ public:
     void renderinputform(const sf::RenderWindow& window, int cur, ImVec2 currentbttnPos);
 
     void applyTheme(const Theme& selectedTheme) { theme = selectedTheme; }
+    void setDS(int DS) { currentDS=DS; }
     int getAction() const { return hasAction; }
     int getMode() const { return outMode; }
     std::string getString1() const { return outString1; }
     std::string getString2() const { return outString2; }
+    std::string getString3() const { return outString3; }
     void resetAction() { hasAction = 0; }
+    void resetState() {
+        isopenMenu = false;
+        currentOption = -1;
+        insertSubMode = 0;
+        outMode = -1;
+        inputBuf1[0] = '\0';
+        inputBuf2[0] = '\0';
+        inputBuf3[0] = '\0';
+    }
 };
 
 #endif // INPUTMENU_H

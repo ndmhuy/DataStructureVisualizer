@@ -62,16 +62,50 @@ public:
     void shutdown(); // shutdown ImGui
 
     // --- Interact Navigation Menu ---
+    void reset(); // Khôi phục toàn bộ UI về trạng thái mặc định (Gọi khi Back to Menu)
     int getSelectedDS() const; // -1: none, 0: SSL, 1: Heap, 2: AVL, 3: SPA
     void resetDSSelection(); // Call after getSelectedDS()
     void setShowMainMenu(bool show);
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
     // --- Interact InputMenu ---
-    int getInputAction() const; // 0: no action, 1: Insert, 2: Delete, 3: Search, 4: Update, 5: Random.
-    int getInputMode() const; //Insert: 0. Single 1. Array 2. File //Random: 0.Single 1.Array //Delete,Search,Update: 0
+    // Each DS has different input menu:
+    /*
+    SINGLY LINKED LIST: (0)
+    1/Init: 
+    2/Insert:
+    3/Search
+    4/Delete
+    5/Update
+    6/Clear
+
+    HEAP:(1)
+    1/Init:
+    2/Insert:
+    3/Pop:
+    4/Clear:
+
+    AVL TREE:(2)
+    1/Init: 
+    2/Insert:
+    3/Search:
+    4/Delete:
+    5/Clear
+
+    SHORTEST PATH ALGORITHM: (3)
+    1/Init from file:
+    2/Create Node:
+    3/Create Egde:
+    4/Single Source Shortest Path:
+    5/One Pair Shortest Path:
+    6/All Pairs Shortest Path:
+    7/Clear
+*/
+    int getInputAction() const;
+    int getInputMode() const; 
     std::string getInputString1() const;
-    std::string getInputString2() const; //Only get if Action 4, Mode 0
+    std::string getInputString2() const;
+    std::string getInputString3() const;
     void resetInputAction(); //Call after done getAction
 
     // --- Interact CodePanel ---

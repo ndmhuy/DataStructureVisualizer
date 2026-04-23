@@ -42,7 +42,7 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     }
 
     // --- Vẽ Lưới Nút Bấm 2x2 ---
-    float btnWidth = 350.0f;
+    float btnWidth = 400.0f; // Mở rộng kích thước nút để chứa trọn vẹn cụm từ "Shortest Path Algorithm"
     float btnHeight = 80.0f;
     float spacing = 30.0f;
     int cols = 2; 
