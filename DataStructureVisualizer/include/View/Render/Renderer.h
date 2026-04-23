@@ -5,6 +5,7 @@
 #include <cmath>
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <map>
 
 #include "View/Core/Window.h"
 #include "View/Core/Theme.h"
@@ -46,7 +47,10 @@ private:
     sf::Texture bgTexture;
     sf::Texture nodeTexture;
     sf::Texture arrayTexture;
-
+    std::map<size_t, sf::Vector2f> customNodePositions;
+    std::map<size_t, sf::Vector2f> defaultNodePositions; 
+    int draggedNodeIndex = -1;
+    sf::Vector2f dragOffset;
     sf::Sprite bgSprite;
 
 public:
@@ -66,8 +70,8 @@ public:
     void drawLine(sf::Vector2f p1, sf::Vector2f size1, ShapeType type1, sf::Vector2f p2, sf::Vector2f size2, ShapeType type2, float thickness, bool isHighlighted = false);
 
     void renderActiveState(const Frame* currentFrame);
-    
-    // IPayloadVisitor overrides
+
+    // IPayloadVisitor overrides.
     void visit(const LinkedListPayload& payload) override;
     void visit(const TreePayload& payload) override;
     void visit(const HeapPayload& payload) override;
@@ -79,6 +83,12 @@ public:
     // Texture-based size queries.
     sf::Vector2f getNodeSize() const;  // in main.cpp have to use to access nodeW
     sf::Vector2f getArraySize() const; // in main.cpp have to use to access nodeH
+
+    // Drag and Drop handlers
+    void handleMousePress(sf::Vector2f mousePos);
+    void handleMouseMove(sf::Vector2f mousePos);
+    void handleMouseRelease();
+    void resetCustomPositions();
 
     // Generic and positional text helpers.
     void drawText(

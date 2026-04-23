@@ -431,6 +431,19 @@ void AppEngine::processInput(const sf::Event& event) {
 
     // Pass the event to Dear ImGui and your custom buttons
     uiManager.processEvent(window.getWindow(), event);
+    if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
+        if (mousePressed->button == sf::Mouse::Button::Left && !uiManager.isMouseOverUI()) {
+            sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mousePressed->position);
+            renderer.handleMousePress(worldPos);
+        }
+    } else if (const auto* mouseMoved = event.getIf<sf::Event::MouseMoved>()) {
+        sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mouseMoved->position);
+        renderer.handleMouseMove(worldPos);
+    } else if (const auto* mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
+        if (mouseReleased->button == sf::Mouse::Button::Left) {
+            renderer.handleMouseRelease();
+        }
+    }
 }
 
 void AppEngine::update(sf::Time deltaTime) {

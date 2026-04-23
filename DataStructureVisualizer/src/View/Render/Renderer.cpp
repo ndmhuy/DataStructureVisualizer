@@ -302,6 +302,41 @@ void Renderer::drawTextBottomRight(sf::Vector2f center, sf::Vector2f objSize, fl
     drawTextPositioned(center, text, size, color, TextPositionMode::BottomRight, objSize.y, objSize.x, padding);
 }
 
+void Renderer::resetCustomPositions() {
+    customNodePositions.clear();
+    draggedNodeIndex = -1;
+}
+void Renderer::handleMousePress(sf::Vector2f mousePos) {
+    sf::Vector2f nodeSize = getNodeSize();
+    float radius = std::max(nodeSize.x, nodeSize.y) / 2.0f;
+    if (radius < 20.0f) radius = 35.0f; 
+
+    for (const auto& pair : defaultNodePositions) {
+        size_t id = pair.first;
+        sf::Vector2f pos = pair.second;
+        
+        if (customNodePositions.find(id) != customNodePositions.end()) {
+            pos = customNodePositions[id];
+        }
+
+        float dx = mousePos.x - pos.x;
+        float dy = mousePos.y - pos.y;
+        if (std::sqrt(dx * dx + dy * dy) <= radius) {
+            draggedNodeIndex = id;
+            dragOffset = pos - mousePos;
+            return;
+        }
+    }
+}
+void Renderer::handleMouseMove(sf::Vector2f mousePos) {
+    if (draggedNodeIndex != -1) {
+        customNodePositions[draggedNodeIndex] = mousePos + dragOffset;
+    }
+}
+void Renderer::handleMouseRelease() {
+    draggedNodeIndex = -1;
+}
+
 void Renderer::renderActiveState(const Frame* currentFrame) {
     if (!currentFrame || !currentFrame->getPayload()) return;
     
@@ -407,27 +442,31 @@ void Renderer::visit(const GraphPayload& payload) {
     const auto& hEdges = payload.highlightedEdges;
     const auto& hIndices = payload.highlightedVertices;
 
-    // Use payload.positions if available, otherwise fallback to circular layout for now
-    std::vector<sf::Vector2f> positions(vertices.size());
-    if (payload.positions.size() == vertices.size()) {
-        for (size_t i = 0; i < vertices.size(); ++i) {
-            positions[i] = {payload.positions[i].x, payload.positions[i].y};
-        }
-    } else {
-        sf::Vector2u winSize = window.getWindow().getSize();
-        float cx = winSize.x / 2.0f;
-        float cy = winSize.y / 2.0f - 50.0f; 
-        
-        float radius = std::min(cx, cy) - 100.0f;
-        if (radius < 50.0f) radius = 50.0f;
+    sf::Vector2u winSize = window.getWindow().getSize();
+    float cx = winSize.x / 2.0f;
+    float cy = winSize.y / 2.0f - 50.0f; 
+    
+    float radius = std::min(cx, cy) - 100.0f;
+    if (radius < 50.0f) radius = 50.0f;
 
-        for (size_t i = 0; i < vertices.size(); ++i) {
+    defaultNodePositions.clear();
+    std::vector<sf::Vector2f> positions(vertices.size());
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        if (payload.positions.size() == vertices.size()) {
+            positions[i] = {payload.positions[i].x, payload.positions[i].y};
+        } else {
             if (vertices.size() == 1) {
                 positions[i] = {cx, cy};
             } else {
                 float angle = i * (2.0f * M_PI / vertices.size()) - M_PI / 2.0f;
                 positions[i] = {cx + radius * std::cos(angle), cy + radius * std::sin(angle)};
             }
+        }
+
+        defaultNodePositions[i] = positions[i];
+        auto customPosIt = customNodePositions.find(i);
+        if (customPosIt != customNodePositions.end()) {
+            positions[i] = customPosIt->second;
         }
     }
 

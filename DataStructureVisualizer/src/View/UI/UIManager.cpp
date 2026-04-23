@@ -382,3 +382,7 @@ bool UIManager::checkBackToMenuClicked() {
     backToMenuClicked = false;
     return res;
 }
+
+bool UIManager::isMouseOverUI() const {
+    return ImGui::GetIO().WantCaptureMouse;
+}

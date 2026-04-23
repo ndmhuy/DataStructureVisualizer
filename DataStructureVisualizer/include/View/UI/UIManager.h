@@ -67,6 +67,8 @@ public:
     void setShowMainMenu(bool show);
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
+    bool isMouseOverUI() const;
+
     // --- Interact InputMenu ---
     int getInputAction() const; // 0: no action, 1: Insert, 2: Delete, 3: Search, 4: Update, 5: Random.
     int getInputMode() const; //Insert: 0. Single 1. Array 2. File //Random: 0.Single 1.Array //Delete,Search,Update: 0
