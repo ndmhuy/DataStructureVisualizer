@@ -48,6 +48,7 @@ class AVLTree : public IStandardStructure {
     void insert(int value, Timeline& timeline) override;
     void remove(int value, Timeline& timeline) override;
     void search(int value, Timeline& timeline) override;
+    void update(int oldValue, int newValue, Timeline& timeline) override;
     void clear(Timeline& timeline) override;
 
     StructureType getStructureType() const override;

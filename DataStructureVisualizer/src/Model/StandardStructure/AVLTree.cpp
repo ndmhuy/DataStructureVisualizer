@@ -307,6 +307,25 @@ void AVLTree::search(int value, Timeline& timeline) {
     timeline.addFrame(Frame(makeTreePayload({}), 4, "Value " + std::to_string(value) + " was not found in the tree."));
 }
 
+void AVLTree::update(int oldValue, int newValue, Timeline& timeline) {
+    makeTreePayload();
+    timeline.addFrame(Frame(makeTreePayload({}), 1, "Starting update: " + std::to_string(oldValue) + " -> " + std::to_string(newValue)));
+
+    auto found = getNodeIndex.find(oldValue);
+    if (found == getNodeIndex.end()) {
+        timeline.addFrame(Frame(makeTreePayload({}), 2, "Value " + std::to_string(oldValue) + " not found. Update canceled."));
+        return;
+    }
+
+    timeline.addFrame(Frame(makeTreePayload({found->second}), 3, "Found old value. Removing it first..."));
+    remove(oldValue, timeline);
+
+    timeline.addFrame(Frame(makeTreePayload({}), 4, "Now inserting the new value..."));
+    insert(newValue, timeline);
+
+    timeline.addFrame(Frame(makeTreePayload({}), 5, "Update successfully completed!"));
+}
+
 void AVLTree::clear(Timeline& timeline) {
     timeline.addFrame(Frame(makeTreePayload({}), 1, "Clearing the entire tree..."));
 
