@@ -88,18 +88,18 @@ std::vector<Edge> AdjacencyMatrix::getEdgesFromVertex(size_t vertex) const {
 
 void AdjacencyMatrix::initialize(const std::vector<Edge>& startingEdges, Timeline& timeline) {
     clear(timeline);
-    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Initializing Adjacency Matrix with given edges..."));
+    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initializing Adjacency Matrix with given edges..."));
     for (const auto& edge : startingEdges) {
         addEdge(edge.from, edge.to, edge.weight);
     }
-    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Initialization complete."));
+    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initialization complete."));
 }
 
 void AdjacencyMatrix::clear(Timeline& timeline) {
-    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Clearing Adjacency Matrix..."));
+    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Clearing Adjacency Matrix..."));
     matrix.clear();
     vertexCount = 0;
-    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Adjacency Matrix cleared."));
+    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Adjacency Matrix cleared."));
 }
 
 StructureType AdjacencyMatrix::getStructureType() const {
