@@ -4,12 +4,38 @@ const std::vector<std::string>& PseudocodeManager::getPseudocode(AlgorithmType t
     switch (type) {
         case AlgorithmType::None:
             return {"No algorithm selected."};
+        
+        // Singly Linked List
         case AlgorithmType::SinglyLinkedListInsert:
             return SinglyLinkedListInsertCode;
-        case AlgorithmType::SinglyLinkedListDelete:
-            return SinglyLinkedListDeleteCode;
+        case AlgorithmType::SinglyLinkedListRemove:
+            return SinglyLinkedListRemoveCode;
         case AlgorithmType::SinglyLinkedListSearch:
             return SinglyLinkedListSearchCode;
+        case AlgorithmType::SinglyLinkedListUpdate:
+            return SinglyLinkedListUpdateCode;
+
+        // Heap
+        case AlgorithmType::HeapInsert:
+            return HeapInsertCode;
+        case AlgorithmType::HeapRemove:
+            return HeapRemoveCode;
+        case AlgorithmType::HeapSearch:
+            return HeapSearchCode;
+        case AlgorithmType::HeapUpdate:
+            return HeapUpdateCode;
+
+        // AVL Tree
+        case AlgorithmType::AVLTreeInsert:
+            return AVLTreeInsertCode;
+        case AlgorithmType::AVLTreeRemove:
+            return AVLTreeRemoveCode;
+        case AlgorithmType::AVLTreeSearch:
+            return AVLTreeSearchCode;
+        case AlgorithmType::AVLTreeUpdate:
+            return AVLTreeUpdateCode;
+
+        // Graph
         case AlgorithmType::GraphGridBFSShortestPath:
             return GraphGridBFSShortestPathCode;
         case AlgorithmType::GraphDAGShortestPath:
@@ -29,6 +55,7 @@ const std::vector<std::string>& PseudocodeManager::getPseudocode(AlgorithmType t
     }
 }
 
+// Singly Linked List
 const std::vector<std::string> PseudocodeManager::SinglyLinkedListInsertCode = {
     "function insert(value):", // Line 0
     "   newNode = Node(value)", // Line 1
@@ -41,8 +68,8 @@ const std::vector<std::string> PseudocodeManager::SinglyLinkedListInsertCode = {
     "       current.next = newNode" // Line 8
 };
 
-const std::vector<std::string> PseudocodeManager::SinglyLinkedListDeleteCode = {
-    "function delete(value):", // Line 0
+const std::vector<std::string> PseudocodeManager::SinglyLinkedListRemoveCode = {
+    "function remove(value):", // Line 0
     "   if head is null:", // Line 1
     "       return", // Line 2
     "   if head.value == value:", // Line 3
@@ -51,9 +78,9 @@ const std::vector<std::string> PseudocodeManager::SinglyLinkedListDeleteCode = {
     "   current = head", // Line 6
     "   while current.next is not null:", // Line 7
     "       if current.next.value == value:", // Line 8
-    "           deleteNode = current.next", // Line 9
+    "           removeNode = current.next", // Line 9
     "           current.next = current.next.next", // Line 10
-    "           delete deleteNode", // Line 11
+    "           delete removeNode", // Line 11
     "           return", // Line 12
     "       current = current.next" // Line 13
 };
@@ -68,6 +95,104 @@ const std::vector<std::string> PseudocodeManager::SinglyLinkedListSearchCode = {
     "   return false" // Line 6
 };
 
+const std::vector<std::string> PseudocodeManager::SinglyLinkedListUpdateCode = {
+    "function update(oldValue, newValue):", // Line 0
+    "   current = head", // Line 1
+    "   while current is not null:", // Line 2
+    "       if current.value == oldValue:", // Line 3
+    "           current.value = newValue", // Line 4
+    "           return true", // Line 5
+    "       current = current.next", // Line 6
+    "   return false" // Line 7
+};
+
+// Heap
+const std::vector<std::string> PseudocodeManager::HeapInsertCode = {
+    "function insert(value):", // Line 0
+    "   heap.append(value)", // Line 1
+    "   i = heap.length - 1", // Line 2
+    "   while i > 0 and compare(i, parent(i)):", // Line 3
+    "       swap(heap[i], heap[parent(i)])", // Line 4
+    "       i = parent(i)" // Line 5
+};
+
+const std::vector<std::string> PseudocodeManager::HeapRemoveCode = {
+    "function remove(value):", // Line 0
+    "   index = search(value)", // Line 1
+    "   if index == -1: return", // Line 2
+    "   swap(heap[index], heap.last())", // Line 3
+    "   heap.removeLast()", // Line 4
+    "   if index < heap.length:", // Line 5
+    "       fixNode(index) // shiftUp or shiftDown" // Line 6
+};
+
+const std::vector<std::string> PseudocodeManager::HeapSearchCode = {
+    "function search(value):", // Line 0
+    "   for i = 0 to heap.length - 1:", // Line 1
+    "       if heap[i] == value:", // Line 2
+    "           return i", // Line 3
+    "   return -1" // Line 4
+};
+
+const std::vector<std::string> PseudocodeManager::HeapUpdateCode = {
+    "function update(oldValue, newValue):", // Line 0
+    "   index = search(oldValue)", // Line 1
+    "   if index == -1: return false", // Line 2
+    "   heap[index] = newValue", // Line 3
+    "   fixNode(index) // shiftUp or shiftDown", // Line 4
+    "   return true" // Line 5
+};
+
+// AVL Tree
+const std::vector<std::string> PseudocodeManager::AVLTreeInsertCode = {
+    "function insert(node, value):", // Line 0
+    "   if node is null: return new Node(value)", // Line 1
+    "   if value < node.value:", // Line 2
+    "       node.left = insert(node.left, value)", // Line 3
+    "   else if value > node.value:", // Line 4
+    "       node.right = insert(node.right, value)", // Line 5
+    "   node.height = 1 + max(height(node.left), height(node.right))", // Line 6
+    "   balanceFactor = height(node.left) - height(node.right)", // Line 7
+    "   return balance(node, balanceFactor)" // Line 8
+};
+
+const std::vector<std::string> PseudocodeManager::AVLTreeRemoveCode = {
+    "function remove(node, value):", // Line 0
+    "   if node is null: return node", // Line 1
+    "   if value < node.value: node.left = remove(node.left, value)", // Line 2
+    "   else if value > node.value: node.right = remove(node.right, value)", // Line 3
+    "   else:", // Line 4
+    "       if node has 1 or 0 children: return non_null_child_or_null", // Line 5
+    "       temp = minValueNode(node.right)", // Line 6
+    "       node.value = temp.value", // Line 7
+    "       node.right = remove(node.right, temp.value)", // Line 8
+    "   if node is null: return node", // Line 9
+    "   node.height = 1 + max(height(node.left), height(node.right))", // Line 10
+    "   balanceFactor = height(node.left) - height(node.right)", // Line 11
+    "   return balance(node, balanceFactor)" // Line 12
+};
+
+const std::vector<std::string> PseudocodeManager::AVLTreeSearchCode = {
+    "function search(node, value):", // Line 0
+    "   while node is not null:", // Line 1
+    "       if value == node.value: return node", // Line 2
+    "       if value < node.value:", // Line 3
+    "           node = node.left", // Line 4
+    "       else:", // Line 5
+    "           node = node.right", // Line 6
+    "   return null" // Line 7
+};
+
+const std::vector<std::string> PseudocodeManager::AVLTreeUpdateCode = {
+    "function update(root, oldValue, newValue):", // Line 0
+    "   if search(root, oldValue) is null:", // Line 1
+    "       return root // Not found", // Line 2
+    "   root = remove(root, oldValue)", // Line 3
+    "   root = insert(root, newValue)", // Line 4
+    "   return root" // Line 5
+};
+
+// Graph
 const std::vector<std::string> PseudocodeManager::GraphGridBFSShortestPathCode = {
     "function bfsShortestPath(graph, start, target):", // Line 0
     "   visited = 2D array of size rows x cols initialized to false", // Line 1
