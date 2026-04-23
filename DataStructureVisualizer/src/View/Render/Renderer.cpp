@@ -371,7 +371,7 @@ void Renderer::visit(const LinkedListPayload& payload) {
     if (payload.values.empty()) return;
 
     sf::Vector2f nodeSize = getNodeSize();
-    float spacing = 50.0f;
+    float spacing = 50.0f * theme.nodeScale;
     float totalWidth = payload.values.size() * (nodeSize.x + spacing) - spacing;
 
     sf::Vector2u winSize = window.getWindow().getSize();
@@ -428,8 +428,8 @@ void Renderer::visit(const HeapPayload& payload) {
     // to compute the suitable values
     float startX = 800;
     float startY = 225;
-    float distanceHorizontal = 30; // Deepest leaf nodes
-    float distanceVertical = 50;
+    float distanceHorizontal = 30.0f * theme.nodeScale; // Deepest leaf nodes
+    float distanceVertical = 50.0f * theme.nodeScale;
     float height = ceil(log2(heapArray.size()));
 
     currentChildren.clear();

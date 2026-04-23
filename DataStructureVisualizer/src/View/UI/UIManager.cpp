@@ -107,6 +107,12 @@ bool UIManager::consumeThemeToggleRequest() {
     return res;
 }
 
+bool UIManager::consumeThemeScaleRequest() {
+    bool res = themeScaleChanged;
+    themeScaleChanged = false;
+    return res;
+}
+
 void UIManager::processEvent(sf::RenderWindow& window, const sf::Event& event) {
     ImGui::SFML::ProcessEvent(window, event);
 
@@ -231,7 +237,14 @@ void UIManager::render(sf::RenderWindow& window) {
             navMenu.resetState();
         }
 
-        ImGui::SetCursorPos(ImVec2(winSize.x - 110.0f, 10.0f));
+        ImGui::SameLine(0.0f, 30.0f);
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::SliderFloat("##ScaleApp", &theme.nodeScale, 0.3f, 2.0f, "Size %.1f")) {
+            theme.arrayScale = theme.nodeScale;
+            themeScaleChanged = true;
+        }
+        
+        ImGui::SameLine(0.0f, 20.0f);
         if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;

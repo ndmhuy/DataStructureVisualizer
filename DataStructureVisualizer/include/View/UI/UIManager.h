@@ -22,6 +22,7 @@ private:
     bool isMainMenu = true; // Main menu is visible?
     bool isDarkMode = false;
     bool themeToggleRequested = false;
+    bool themeScaleChanged = false;
     bool backToMenuClicked = false;
     Button play;
     Button pause;
@@ -58,6 +59,7 @@ public:
 
     bool applyTheme(const Theme& selectedTheme);
     bool consumeThemeToggleRequest();
+    bool consumeThemeScaleRequest();
 
     void shutdown(); // shutdown ImGui
 
