@@ -128,25 +128,25 @@ void SinglyLinkedList::search(int value, Timeline& timeline) {
 
 void SinglyLinkedList::update(int oldValue, int newValue, Timeline& timeline) {
     std::vector<int> currentState = toVector();
-    timeline.addFrame(Frame(currentState, {}, 1, "Searching for " + std::to_string(oldValue)));
+    timeline.addFrame(Frame(LinkedListPayload(currentState, {}), 1, "Searching for " + std::to_string(oldValue)));
 
     Node* current = head;
     size_t index = 0;
     
     while (current) {
-        timeline.addFrame(Frame(currentState, {index}, 2, "Comparing with node value " + std::to_string(current->value)));
+        timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 2, "Comparing with node value " + std::to_string(current->value)));
         if (current->value == oldValue) {
-            timeline.addFrame(Frame(currentState, {index}, 3, "Value found at index " + std::to_string(index)));
+            timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 3, "Value found at index " + std::to_string(index)));
             
             current->value = newValue;
-            timeline.addFrame(Frame(currentState, {index}, 4, "Updated this index's value to " + std::to_string(newValue)));
+            timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 4, "Updated this index's value to " + std::to_string(newValue)));
 
             return;
         }
         current = current->next;
         index++;
     }
-    timeline.addFrame(Frame(currentState, {}, 5, "Value " + std::to_string(oldValue) + " was not found in the list. Updating canceled."));
+    timeline.addFrame(Frame(LinkedListPayload(currentState, {}), 5, "Value " + std::to_string(oldValue) + " was not found in the list. Updating canceled."));
 }
 
 void SinglyLinkedList::clear(Timeline& timeline) {

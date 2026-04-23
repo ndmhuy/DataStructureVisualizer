@@ -172,8 +172,12 @@ StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
         case 1:
             return StructureType::MinHeap;
         case 2:
-            return StructureType::AVLTree;
+            return StructureType::MaxHeap;
         case 3:
+            return StructureType::AVLTree;
+        case 5:
+            return StructureType::AdjacencyMatrix;
+        case 6:
             return StructureType::AdjacencyList;
         default:
             return StructureType::None;
@@ -211,6 +215,7 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
 
     activeStructureType = structureType;
     activeStructure = resolveStructure(structureType);
+    renderer.resetCustomPositions();
 
     Timeline timeline;
     if (activeStructure) {
@@ -270,6 +275,7 @@ void AppEngine::handleDataActionRequest() {
                     std::vector<int> values = (mode == 1) ? parseIntList(input1) : readIntListFromFile(input1);
                     if (!values.empty()) {
                         standard->initialize(values, timeline);
+                        renderer.resetCustomPositions();
                         handled = true;
                     }
                 }
@@ -284,6 +290,7 @@ void AppEngine::handleDataActionRequest() {
                     std::vector<int> values = (mode == 1) ? parseIntList(input1) : readIntListFromFile(input1);
                     if (!values.empty()) {
                         heap->initialize(values, timeline);
+                        renderer.resetCustomPositions();
                         handled = true;
                     }
                 }
@@ -293,6 +300,7 @@ void AppEngine::handleDataActionRequest() {
                     std::vector<Edge> edges = parseEdgesFromInts(rawValues);
                     if (!edges.empty()) {
                         graph->initialize(edges, timeline);
+                        renderer.resetCustomPositions();
                         handled = true;
                     }
                 }
@@ -354,11 +362,13 @@ void AppEngine::handleDataActionRequest() {
                     } else {
                         heap->initialize(values, timeline);
                     }
+                    renderer.resetCustomPositions();
                     handled = true;
                 }
             } else if (graph && mode == 1) {
                 std::vector<Edge> edges = generateRandomEdges(8, 12, 1, 20);
                 graph->initialize(edges, timeline);
+                renderer.resetCustomPositions();
                 handled = true;
             }
             break;
@@ -447,6 +457,12 @@ void AppEngine::processInput(const sf::Event& event) {
     } else if (const auto* mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (mouseReleased->button == sf::Mouse::Button::Left) {
             renderer.handleMouseRelease();
+        }
+    } else if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+        if (keyPressed->code == sf::Keyboard::Key::Z && 
+           (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl))) {
+            // Hoàn tác bước kéo thả (Undo drag node)
+            renderer.undoLastDrag();
         }
     }
 }

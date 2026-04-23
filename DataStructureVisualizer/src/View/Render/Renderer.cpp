@@ -303,8 +303,19 @@ void Renderer::drawTextBottomRight(sf::Vector2f center, sf::Vector2f objSize, fl
 }
 
 void Renderer::resetCustomPositions() {
+    if (!customNodePositions.empty()) {
+        positionHistory.push_back(customNodePositions);
+    }
     customNodePositions.clear();
     draggedNodeIndex = -1;
+    hasMovedDuringDrag = false;
+}
+
+void Renderer::undoLastDrag() {
+    if (!positionHistory.empty()) {
+        customNodePositions = positionHistory.back();
+        positionHistory.pop_back();
+    }
 }
 void Renderer::handleMousePress(sf::Vector2f mousePos) {
     sf::Vector2f nodeSize = getNodeSize();
@@ -324,16 +335,23 @@ void Renderer::handleMousePress(sf::Vector2f mousePos) {
         if (std::sqrt(dx * dx + dy * dy) <= radius) {
             draggedNodeIndex = id;
             dragOffset = pos - mousePos;
+            preDragPositions = customNodePositions;
+            hasMovedDuringDrag = false;
             return;
         }
     }
 }
 void Renderer::handleMouseMove(sf::Vector2f mousePos) {
     if (draggedNodeIndex != -1) {
+        hasMovedDuringDrag = true;
         customNodePositions[draggedNodeIndex] = mousePos + dragOffset;
     }
 }
 void Renderer::handleMouseRelease() {
+    if (draggedNodeIndex != -1 && hasMovedDuringDrag) {
+        positionHistory.push_back(preDragPositions);
+    }
+    hasMovedDuringDrag = false;
     draggedNodeIndex = -1;
 }
 
@@ -355,9 +373,23 @@ void Renderer::visit(const LinkedListPayload& payload) {
     float startX = (winSize.x - totalWidth) / 2.0f + nodeSize.x / 2.0f;
     float startY = winSize.y / 2.0f;
 
+    currentChildren.clear();
+    for (size_t i = 0; i + 1 < payload.values.size(); ++i) {
+        currentChildren[i].push_back(i + 1); // Mỗi node nối với node tiếp theo
+    }
+
+    defaultNodePositions.clear();
     std::vector<sf::Vector2f> positions(payload.values.size());
     for (size_t i = 0; i < payload.values.size(); ++i) {
-        positions[i] = {startX + i * (nodeSize.x + spacing), startY};
+        sf::Vector2f calcPos = {startX + i * (nodeSize.x + spacing), startY};
+        defaultNodePositions[i] = calcPos;
+
+        auto customPosIt = customNodePositions.find(i);
+        if (customPosIt != customNodePositions.end()) {
+            positions[i] = customPosIt->second;
+        } else {
+            positions[i] = calcPos;
+        }
     }
 
     // Draw edges
@@ -374,6 +406,7 @@ void Renderer::visit(const LinkedListPayload& payload) {
 
 void Renderer::visit(const TreePayload& payload) {
     // Tree rendering logic (to be expanded with payload.positions)
+    currentChildren.clear();
 }
 
 void Renderer::visit(const HeapPayload& payload) {
@@ -394,6 +427,8 @@ void Renderer::visit(const HeapPayload& payload) {
     float distanceVertical = 50;
     float height = ceil(log2(heapArray.size()));
 
+    currentChildren.clear();
+    defaultNodePositions.clear();
     for (size_t i = 0; i < heapArray.size(); i++) {
         // Coordinates calculation
         int level = std::floor(log2(i + 1));
@@ -405,7 +440,20 @@ void Renderer::visit(const HeapPayload& payload) {
         float currentY = startY + level * distanceVertical;
         float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
 
-        positions[i] = {currentX, currentY};
+        size_t left = 2 * i + 1;
+        size_t right = 2 * i + 2;
+        if (left < heapArray.size()) currentChildren[i].push_back(left);
+        if (right < heapArray.size()) currentChildren[i].push_back(right);
+
+        sf::Vector2f calcPos = {currentX, currentY};
+        defaultNodePositions[i] = calcPos;
+
+        auto customPosIt = customNodePositions.find(i);
+        if (customPosIt != customNodePositions.end()) {
+            positions[i] = customPosIt->second;
+        } else {
+            positions[i] = calcPos;
+        }
     }
 
     // Draw edges then draw nodes
@@ -447,6 +495,7 @@ void Renderer::visit(const GraphPayload& payload) {
     float radius = std::min(cx, cy) - 100.0f;
     if (radius < 50.0f) radius = 50.0f;
 
+    currentChildren.clear(); 
     defaultNodePositions.clear();
     std::vector<sf::Vector2f> positions(vertices.size());
     for (size_t i = 0; i < vertices.size(); ++i) {
