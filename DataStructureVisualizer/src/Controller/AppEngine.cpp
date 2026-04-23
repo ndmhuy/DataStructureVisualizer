@@ -446,6 +446,59 @@ void AppEngine::processInput(const sf::Event& event) {
 
     // Pass the event to Dear ImGui and your custom buttons
     uiManager.processEvent(window.getWindow(), event);
+        if (const auto* wheelScrolled = event.getIf<sf::Event::MouseWheelScrolled>()) {
+        if (!uiManager.isMouseOverUI()) {
+            sf::View view = window.getWindow().getView();
+            const sf::Vector2i pixelPos = wheelScrolled->position;
+            const sf::Vector2f worldPosBeforeZoom = window.getWindow().mapPixelToCoords(pixelPos, view);
+
+            const float zoomFactor = 1.1f;
+            float zoom = 1.0f;
+            if (wheelScrolled->delta > 0) { // Zoom in
+                zoom = 1.f / zoomFactor;
+            } else if (wheelScrolled->delta < 0) { // Zoom out
+                zoom = zoomFactor;
+            }
+
+                // Lấy kích thước hiện tại và kích thước giới hạn
+                sf::Vector2f currentSize = view.getSize();
+                sf::Vector2u winSize = window.getWindow().getSize();
+                
+                float maxWidth = static_cast<float>(winSize.x);   // Zoom out tối đa (1.0x)
+                float minWidth = maxWidth * 0.1f;                 // Zoom in tối đa (10.0x)
+
+                // Tính toán zoom an toàn
+                float expectedWidth = currentSize.x * zoom;
+                if (expectedWidth > maxWidth) {
+                    zoom = maxWidth / currentSize.x;
+                } else if (expectedWidth < minWidth) {
+                    zoom = minWidth / currentSize.x;
+                }
+
+                if (zoom != 1.0f) {
+                    view.zoom(zoom);
+                    window.getWindow().setView(view);
+
+                    const sf::Vector2f worldPosAfterZoom = window.getWindow().mapPixelToCoords(pixelPos, view);
+                    view.move(worldPosBeforeZoom - worldPosAfterZoom);
+                    
+                    // Giữ View không bị trôi ra ngoài màn hình khi zoom out
+                    sf::Vector2f viewCenter = view.getCenter();
+                    sf::Vector2f viewSize = view.getSize();
+                    float halfW = viewSize.x / 2.0f;
+                    float halfH = viewSize.y / 2.0f;
+                    
+                    if (viewCenter.x - halfW < 0.0f) viewCenter.x = halfW;
+                    if (viewCenter.x + halfW > winSize.x) viewCenter.x = winSize.x - halfW;
+                    if (viewCenter.y - halfH < 0.0f) viewCenter.y = halfH;
+                    if (viewCenter.y + halfH > winSize.y) viewCenter.y = winSize.y - halfH;
+
+                    view.setCenter(viewCenter);
+                    window.getWindow().setView(view);
+                }
+        }
+    }
+
     if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (mousePressed->button == sf::Mouse::Button::Left && !uiManager.isMouseOverUI()) {
             sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mousePressed->position);
