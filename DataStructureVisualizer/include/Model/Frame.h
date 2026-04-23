@@ -12,10 +12,6 @@ private:
     IPayload* payload;
 
 public:
-    // Retain old signatures to minimize disruption in other files, but instantiate payloads dynamically inside
-    Frame(const std::vector<int>& arrayData, const std::vector<size_t>& highlightedIndices, int lineId, const std::string& msg);
-    Frame(const std::vector<size_t>& vertices, const std::vector<Edge>& edges, const std::vector<size_t>& highlightedVertices, const std::vector<Edge>& highlightedEdges, int lineId, const std::string& msg);
-    
     Frame(const LinkedListPayload& p, int lineId, const std::string& msg);
     Frame(const TreePayload& p, int lineId, const std::string& msg);
     Frame(const HeapPayload& p, int lineId, const std::string& msg);

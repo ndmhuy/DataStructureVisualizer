@@ -97,18 +97,18 @@ std::vector<Edge> AdjacencyList::getEdgesFromVertex(size_t vertex) const {
 
 void AdjacencyList::initialize(const std::vector<Edge>& startingEdges, Timeline& timeline) {
     clear(timeline);
-    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Initializing Adjacency List with given edges..."));
+    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initializing Adjacency List with given edges..."));
     for (const auto& edge : startingEdges) {
         addEdge(edge.from, edge.to, edge.weight);
     }
-    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Initialization complete."));
+    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initialization complete."));
 }
 
 void AdjacencyList::clear(Timeline& timeline) {
-    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Clearing Adjacency List..."));
+    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Clearing Adjacency List..."));
     adjacencyList.clear();
     vertexCount = 0;
-    timeline.addFrame(Frame(getVertices(), getEdges(), {}, {}, 0, "Adjacency List cleared..."));
+    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Adjacency List cleared..."));
 }
 
 StructureType AdjacencyList::getStructureType() const {

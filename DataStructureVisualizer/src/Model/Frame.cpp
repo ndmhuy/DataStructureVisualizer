@@ -1,11 +1,5 @@
 #include "Model/Frame.h"
 
-Frame::Frame(const std::vector<int>& arrayData, const std::vector<size_t>& highlightedIndices, int lineId, const std::string& msg)
-    : codeLineId(lineId), message(msg), payload(new HeapPayload(arrayData, highlightedIndices)) {}
-
-Frame::Frame(const std::vector<size_t>& vertices, const std::vector<Edge>& edges, const std::vector<size_t>& highlightedVertices, const std::vector<Edge>& highlightedEdges, int lineId, const std::string& msg)
-    : codeLineId(lineId), message(msg), payload(new GraphPayload(vertices, edges, highlightedVertices, highlightedEdges)) {}
-
 Frame::Frame(const LinkedListPayload& p, int lineId, const std::string& msg)
     : codeLineId(lineId), message(msg), payload(new LinkedListPayload(p)) {}
 

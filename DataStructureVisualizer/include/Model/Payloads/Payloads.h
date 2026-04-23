@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <limits>
 
 struct LinkedListPayload : public IPayload {
     std::vector<int> values;
@@ -24,8 +25,8 @@ struct LinkedListPayload : public IPayload {
 struct TreeNodeData {
     size_t id;
     int value;
-    size_t leftId = -1;
-    size_t rightId = -1;
+    size_t leftId = std::numeric_limits<size_t>::max();
+    size_t rightId = std::numeric_limits<size_t>::max();
     size_t height = 0;
 };
 
