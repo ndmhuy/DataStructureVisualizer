@@ -431,8 +431,6 @@ void Renderer::visit(const HeapPayload& payload) {
     }
 }
 
-
-
 void Renderer::visit(const GraphPayload& payload) {
     const auto& vertices = payload.vertices;
     const auto& edges = payload.edges;

@@ -153,6 +153,7 @@ void syncCodePanelWithCurrentFrame(UIManager& uiManager, const Timeline& timelin
     uiManager.setCodePanelHighlightedLine(currentFrame->getCodeLineId());
 }
 
+
 bool isGraphStructureType(StructureType structureType) {
     return structureType == StructureType::AdjacencyList || structureType == StructureType::AdjacencyMatrix;
 }
