@@ -30,10 +30,12 @@ private:
     std::string outString1 = "";
     std::string outString2 = "";
     std::string outString3 = "";
+    std::string outString4 = "";
 
     char inputBuf1[256] = "";
     char inputBuf2[256] = "";
     char inputBuf3[256] = "";
+    char inputBuf4[256] = "";
     
     ImGui::FileBrowser fileDialog;
 
@@ -51,6 +53,7 @@ public:
     std::string getString1() const { return outString1; }
     std::string getString2() const { return outString2; }
     std::string getString3() const { return outString3; }
+    std::string getString4() const { return outString4; }
     void resetAction() { hasAction = 0; }
     void resetState() {
         isopenMenu = false;
@@ -60,6 +63,7 @@ public:
         inputBuf1[0] = '\0';
         inputBuf2[0] = '\0';
         inputBuf3[0] = '\0';
+        inputBuf4[0] = '\0';
     }
 };
 

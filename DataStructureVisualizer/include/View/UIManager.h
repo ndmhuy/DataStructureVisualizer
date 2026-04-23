@@ -63,8 +63,8 @@ public:
 
     // --- Interact Navigation Menu ---
     void reset(); // Khôi phục toàn bộ UI về trạng thái mặc định (Gọi khi Back to Menu)
-    int getSelectedDS() const; // -1: none, 0: SSL, 1: Heap, 2: AVL, 3: SPA
-    void resetDSSelection(); // Call after getSelectedDS()
+    int getSelectedDS() const; // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: ADJ Matrix, 6: ADJ List
+    void resetDSSelection(); 
     void setShowMainMenu(bool show);
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
@@ -79,20 +79,27 @@ public:
     5/Update
     6/Clear
 
-    HEAP:(1)
+    HEAP:(1)- Min Heap (2)- Max Heap
     1/Init:
     2/Insert:
     3/Pop:
     4/Clear:
 
-    AVL TREE:(2)
+    AVL TREE:(3)
     1/Init: 
     2/Insert:
     3/Search:
     4/Delete:
     5/Clear
 
-    SHORTEST PATH ALGORITHM: (3)
+    SPA: (4)- Grid
+    1/ Init: N=(ô nhập liệu 1), M=(ô nhập liệu 2)/ File browser
+    2/ Random: N=(ô nhập liệu 1), M=(ô nhập liệu 2)
+    3/ Set obstacles: i=(ô nhập liệu 1), j=(ô nhập liệu 2)
+    4/ BFS: from x1=(ô nhập liệu 1), y1=(ô nhập liệu 2) to x2=(ô nhập liệu 3), y2=(ô nhập liệu 4)
+    5/ Clear: nút Confirm 
+
+    SPA: (5)- ADJ Matrix (6)- ADJ List
     1/Init from file:
     2/Create Node:
     3/Create Egde:
@@ -106,6 +113,7 @@ public:
     std::string getInputString1() const;
     std::string getInputString2() const;
     std::string getInputString3() const;
+    std::string getInputString4() const;
     void resetInputAction(); //Call after done getAction
 
     // --- Interact CodePanel ---

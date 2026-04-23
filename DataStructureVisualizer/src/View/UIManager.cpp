@@ -279,6 +279,9 @@ void UIManager::reset() {
     stepForwardClicked = false;
     stepBackwardClicked = false;
 
+    //Reset Navigation Menu
+    //navMenu.resetState();
+
     syncPlaybackUI(false, true, true, true); // Đặt nút Playback về trạng thái vô hiệu hóa (Rỗng)
 }
 
@@ -311,6 +314,10 @@ std::string UIManager::getInputString1() const {
 
 std::string UIManager::getInputString2() const {
     return inputMenu.getString2();
+}
+
+std::string UIManager::getInputString4() const {
+    return inputMenu.getString4();
 }
 
 void UIManager::resetInputAction() {
