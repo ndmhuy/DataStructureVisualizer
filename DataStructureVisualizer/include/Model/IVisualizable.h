@@ -1,7 +1,7 @@
 #ifndef IVISUALIZABLE_H
 #define IVISUALIZABLE_H
 
-#include "Controller/StructureType.h"
+#include "Utilities/StructureType.h"
 #include "Model/Timeline.h"
 
 class IVisualizable {
