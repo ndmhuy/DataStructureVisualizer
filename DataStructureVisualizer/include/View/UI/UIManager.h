@@ -68,6 +68,7 @@ public:
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
     bool isMouseOverUI() const;
+    bool isKeyboardCapturedByUI() const;
 
     // --- Interact InputMenu ---
     int getInputAction() const; // 0: no action, 1: Insert, 2: Delete, 3: Search, 4: Update, 5: Random.

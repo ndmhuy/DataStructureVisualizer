@@ -89,9 +89,9 @@ public:
     sf::Vector2f getArraySize() const; // in main.cpp have to use to access nodeH
 
     // Drag and Drop handlers
-    void handleMousePress(sf::Vector2f mousePos);
+    bool handleMousePress(sf::Vector2f mousePos);
     void handleMouseMove(sf::Vector2f mousePos);
-    void handleMouseRelease();
+    bool handleMouseRelease();
     void resetCustomPositions();
     void undoLastDrag();
 

@@ -24,7 +24,10 @@ bool Renderer::loadAssets() {
 }
 
 void Renderer::drawBackground() {
+    sf::View currentView = window.getWindow().getView();
+    window.getWindow().setView(window.getWindow().getDefaultView());
     window.getWindow().draw(bgSprite);
+    window.getWindow().setView(currentView);
 }
 
 void Renderer::drawImageNode(sf::Vector2f pos, const std::string& text, bool isHighlighted) {
@@ -303,10 +306,8 @@ void Renderer::drawTextBottomRight(sf::Vector2f center, sf::Vector2f objSize, fl
 }
 
 void Renderer::resetCustomPositions() {
-    if (!customNodePositions.empty()) {
-        positionHistory.push_back(customNodePositions);
-    }
     customNodePositions.clear();
+    positionHistory.clear();
     draggedNodeIndex = -1;
     hasMovedDuringDrag = false;
 }
@@ -317,7 +318,7 @@ void Renderer::undoLastDrag() {
         positionHistory.pop_back();
     }
 }
-void Renderer::handleMousePress(sf::Vector2f mousePos) {
+bool Renderer::handleMousePress(sf::Vector2f mousePos) {
     sf::Vector2f nodeSize = getNodeSize();
     float radius = std::max(nodeSize.x, nodeSize.y) / 2.0f;
     if (radius < 20.0f) radius = 35.0f; 
@@ -337,9 +338,10 @@ void Renderer::handleMousePress(sf::Vector2f mousePos) {
             dragOffset = pos - mousePos;
             preDragPositions = customNodePositions;
             hasMovedDuringDrag = false;
-            return;
+            return true;
         }
     }
+    return false;
 }
 void Renderer::handleMouseMove(sf::Vector2f mousePos) {
     if (draggedNodeIndex != -1) {
@@ -347,12 +349,15 @@ void Renderer::handleMouseMove(sf::Vector2f mousePos) {
         customNodePositions[draggedNodeIndex] = mousePos + dragOffset;
     }
 }
-void Renderer::handleMouseRelease() {
+bool Renderer::handleMouseRelease() {
+    bool recorded = false;
     if (draggedNodeIndex != -1 && hasMovedDuringDrag) {
         positionHistory.push_back(preDragPositions);
+        recorded = true;
     }
     hasMovedDuringDrag = false;
     draggedNodeIndex = -1;
+    return recorded;
 }
 
 void Renderer::renderActiveState(const Frame* currentFrame) {

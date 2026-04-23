@@ -157,6 +157,19 @@ void syncCodePanelWithCurrentFrame(UIManager& uiManager, const Timeline& timelin
 bool isGraphStructureType(StructureType structureType) {
     return structureType == StructureType::AdjacencyList || structureType == StructureType::AdjacencyMatrix;
 }
+
+bool isPanning = false;
+sf::Vector2i lastPanMousePos;
+
+enum class UndoAction { NodeDrag, CameraPan };
+std::vector<UndoAction> undoHistory;
+std::vector<sf::Vector2f> viewCenterHistory;
+sf::Vector2f prePanCenter;
+
+void clearUndoHistory() {
+    undoHistory.clear();
+    viewCenterHistory.clear();
+}
 } // namespace
 
 AppEngine::AppEngine() : window(), theme(Theme::getDefaultTheme()), renderer(window, theme), uiManager(), playbackController() {}
@@ -204,6 +217,8 @@ IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
 }
 
 void AppEngine::switchActiveStructure(StructureType structureType) {
+    window.getWindow().setView(window.getWindow().getDefaultView());
+
     if (activeStructureType == structureType) {
         return;
     }
@@ -216,6 +231,7 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
     activeStructureType = structureType;
     activeStructure = resolveStructure(structureType);
     renderer.resetCustomPositions();
+    clearUndoHistory();
 
     Timeline timeline;
     if (activeStructure) {
@@ -276,6 +292,7 @@ void AppEngine::handleDataActionRequest() {
                     if (!values.empty()) {
                         standard->initialize(values, timeline);
                         renderer.resetCustomPositions();
+                        clearUndoHistory();
                         handled = true;
                     }
                 }
@@ -291,6 +308,7 @@ void AppEngine::handleDataActionRequest() {
                     if (!values.empty()) {
                         heap->initialize(values, timeline);
                         renderer.resetCustomPositions();
+                        clearUndoHistory();
                         handled = true;
                     }
                 }
@@ -301,6 +319,7 @@ void AppEngine::handleDataActionRequest() {
                     if (!edges.empty()) {
                         graph->initialize(edges, timeline);
                         renderer.resetCustomPositions();
+                        clearUndoHistory();
                         handled = true;
                     }
                 }
@@ -363,12 +382,14 @@ void AppEngine::handleDataActionRequest() {
                         heap->initialize(values, timeline);
                     }
                     renderer.resetCustomPositions();
+                    clearUndoHistory();
                     handled = true;
                 }
             } else if (graph && mode == 1) {
                 std::vector<Edge> edges = generateRandomEdges(8, 12, 1, 20);
                 graph->initialize(edges, timeline);
                 renderer.resetCustomPositions();
+                clearUndoHistory();
                 handled = true;
             }
             break;
@@ -482,16 +503,23 @@ void AppEngine::processInput(const sf::Event& event) {
                     const sf::Vector2f worldPosAfterZoom = window.getWindow().mapPixelToCoords(pixelPos, view);
                     view.move(worldPosBeforeZoom - worldPosAfterZoom);
                     
-                    // Giữ View không bị trôi ra ngoài màn hình khi zoom out
+                    // Giữ View không bị trôi ra ngoài màn hình quá xa
                     sf::Vector2f viewCenter = view.getCenter();
                     sf::Vector2f viewSize = view.getSize();
                     float halfW = viewSize.x / 2.0f;
                     float halfH = viewSize.y / 2.0f;
                     
-                    if (viewCenter.x - halfW < 0.0f) viewCenter.x = halfW;
-                    if (viewCenter.x + halfW > winSize.x) viewCenter.x = winSize.x - halfW;
-                    if (viewCenter.y - halfH < 0.0f) viewCenter.y = halfH;
-                    if (viewCenter.y + halfH > winSize.y) viewCenter.y = winSize.y - halfH;
+                    float winW = static_cast<float>(winSize.x);
+                    float winH = static_cast<float>(winSize.y);
+                    float limitMinX = -winW * 1.5f;
+                    float limitMaxX = winW * 2.5f;
+                    float limitMinY = -winH * 1.5f;
+                    float limitMaxY = winH * 2.5f;
+                    
+                    if (viewCenter.x - halfW < limitMinX) viewCenter.x = limitMinX + halfW;
+                    if (viewCenter.x + halfW > limitMaxX) viewCenter.x = limitMaxX - halfW;
+                    if (viewCenter.y - halfH < limitMinY) viewCenter.y = limitMinY + halfH;
+                    if (viewCenter.y + halfH > limitMaxY) viewCenter.y = limitMaxY - halfH;
 
                     view.setCenter(viewCenter);
                     window.getWindow().setView(view);
@@ -502,20 +530,77 @@ void AppEngine::processInput(const sf::Event& event) {
     if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (mousePressed->button == sf::Mouse::Button::Left && !uiManager.isMouseOverUI()) {
             sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mousePressed->position);
-            renderer.handleMousePress(worldPos);
+            if (!renderer.handleMousePress(worldPos)) {
+                isPanning = true;
+                lastPanMousePos = mousePressed->position;
+                    prePanCenter = window.getWindow().getView().getCenter();
+            }
         }
     } else if (const auto* mouseMoved = event.getIf<sf::Event::MouseMoved>()) {
-        sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mouseMoved->position);
-        renderer.handleMouseMove(worldPos);
+        if (isPanning) {
+            sf::View view = window.getWindow().getView();
+            sf::Vector2f oldPos = window.getWindow().mapPixelToCoords(lastPanMousePos, view);
+            sf::Vector2f newPos = window.getWindow().mapPixelToCoords(mouseMoved->position, view);
+            view.move(oldPos - newPos);
+            
+            sf::Vector2f viewCenter = view.getCenter();
+            sf::Vector2f viewSize = view.getSize();
+            sf::Vector2u winSize = window.getWindow().getSize();
+            float halfW = viewSize.x / 2.0f;
+            float halfH = viewSize.y / 2.0f;
+            
+            float winW = static_cast<float>(winSize.x);
+            float winH = static_cast<float>(winSize.y);
+            float limitMinX = -winW * 1.5f;
+            float limitMaxX = winW * 2.5f;
+            float limitMinY = -winH * 1.5f;
+            float limitMaxY = winH * 2.5f;
+            
+            if (viewCenter.x - halfW < limitMinX) viewCenter.x = limitMinX + halfW;
+            if (viewCenter.x + halfW > limitMaxX) viewCenter.x = limitMaxX - halfW;
+            if (viewCenter.y - halfH < limitMinY) viewCenter.y = limitMinY + halfH;
+            if (viewCenter.y + halfH > limitMaxY) viewCenter.y = limitMaxY - halfH;
+
+            view.setCenter(viewCenter);
+            window.getWindow().setView(view);
+            lastPanMousePos = mouseMoved->position;
+        } else {
+            sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mouseMoved->position);
+            renderer.handleMouseMove(worldPos);
+        }
     } else if (const auto* mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (mouseReleased->button == sf::Mouse::Button::Left) {
-            renderer.handleMouseRelease();
+            if (isPanning) {
+                isPanning = false;
+                    sf::Vector2f currentCenter = window.getWindow().getView().getCenter();
+                    if (currentCenter != prePanCenter) {
+                        viewCenterHistory.push_back(prePanCenter);
+                        undoHistory.push_back(UndoAction::CameraPan);
+                    }
+            } else {
+                    if (renderer.handleMouseRelease()) {
+                        undoHistory.push_back(UndoAction::NodeDrag);
+                    }
+            }
         }
     } else if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
         if (keyPressed->code == sf::Keyboard::Key::Z && 
            (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl))) {
-            // Hoàn tác bước kéo thả (Undo drag node)
-            renderer.undoLastDrag();
+            if (!uiManager.isKeyboardCapturedByUI()) {
+                    if (!undoHistory.empty()) {
+                        UndoAction action = undoHistory.back();
+                        undoHistory.pop_back();
+                        if (action == UndoAction::NodeDrag) {
+                            renderer.undoLastDrag();
+                        } else if (action == UndoAction::CameraPan) {
+                            sf::Vector2f oldCenter = viewCenterHistory.back();
+                            viewCenterHistory.pop_back();
+                            sf::View view = window.getWindow().getView();
+                            view.setCenter(oldCenter);
+                            window.getWindow().setView(view);
+                        }
+                    }
+            }
         }
     }
 }
@@ -568,9 +653,12 @@ void AppEngine::render() {
     if (currentFrame) {
         renderer.renderActiveState(currentFrame);
     }
+    sf::View currentView = window.getWindow().getView();
+    window.getWindow().setView(window.getWindow().getDefaultView());
 
     // 3. Draw the ImGui UI on top
     uiManager.render(window.getWindow());
+    window.getWindow().setView(currentView);
 
     // 4. Push to monitor
     window.display(); 

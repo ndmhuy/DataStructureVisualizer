@@ -390,3 +390,7 @@ bool UIManager::checkBackToMenuClicked() {
 bool UIManager::isMouseOverUI() const {
     return ImGui::GetIO().WantCaptureMouse;
 }
+
+bool UIManager::isKeyboardCapturedByUI() const {
+    return ImGui::GetIO().WantCaptureKeyboard;
+}
