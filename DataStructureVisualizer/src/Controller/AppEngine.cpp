@@ -152,6 +152,10 @@ void syncCodePanelWithCurrentFrame(UIManager& uiManager, const Timeline& timelin
 
     uiManager.setCodePanelHighlightedLine(currentFrame->getCodeLineId());
 }
+
+bool isGraphStructureType(StructureType structureType) {
+    return structureType == StructureType::AdjacencyList || structureType == StructureType::AdjacencyMatrix;
+}
 } // namespace
 
 AppEngine::AppEngine() : window(), theme(Theme::getDefaultTheme()), renderer(window, theme), uiManager(), playbackController() {}
@@ -465,7 +469,6 @@ void AppEngine::update(sf::Time deltaTime) {
         uiManager.resize(window.getWindow());
     }
 
-<<<<<<< HEAD
     playbackController.setSpeed(uiManager.getSpeed());
 
     if (uiManager.checkPlayClicked()) {
@@ -479,22 +482,6 @@ void AppEngine::update(sf::Time deltaTime) {
     }
     if (uiManager.checkStepBackwardClicked()) {
         playbackController.stepBackward();
-=======
-    // 1. Khi đang ở Main Menu và người dùng chọn một Data Structure
-    if (uiManager.getSelectedDS() != -1) {
-        currentDS = uiManager.getSelectedDS();        
-        // a. Thiết lập dữ liệu cho Data Structure mới tương ứng (TODO)
-        
-        uiManager.resetDSSelection();       // b. Khôi phục cờ chọn
-        uiManager.setShowMainMenu(false);   // c. Chuyển giao diện sang Workspace
-    }
-
-    // 2. Khi đang ở trong vòng lặp xử lý Workspace Data Structure
-    if (uiManager.checkBackToMenuClicked()) {
-        // a. Xóa/Giải phóng dữ liệu của Data Structure hiện tại (TODO)
-        currentDS = -1;
-        uiManager.setShowMainMenu(true);    // b. Trở về Main Menu
->>>>>>> feat/menu-graph-and-heap
     }
 
     playbackController.update(deltaTime.asSeconds());
