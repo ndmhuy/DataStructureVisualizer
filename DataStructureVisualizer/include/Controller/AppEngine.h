@@ -21,6 +21,8 @@ private:
     Renderer renderer;
     UIManager uiManager;
     Playback playbackController;
+    
+    int currentDS = -1; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
 
     IVisualizable* activeStructure = nullptr;
     StructureType activeStructureType = StructureType::None;

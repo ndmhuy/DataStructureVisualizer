@@ -62,7 +62,7 @@ public:
     void shutdown(); // shutdown ImGui
 
     // --- Interact Navigation Menu ---
-    int getSelectedDS() const; // -1: none, 0: SSL, 1: Heap, 2: AVL, 3: SPA
+    int getSelectedDS() const; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
     void resetDSSelection(); // Call after getSelectedDS()
     void setShowMainMenu(bool show);
     bool checkBackToMenuClicked(); // check if User back to Main menu
