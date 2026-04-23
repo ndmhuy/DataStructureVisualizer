@@ -293,6 +293,7 @@ void AppEngine::handleDataActionRequest() {
                         standard->initialize(values, timeline);
                         renderer.resetCustomPositions();
                         clearUndoHistory();
+                        window.getWindow().setView(window.getWindow().getDefaultView());
                         handled = true;
                     }
                 }
@@ -309,6 +310,7 @@ void AppEngine::handleDataActionRequest() {
                         heap->initialize(values, timeline);
                         renderer.resetCustomPositions();
                         clearUndoHistory();
+                        window.getWindow().setView(window.getWindow().getDefaultView());
                         handled = true;
                     }
                 }
@@ -320,6 +322,7 @@ void AppEngine::handleDataActionRequest() {
                         graph->initialize(edges, timeline);
                         renderer.resetCustomPositions();
                         clearUndoHistory();
+                        window.getWindow().setView(window.getWindow().getDefaultView());
                         handled = true;
                     }
                 }
@@ -383,6 +386,7 @@ void AppEngine::handleDataActionRequest() {
                     }
                     renderer.resetCustomPositions();
                     clearUndoHistory();
+                    window.getWindow().setView(window.getWindow().getDefaultView());
                     handled = true;
                 }
             } else if (graph && mode == 1) {
@@ -390,6 +394,7 @@ void AppEngine::handleDataActionRequest() {
                 graph->initialize(edges, timeline);
                 renderer.resetCustomPositions();
                 clearUndoHistory();
+                window.getWindow().setView(window.getWindow().getDefaultView());
                 handled = true;
             }
             break;
