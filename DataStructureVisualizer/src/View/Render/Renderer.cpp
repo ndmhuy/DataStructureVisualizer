@@ -2,6 +2,8 @@
 #include "Model/Frame.h"
 #include <algorithm>
 
+const size_t INVALID_INDEX = static_cast<size_t>(-1);
+
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
 
@@ -373,7 +375,71 @@ void Renderer::visit(const LinkedListPayload& payload) {
 }
 
 void Renderer::visit(const TreePayload& payload) {
-    // Tree rendering logic (to be expanded with payload.positions)
+    const auto& nodes = payload.nodes; // This nodes only contains non-null nodes, which is different from old way, we store ~ 2^h-1 nodes
+    const auto& highlights = payload.highlightedNodes;
+    
+    if (nodes.empty())
+        return;
+    
+    // Since this is new way we need to find the actual height
+    size_t maxId = 0;
+    for (const auto& node : nodes) {
+        if (node.id > maxId) maxId = node.id;
+    }
+    float virtualHeight = std::ceil(std::log2(maxId + 2)); 
+
+    // Coordinate mapping instead of array
+    // We use map since node id is not filled completely from 0 to final id
+    std::map<size_t, sf::Vector2f> positions;
+
+    float startX = 800;
+    float startY = 150;
+    float distanceHorizontal = 35;
+    float distanceVertical = 70;
+
+    for (const auto& node : nodes) {
+        size_t id = node.id;
+        int level = std::floor(std::log2(id + 1));
+        int posInLevel = id - (std::pow(2, level) - 1);
+        
+        float levelSpacing = distanceHorizontal * std::pow(2, virtualHeight - level);
+        int nodesInLevel = std::pow(2, level);
+        float levelWidth = levelSpacing * nodesInLevel;
+
+        float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
+        float currentY = startY + level * distanceVertical;
+
+        positions[id] = {currentX, currentY};
+    }
+
+    // Draw edges (with arrow) then draw nodes
+    sf::Vector2f nodeSize = getNodeSize();
+    for (const auto& node : nodes) {
+        // Lambda function 
+        // As my understanding, this is "small" function that is just used for specific part and dont need using anywhere else
+        auto drawEdgeIfExist = [&](size_t childId) {
+            if (positions.count(childId)) {
+                bool isHighlighted = std::find(highlights.begin(), highlights.end(), node.id) != highlights.end();
+                bool isHighlightedChild = std::find(highlights.begin(), highlights.end(), childId) != highlights.end();
+                
+                // arrow: parent to child
+                drawLineWithArrow(positions[node.id], nodeSize, ShapeType::Circle,
+                                  positions[childId], nodeSize, ShapeType::Circle,
+                                  3.0f, 12.0f, isHighlighted && isHighlightedChild);
+            }
+        };
+
+        if (node.leftId != INVALID_INDEX) // != static_cast<size_t>(-1)
+            drawEdgeIfExist(node.leftId);
+
+        if (node.rightId != INVALID_INDEX)
+            drawEdgeIfExist(node.rightId);
+    } 
+
+    for (const auto& node : nodes) {
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), node.id) != highlights.end();
+        drawImageNode(positions[node.id], std::to_string(node.value), isHighlighted);
+    }
 }
 
 void Renderer::visit(const HeapPayload& payload) {
