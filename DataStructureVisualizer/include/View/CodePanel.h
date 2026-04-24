@@ -16,6 +16,7 @@ private:
     std::vector<std::string> listofCodes; // Store code lines.
     int highlightedline = -1; // 0-based; -1 means no highlighted line.
     Theme theme = Theme::getDefaultTheme();
+    float panelHeight = 400.0f; // Chiều cao cố định của Code Panel
 
 public:
     CodePanel() = default;
@@ -24,6 +25,7 @@ public:
     void setCode(std::vector<std::string>& setcodes);
     void setHighlightedLine(int numline);
     void clearCode();
+    void resize(const sf::RenderWindow& window);
     void render(const sf::RenderWindow& window);
 };
 

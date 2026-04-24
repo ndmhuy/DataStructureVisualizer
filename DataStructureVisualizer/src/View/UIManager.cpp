@@ -154,6 +154,7 @@ void UIManager::resize(const sf::RenderWindow& window) {
     stepBackward.resize(sf::Vector2f{theme.uiStepBackwardButtonXRatio * x, theme.uiButtonsYRatio * y}, rad);
     
     slider.resize(window);
+    codePanel.resize(window);
 }
 
 void UIManager::update(sf::RenderWindow& window, const sf::Time& deltatime) {
@@ -313,6 +314,10 @@ std::string UIManager::getInputString1() const {
 }
 
 std::string UIManager::getInputString2() const {
+    return inputMenu.getString2();
+}
+
+std::string UIManager::getInputString3() const {
     return inputMenu.getString2();
 }
 

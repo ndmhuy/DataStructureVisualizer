@@ -17,14 +17,19 @@ void CodePanel::clearCode(){
     listofCodes.clear();
 }
 
+void CodePanel::resize(const sf::RenderWindow& window) {
+    // Đặt chiều cao Code Panel cố định thay vì thay đổi theo lượng code.
+    // Sử dụng khoảng 45% chiều cao cửa sổ, nhưng tối thiểu là 300px để không bị quá nhỏ.
+    panelHeight = std::max(300.0f, static_cast<float>(window.getSize().y) * 0.45f);
+}
+
 void CodePanel::render(const sf::RenderWindow& window){
     if (listofCodes.empty()) return; // Don't draw anything if there's no code
 
-    // 1. Calculate dynamic window size
+    // 1. Lấy kích thước và màu sắc từ Theme
     float panelWidth = theme.codePanelWidth;
     float headerHeight = theme.codePanelHeaderHeight;
     float padding = theme.codePanelPadding;
-    float lineHeight = ImGui::GetTextLineHeightWithSpacing();
     ImU32 bgColor = IM_COL32(
         theme.codePanelBackgroundColor.r,
         theme.codePanelBackgroundColor.g,
@@ -56,20 +61,6 @@ void CodePanel::render(const sf::RenderWindow& window){
         theme.codePanelHighlightColor.a
     );
     
-    // Check if horizontal scrollbar will be needed
-    bool needsScrollbar = false;
-    for (size_t i = 0; i < listofCodes.size(); ++i) {
-        std::string displayText = (static_cast<int>(i) == highlightedline) ? "-> " + listofCodes[i] : "   " + listofCodes[i];
-        if (ImGui::CalcTextSize(displayText.c_str()).x > (panelWidth - 2 * padding)) {
-            needsScrollbar = true;
-            break;
-        }
-    }
-    
-    float scrollbarOffset = needsScrollbar ? ImGui::GetStyle().ScrollbarSize : 0.0f;
-
-    // Total height = header + top padding + (lines * line height) + bottom padding + scrollbar offset
-    float panelHeight = headerHeight + padding + (listofCodes.size() * lineHeight) + padding + scrollbarOffset;
 
     // 2. Position the panel at the TOP RIGHT of the screen
     float windowX = window.getSize().x;
