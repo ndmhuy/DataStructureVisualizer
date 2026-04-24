@@ -1,33 +1,45 @@
 #include "Model/Frame.h"
 
-Frame::Frame(const std::vector<int>& arrData, const std::vector<size_t>& highlights, int lineId, const std::string& msg) : arrayData(arrData), highlightIndices(highlights), codeLineId(lineId), message(msg) {}
+Frame::Frame(const LinkedListPayload& p, int lineId, const std::string& msg)
+    : codeLineId(lineId), message(msg), payload(new LinkedListPayload(p)) {}
 
-Frame::Frame(const std::vector<std::string>& strData, const std::vector<size_t>& highlights, int lineId, const std::string& msg) : stringData(strData), highlightIndices(highlights), codeLineId(lineId), message(msg) {}
+Frame::Frame(const TreePayload& p, int lineId, const std::string& msg)
+    : codeLineId(lineId), message(msg), payload(new TreePayload(p)) {}
 
-Frame::Frame(const std::vector<size_t>& vertices, const std::vector<Edge>& edges, const std::vector<size_t>& highlightedNodes, const std::vector<Edge>& highlightedEdges, int lineId, const std::string& msg) : verticesData(vertices), edgeData(edges), highlightIndices(highlightedNodes), highlightEdges(highlightedEdges), codeLineId(lineId), message(msg) {}
+Frame::Frame(const HeapPayload& p, int lineId, const std::string& msg)
+    : codeLineId(lineId), message(msg), payload(new HeapPayload(p)) {}
 
-const std::vector<int>& Frame::getArrayData() const {
-    return arrayData;
+Frame::Frame(const GraphPayload& p, int lineId, const std::string& msg)
+    : codeLineId(lineId), message(msg), payload(new GraphPayload(p)) {}
+
+Frame::Frame(const SingleSourcePayload& p, int lineId, const std::string& msg)
+    : codeLineId(lineId), message(msg), payload(new SingleSourcePayload(p)) {}
+
+Frame::Frame(const AStarPayload& p, int lineId, const std::string& msg)
+    : codeLineId(lineId), message(msg), payload(new AStarPayload(p)) {}
+
+Frame::Frame(const AllPairsPayload& p, int lineId, const std::string& msg)
+    : codeLineId(lineId), message(msg), payload(new AllPairsPayload(p)) {}
+
+Frame::~Frame() {
+    delete payload;
 }
 
-const std::vector<std::string>& Frame::getStringData() const {
-    return stringData;
+Frame::Frame(const Frame& other)
+    : codeLineId(other.codeLineId), message(other.message), payload(other.payload ? other.payload->clone() : nullptr) {}
+
+Frame& Frame::operator=(const Frame& other) {
+    if (this != &other) {
+        codeLineId = other.codeLineId;
+        message = other.message;
+        delete payload;
+        payload = other.payload ? other.payload->clone() : nullptr;
+    }
+    return *this;
 }
 
-const std::vector<size_t>& Frame::getVerticesData() const {
-    return verticesData;
-}
-
-const std::vector<Edge>& Frame::getEdgeData() const {
-    return edgeData;
-}
-
-const std::vector<size_t>& Frame::getHighlightIndices() const {
-    return highlightIndices;
-}
-
-const std::vector<Edge>& Frame::getHighlightEdges() const {
-    return highlightEdges;
+const IPayload* Frame::getPayload() const {
+    return payload;
 }
 
 int Frame::getCodeLineId() const {

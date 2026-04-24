@@ -36,6 +36,13 @@ class AdjacencyList : public IGraphStructure {
     virtual void clear(Timeline& timeline) override;
 
     StructureType getStructureType() const override;
+
+    void runDAGShortestPath(size_t startVertex, Timeline& timeline) override;
+    void runDijkstra(size_t startVertex, Timeline& timeline) override;
+    void runAStar(size_t startVertex, size_t targetVertex, Timeline& timeline) override;
+    void runBellmanFord(size_t startVertex, Timeline& timeline) override;
+    void runFloydWarshall(Timeline& timeline) override;
+    void runJohnson(Timeline& timeline) override;
 };
 
 #endif // ADJACENCYLIST_H

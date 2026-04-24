@@ -29,6 +29,7 @@ class SinglyLinkedList : public IStandardStructure {
     void insert(int value, Timeline& timeline) override;
     void remove(int value, Timeline& timeline) override;
     void search(int value, Timeline& timeline) override;
+    void update(int value1, int value2, Timeline& timeline) override;
     void clear(Timeline& timeline) override;
 
     StructureType getStructureType() const override;
