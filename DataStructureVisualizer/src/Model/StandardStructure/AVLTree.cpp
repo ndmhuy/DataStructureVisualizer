@@ -4,6 +4,8 @@
 #include <queue>
 #include <string>
 
+const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
+
 int AVLTree::Node::heightOf(Node* root) {
     return root ? root->height : 0;
 }
@@ -25,7 +27,7 @@ TreePayload AVLTree::makeTreePayload(const std::vector<size_t>& highlightedNodes
     // getNodeIndex.clear();
 
     if (!root) {
-        return TreePayload({}, 0, highlightedNodes, pointers);
+        return TreePayload({}, INVALID_INDEX, highlightedNodes, pointers);
     }
 
     std::queue<std::pair<Node*, size_t>> que;
