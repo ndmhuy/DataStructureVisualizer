@@ -9,6 +9,8 @@
 #include <map>
 #include <limits>
 
+const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
+
 struct LinkedListPayload : public IPayload {
     std::vector<int> values;
     std::vector<size_t> highlightedNodes;
@@ -25,8 +27,8 @@ struct LinkedListPayload : public IPayload {
 struct TreeNodeData {
     size_t id;
     int value;
-    size_t leftId = std::numeric_limits<size_t>::max();
-    size_t rightId = std::numeric_limits<size_t>::max();
+    size_t leftId = INVALID_INDEX;
+    size_t rightId = INVALID_INDEX;
     size_t height = 0;
 };
 
@@ -37,8 +39,8 @@ struct TreePayload : public IPayload {
     std::vector<size_t> highlightedNodes;
     std::map<std::string, size_t> pointers; // e.g., {"current": 2}
 
-    TreePayload() : rootId(0) {}
-    TreePayload(std::vector<TreeNodeData> nodes, size_t rootId = 0, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<Position> positions = {})
+    TreePayload() : rootId(INVALID_INDEX) {}
+    TreePayload(std::vector<TreeNodeData> nodes, size_t rootId = INVALID_INDEX, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<Position> positions = {})
         : nodes(std::move(nodes)), positions(std::move(positions)), rootId(rootId), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
