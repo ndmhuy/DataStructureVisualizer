@@ -56,8 +56,20 @@ void CodePanel::render(const sf::RenderWindow& window){
         theme.codePanelHighlightColor.a
     );
     
-    // Total height = header + top padding + (lines * line height) + bottom padding
-    float panelHeight = headerHeight + padding + (listofCodes.size() * lineHeight) + padding;
+    // Check if horizontal scrollbar will be needed
+    bool needsScrollbar = false;
+    for (size_t i = 0; i < listofCodes.size(); ++i) {
+        std::string displayText = (static_cast<int>(i) == highlightedline) ? "-> " + listofCodes[i] : "   " + listofCodes[i];
+        if (ImGui::CalcTextSize(displayText.c_str()).x > (panelWidth - 2 * padding)) {
+            needsScrollbar = true;
+            break;
+        }
+    }
+    
+    float scrollbarOffset = needsScrollbar ? ImGui::GetStyle().ScrollbarSize : 0.0f;
+
+    // Total height = header + top padding + (lines * line height) + bottom padding + scrollbar offset
+    float panelHeight = headerHeight + padding + (listofCodes.size() * lineHeight) + padding + scrollbarOffset;
 
     // 2. Position the panel at the TOP RIGHT of the screen
     float windowX = window.getSize().x;
@@ -69,8 +81,7 @@ void CodePanel::render(const sf::RenderWindow& window){
 
     // 3. Remove default ImGui window styling
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | 
-                             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | 
-                             ImGuiWindowFlags_NoMove | 
+                             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                              ImGuiWindowFlags_NoBringToFrontOnFocus;
     
     ImGui::Begin("CustomCodePanel", nullptr, flags);
@@ -102,19 +113,26 @@ void CodePanel::render(const sf::RenderWindow& window){
     ImGui::PopStyleColor();
 
     // --- RENDER CODE TEXT ---
-    // Move cursor below the header to start printing the code
-    ImGui::SetCursorPos(ImVec2(padding, headerHeight + padding)); 
+    // Position the child window to start right after the header
+    ImGui::SetCursorPos(ImVec2(0, headerHeight + borderThickness));
+
+    // Make the child window background transparent so our custom one shows through
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(0, 0, 0, 0));
+
+    // Create a child window for the scrolling code content.
+    ImGui::BeginChild("CodeScrollingRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+    // Move cursor to add padding inside the child window
+    ImGui::SetCursorPos(ImVec2(padding, padding));
     
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, theme.codePanelLineSpacing));
 
     for (size_t i = 0; i < listofCodes.size(); ++i) {
         if (static_cast<int>(i) == highlightedline) {
-            // Highlighted line: Vivid color and arrow indicator
             ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
             ImGui::Text("-> %s", listofCodes[i].c_str());
             ImGui::PopStyleColor();
         } else {
-            // Normal line: Dark grey text, indented to align with the arrow
             ImGui::PushStyleColor(ImGuiCol_Text, textColor);
             ImGui::Text("   %s", listofCodes[i].c_str());
             ImGui::PopStyleColor();
@@ -122,5 +140,8 @@ void CodePanel::render(const sf::RenderWindow& window){
     }
 
     ImGui::PopStyleVar();
+    ImGui::EndChild(); // End of scrolling region
+    ImGui::PopStyleColor(); // Pop transparent child background
+
     ImGui::End();
 }
