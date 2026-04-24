@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 
-const size_t INVALID_INDEX = static_cast<size_t>(-1);
+const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 // Index
 size_t IHeapStructure::parent(size_t n, size_t i) {
