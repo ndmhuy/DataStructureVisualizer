@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <queue>
 #include <limits>
+#include <cstddef>
+#include <set>
+
+const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 #include "Controller/DataManager.h"
 #include "Utilities/MathUtils.h"
@@ -75,50 +79,68 @@ void DataManager::inputFromFileGraph(const std::string& filePath) {
         }
 
         std::stringstream ss(line);
-        int v1, v2, w;
-        bool lineHasValid = false;
-    
-        while (true) {
-            if (ss >> v1) {
-                if (ss >> v2 && ss >> w) {
-                    bool added = true;
-                    // w can be negative
-                    if (v1 >= 0 && v2 >= 0) {
-                        dataGraph[v1].push_back({v2, w});
-                        
-                        dataGraph[v2]; // Set empty if v2 not exist or do nothing if exist
-                    }
-                    else if (v1 >= 0 && v2 == -1) {
-                        dataGraph[v1]; 
-                    }
-                    else if (v1 == -1 && v2 >= 0) {
-                        dataGraph[v2];
-                    }
-                    else {
-                        added = false;
-                    }
+        std::vector<int> buffer;
+        int value;
 
-                    if (added) {
-                        hasAnyValid = true;
-                        lineHasValid = true;
-                    }
-                }
-                else {
-                    ss.clear();
-                    ss.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
-                }
-            } 
-            else if (ss.eof()) {
-                break; 
-            } 
-            else {
+        while (true) {
+            if (ss >> value) {
+                buffer.push_back(value);
+            } else if (ss.eof()) {
+                break;
+            } else {
                 ss.clear();
-                ss.ignore(1); 
+                ss.ignore(1);
             }
         }
 
-        if (!lineHasValid) {
-            std::cout << "Invalid data input text file! No valid integers found on current line; line ignored." << std::endl;
+        bool lineHasValid = false;
+        size_t n = buffer.size();
+
+        if (n >= 3 && n % 3 == 0) {
+            for (size_t i = 0; i < n; i += 3) {
+                int u = buffer[i];
+                int v = buffer[i + 1];
+                int w = buffer[i + 2];
+
+                if (u >= 0 && v >= 0) {
+                    dataGraph.push_back({(size_t)u, (size_t)v, w});
+                    lineHasValid = true;
+                } 
+                else if (u >= 0 && v == -1) {
+                    dataGraph.push_back({(size_t)u, INVALID_INDEX, w});
+                    lineHasValid = true;
+                } 
+                else if (u == -1 && v >= 0) {
+                    dataGraph.push_back({(size_t)v, INVALID_INDEX, w}); 
+                    lineHasValid = true;
+                }
+            }
+        }
+        else if (n >= 2 && n % 2 == 0) {
+            for (size_t i = 0; i < n; i += 2) {
+                int u = buffer[i];
+                int v = buffer[i + 1];
+
+                if (u >= 0 && v >= 0) {
+                    dataGraph.push_back({(size_t)u, (size_t)v, 1});
+                    lineHasValid = true;
+                } 
+                else if (u >= 0 && v == -1) {
+                    dataGraph.push_back({(size_t)u, INVALID_INDEX, 1});
+                    lineHasValid = true;
+                } 
+                else if (u == -1 && v >= 0) {
+                    dataGraph.push_back({(size_t)v, INVALID_INDEX, 1});
+                    lineHasValid = true;
+                }
+            }
+        }
+
+        if (lineHasValid) {
+            hasAnyValid = true;
+        }
+        else {
+            std::cout << "Invalid data input text file! No valid edge format found on current line; line ignored." << std::endl;
         }
     }
 
@@ -130,55 +152,42 @@ void DataManager::inputFromFileGraph(const std::string& filePath) {
 }
 
 // Stream input
-void DataManager::inputFromStream(std::istream& in) {
-    data.clear();
+void DataManager::inputFromStreamGraph(std::istream& in) {
+    dataGraph.clear();
+
+    std::vector<int> buffer;
     int value;
 
     while (true) {
         if (in >> value) {
-            data.push_back(value);
+            buffer.push_back(value);
         } else if (in.eof()) {
             break;
         } else {
-            // Clear fail state, skip one char
-            in.clear();
+            in.clear(); 
             in.ignore(1);
         }
     }
-}
 
-void DataManager::inputFromStreamGraph(std::istream& in) {
-    dataGraph.clear();
+    if (buffer.empty()) return;
 
-    int v1, v2, w;
+    size_t n = buffer.size();
 
-    while (true) {
-        if (in >> v1) {
-            if (in >> v2 && in >> w) {
-                // w can be negative
-                if (v1 >= 0 && v2 >= 0) {
-                    dataGraph[v1].push_back({v2, w});
-                    
-                    dataGraph[v2];
-                }
-                else if (v1 >= 0 && v2 == -1) {
-                    dataGraph[v1]; 
-                }
-                else if (v1 == -1 && v2 >= 0) {
-                    dataGraph[v2];
-                }
-            }
-            else {
-                in.clear();
-                in.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
-            }
-        } 
-        else if (in.eof()) {
-            break; 
-        } 
-        else {
-            in.clear();
-            in.ignore(1); 
+    if (n >= 3 && n % 3 == 0) {
+        for (size_t i = 0; i < n; i += 3) {
+            size_t u = buffer[i] < 0 ? INVALID_INDEX : buffer[i];
+            size_t v = buffer[i + 1] < 0 ? INVALID_INDEX : buffer[i + 1];
+            int w = buffer[i + 2];
+            
+            dataGraph.push_back({u, v, w}); 
+        }
+    } 
+    else if (n >= 2 && n % 2 == 0) {
+        for (size_t i = 0; i < n; i += 2) {
+            size_t u = buffer[i] < 0 ? INVALID_INDEX : buffer[i];
+            size_t v = buffer[i + 1] < 0 ? INVALID_INDEX : buffer[i + 1];
+            
+            dataGraph.push_back({u, v, 1}); 
         }
     }
 }
@@ -222,9 +231,11 @@ void DataManager::outputToFileGraph(const std::string& filePath) const { // not 
         return;
     }
 
-    for (auto& next : dataGraph) {
-        for (std::pair<int, int> value : next.second) {
-            std::cout << next.first << " -> " << value.first << " : " << value.second;
+    for (auto& value : dataGraph) {
+        if (value.to == INVALID_INDEX) {
+            std::cout << value.from << " (isolated)\n";
+        } else {
+            std::cout << value.from << " -> " << value.to << " : " << value.weight << "\n";
         }
     }
     
@@ -241,9 +252,11 @@ void DataManager::outputToConsole() const { // not changing class value
 }
 
 void DataManager::outputToConsoleGraph() const { // not changing class value 
-    for (auto& next : dataGraph) {
-        for (std::pair<int, int> value : next.second) {
-            std::cout << next.first << " -> " << value.first << " : " << value.second;
+    for (auto& value : dataGraph) {
+        if (value.to == INVALID_INDEX) {
+            std::cout << value.from << " (isolated)\n";
+        } else {
+            std::cout << value.from << " -> " << value.to << " : " << value.weight << "\n";
         }
     }
 
@@ -258,12 +271,6 @@ void DataManager::randomData(int n, int minValue, int maxValue) {
 
         return;
     }
-    if (minValue > maxValue) {
-        std::cerr << "Error: DataManager::randomData received invalid range ["
-                  << minValue << ", " << maxValue << "]." << std::endl;
-
-        return;
-    }
 
     data.clear();
 
@@ -272,16 +279,53 @@ void DataManager::randomData(int n, int minValue, int maxValue) {
     }
 }
 
-void DataManager::randomDataGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight) {
-    if (n <= 0) {
-        std::cerr << "Error: DataManager::randomDataGraph received invalid vertice number n="
-                  << n << "." << std::endl;
+void DataManager::randomDataGraph(int vertexCount, int edgeCount, int minValue, int maxValue) {
+    if (vertexCount <= 0) {
+        std::cerr << "Error: DataManager::randomDataGraph received invalid vertexCount="
+                  << vertexCount << "." << std::endl;
 
         return;
     }
-    if (minValue > maxValue) {
-        std::cerr << "Error: DataManager::randomDataGraph received invalid range ["
-                  << minValue << ", " << maxValue << "]." << std::endl;
+    if (edgeCount < 0) {
+        std::cerr << "Error: DataManager::randomDataGraph received invalid edgeCount="
+                  << edgeCount << "." << std::endl;
+
+        return;
+    }
+
+    dataGraph.clear();
+
+    for (int i = 0; i < vertexCount; ++i) {
+        dataGraph.push_back({(size_t)i, INVALID_INDEX, 1}); // Single vertice
+    }
+
+    int maxEdges = vertexCount * (vertexCount - 1); 
+    if (edgeCount > maxEdges) {
+        edgeCount = maxEdges;
+    }
+
+    std::set<std::pair<int, int>> existingEdges;
+
+    for (int i = 0; i < edgeCount; i++) {
+        int u = MathUtils::getRandomInRange(0, vertexCount - 1);
+        int v = MathUtils::getRandomInRange(0, vertexCount - 1);
+
+        if (u == v || existingEdges.count({u, v})) {
+            i--;
+            continue;
+        }
+
+        existingEdges.insert({u, v});
+        
+        int weight = MathUtils::getRandomInRange(minValue, maxValue);
+        dataGraph.push_back({(size_t)u, (size_t)v, weight});
+    }
+}
+
+void DataManager::randomDataPlanarGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight) {
+    if (n <= 0) {
+        std::cerr << "Error: DataManager::randomDataPlanarGraph received invalid vertice number n="
+                  << n << "." << std::endl;
 
         return;
     }
@@ -316,14 +360,20 @@ void DataManager::randomDataGraph(int n, int minValue, int maxValue, float scree
         que.push({x, y, i});
     }
 
+    std::set<std::pair<int, int>> existingEdges;
+
     std::vector<int> initialVertice = que.top();
     que.pop();
     while (!que.empty()) {
         std::vector<int> nextVertice = que.top();
         que.pop();
 
+        int u = initialVertice[2];
+        int v = nextVertice[2];
         int weight = MathUtils::getRandomInRange(minValue, maxValue);
-        dataGraph[initialVertice[2]].push_back({nextVertice[2], weight});
+
+        dataGraph.push_back({(size_t)u, (size_t)v, weight});
+        existingEdges.insert({u, v}); // Đánh dấu cạnh đã tồn tại
 
         initialVertice = nextVertice;
     }
@@ -336,44 +386,42 @@ void DataManager::randomDataGraph(int n, int minValue, int maxValue, float scree
         for (int j = 0; j < n; ++j) {
             if (i == j) continue;
             
-            bool edgeExists = false;
-            for (const auto& edge : dataGraph[i]) {
-                if (edge.first == j) {
-                    edgeExists = true;
-                    break;
-                }
-            }
-
-            if (!edgeExists) {
+            if (!existingEdges.count({i, j})) {
                 nodeBuffer.push_back({i, j});
             }
         } 
     }
 
-    int edge_addition = MathUtils::getRandomInRange(0, 2*n-5) ; // (3n-6) - (n-1)
+    int maxEdgesToAdd = std::max(0, 2 * n - 5);
+    int edge_addition = (maxEdgesToAdd > 0) ? MathUtils::getRandomInRange(0, maxEdgesToAdd) : 0; // (3n-6) - (n-1)
     while (edge_addition > 0 && !nodeBuffer.empty()) {
         int randIdx = MathUtils::getRandomInRange(0, nodeBuffer.size() - 1);
         bool hasIntersect = false;
 
-        int idx1 = nodeBuffer[randIdx].first, idx2 = nodeBuffer[randIdx].second;
-        for (auto const& [u, edges] : dataGraph) { // u là ID đỉnh nguồn
-            for (auto const& edge : edges) {       // duyệt từng cạnh của đỉnh u
-                int v = edge.first;
+        int idx1 = nodeBuffer[randIdx].first;
+        int idx2 = nodeBuffer[randIdx].second;
+        for (const auto& edge : dataGraph) { 
+            if (edge.to == INVALID_INDEX)
+                continue;
 
-                // Same vertice
-                if (idx1 == u || idx1 == v || idx2 == u || idx2 == v) 
-                    continue;
+            int u = edge.from;
+            int v = edge.to;
 
-                if (MathUtils::doIntersect(nodePositions[idx1], nodePositions[idx2], nodePositions[u], nodePositions[v])) {
-                    hasIntersect = true;
-                    break;
-                }
+            if (idx1 == u || idx1 == v || idx2 == u || idx2 == v) 
+                continue;
+
+            if (MathUtils::doIntersect(nodePositions[idx1], nodePositions[idx2], nodePositions[u], nodePositions[v])) {
+                hasIntersect = true;
+                break;
             }
         }
 
         if (!hasIntersect) {
             int weight = MathUtils::getRandomInRange(minValue, maxValue);
-            dataGraph[idx1].push_back({idx2, weight});
+            
+            dataGraph.push_back({(size_t)idx1, (size_t)idx2, weight});
+            existingEdges.insert({idx1, idx2});
+
             edge_addition--; 
         }
 
@@ -389,7 +437,7 @@ const std::vector<int>& DataManager::getData() const {
     return data; 
 }
 
-const DataManager::GraphData& DataManager::getDataGraph() const {
+const std::vector<Edge>& DataManager::getDataGraph() const {
     return dataGraph;
 }
 

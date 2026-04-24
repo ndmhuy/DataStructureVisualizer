@@ -6,13 +6,11 @@
 #include <fstream>
 #include <unordered_map>
 #include <SFML/System/Vector2.hpp>
+#include <Model/GraphStructure/Edge.h>
 
 class DataManager
 {
 public:
-    using Edge = std::pair<int, int>; 
-    using GraphData = std::unordered_map<int, std::vector<Edge>>;
-
     // Input
     void inputFromFile(const std::string& filePath);
 
@@ -38,18 +36,20 @@ public:
     // Getter
     const std::vector<int>& getData() const;
 
-    const GraphData& getDataGraph() const;
+    const std::vector<Edge>& getDataGraph() const;
 
     const std::unordered_map<int, sf::Vector2f>& getNodePositions() const;
 
     // Data randomizer
     void randomData(int n, int minValue, int maxValue);
 
-    void randomDataGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight);
+    void randomDataGraph(int vertexCount, int edgeCount, int minValue, int maxValue);
+
+    void randomDataPlanarGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight);
 
 private:
     std::vector<int> data;
-    GraphData dataGraph;
+    std::vector<Edge> dataGraph; // Edge vector: {u, v, w}
     std::unordered_map<int, sf::Vector2f> nodePositions;
 };
 
