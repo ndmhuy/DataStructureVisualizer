@@ -1,8 +1,9 @@
 #include "View/Render/Renderer.h"
 #include "Model/Frame.h"
 #include <algorithm>
+#include <climits>
 
-const size_t INVALID_INDEX = static_cast<size_t>(-1);
+const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();;
 
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
@@ -381,6 +382,7 @@ void Renderer::visit(const TreePayload& payload) {
     if (nodes.empty())
         return;
     
+    sf::Vector2u winSize = window.getWindow().getSize();
     // Since this is new way we need to find the actual height
     size_t maxId = 0;
     for (const auto& node : nodes) {
@@ -392,10 +394,11 @@ void Renderer::visit(const TreePayload& payload) {
     // We use map since node id is not filled completely from 0 to final id
     std::map<size_t, sf::Vector2f> positions;
 
-    float startX = 800;
-    float startY = 150;
-    float distanceHorizontal = 35;
-    float distanceVertical = 70;
+    // Adapt with window.size()
+    float startX = static_cast<float>(winSize.x) / 2.0f;
+    float startY = static_cast<float>(winSize.y) * 0.15f;
+    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
+    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
 
     for (const auto& node : nodes) {
         size_t id = node.id;
@@ -449,15 +452,15 @@ void Renderer::visit(const HeapPayload& payload) {
     if (heapArray.empty())
         return;
     
+    sf::Vector2u winSize = window.getWindow().getSize();
     // Coordinates temp buffer
     std::vector<sf::Vector2f> positions(heapArray.size());
 
-    // Assume the resolution is 1600:900, otherwise we have to use the current resolution
-    // to compute the suitable values
-    float startX = 800;
-    float startY = 150;
-    float distanceHorizontal = 35; // Deepest leaf nodes
-    float distanceVertical = 70;
+    // Adapt with window.size()
+    float startX = static_cast<float>(winSize.x) / 2.0f;
+    float startY = static_cast<float>(winSize.y) * 0.15f; 
+    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
+    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
     float height = std::ceil(log2(heapArray.size()+1));
 
     for (size_t idx = 0; idx < heapArray.size(); idx++) {

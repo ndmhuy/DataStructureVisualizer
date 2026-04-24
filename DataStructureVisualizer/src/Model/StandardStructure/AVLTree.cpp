@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <queue>
 #include <string>
+#include <climits>
 
 const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
