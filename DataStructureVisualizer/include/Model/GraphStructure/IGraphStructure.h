@@ -26,6 +26,13 @@ class IGraphStructure : public IVisualizable {
     virtual std::vector<Edge> getEdgesFromVertex(size_t vertex) const = 0;
 
     virtual void initialize(const std::vector<Edge>& startingEdges, Timeline& timeline) = 0;
+
+    virtual void runDAGShortestPath(size_t startVertex, Timeline& timeline) = 0;
+    virtual void runDijkstra(size_t startVertex, Timeline& timeline) = 0;
+    virtual void runAStar(size_t startVertex, size_t targetVertex, Timeline& timeline) = 0;
+    virtual void runBellmanFord(size_t startVertex, Timeline& timeline) = 0;
+    virtual void runFloydWarshall(Timeline& timeline) = 0;
+    virtual void runJohnson(Timeline& timeline) = 0;
 };
 
 #endif // IGRAPHSTRUCTURE_H

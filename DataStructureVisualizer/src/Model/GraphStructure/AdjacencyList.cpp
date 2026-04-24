@@ -1,4 +1,6 @@
 #include "Model/GraphStructure/AdjacencyList.h"
+#include <limits>
+#include <queue>
 
 AdjacencyList::AdjacencyList(bool directed) : isDirected(directed) { vertexCount = 0; }
 
@@ -115,3 +117,44 @@ StructureType AdjacencyList::getStructureType() const {
     return StructureType::AdjacencyList;
 }
 
+void AdjacencyList::runDijkstra(size_t startVertex, Timeline& timeline) {
+    const int INF = std::numeric_limits<int>::max();
+    std::vector<int> distances(vertexCount, INF);
+    distances[startVertex] = 0;
+
+    std::priority_queue<std::pair<int, size_t>, std::vector<std::pair<int, size_t>>, std::greater<>> pq;
+    pq.emplace(0, startVertex);
+
+    std::vector<size_t> vertices = getVertices();
+    std::vector<Edge> edges = getEdges();
+    timeline.addFrame(Frame(distances, vertices, edges, {startVertex}, {}, 0, "Running Dijkstra's Algorithm..."));
+
+    while (!pq.empty()) {
+        auto [dist, vertex] = pq.top();
+        pq.pop();
+
+        if (dist > distances[vertex]) continue;
+
+        timeline.addFrame(Frame(distances, vertices, edges, {vertex}, {}, 1, "Visiting vertex " + std::to_string(vertex) + " with current distance " + std::to_string(dist)));
+
+        for (const auto& edge : getEdgesFromVertex(vertex)) {
+            timeline.addFrame(Frame(distances, vertices, edges, {vertex, edge.to}, {edge}, 2, "Checking edge from " + std::to_string(edge.from) + " to " + std::to_string(edge.to) + " with weight " + std::to_string(edge.weight)));
+            
+            if (distances[vertex] != INF && dist + edge.weight < distances[edge.to]) {
+                distances[edge.to] = dist + edge.weight;
+                pq.emplace(distances[edge.to], edge.to);
+                timeline.addFrame(Frame(distances, vertices, edges, {edge.to}, {edge}, 3, "Relaxing edge to vertex " + std::to_string(edge.to) + ", new distance " + std::to_string(distances[edge.to])));
+            }
+        }
+    }
+
+    timeline.addFrame(Frame(distances, vertices, edges, {}, {}, 4, "Dijkstra's Algorithm complete."));
+}
+
+void AdjacencyList::runAStar(size_t startVertex, size_t targetVerTex, Timeline& timeline) {
+
+}
+
+void AdjacencyList::runBellmanFord(size_t startVertex, Timeline& timeline) {
+
+}
