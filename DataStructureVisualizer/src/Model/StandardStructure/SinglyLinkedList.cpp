@@ -3,7 +3,7 @@
 
 std::vector<int> SinglyLinkedList::toVector() const {
     std::vector<int> result;
-    const Node *current = head;
+    const Node* current = head;
     while (current) {
         result.push_back(current->value);
         current = current->next;
@@ -11,9 +11,9 @@ std::vector<int> SinglyLinkedList::toVector() const {
     return result;
 }
 
-void SinglyLinkedList::deleteNodes(Node *&head) {
+void SinglyLinkedList::deleteNodes(Node*& head) {
     while (head) {
-        Node *next = head->next;
+        Node* next = head->next;
         delete head;
         head = next;
     }
@@ -23,14 +23,14 @@ SinglyLinkedList::SinglyLinkedList() : head(nullptr) {}
 
 SinglyLinkedList::~SinglyLinkedList() { deleteNodes(head); }
 
-void SinglyLinkedList::initialize(const std::vector<int> &data, Timeline &timeline) {
+void SinglyLinkedList::initialize(const std::vector<int>& data, Timeline& timeline) {
     clear(timeline);
 
     timeline.addFrame(Frame(LinkedListPayload(toVector(), {}), 0, "Initializing Singly Linked List from data..."));
 
-    Node *current;
+    Node* current;
     for (int value : data) {
-        Node *newNode = new Node(value);
+        Node* newNode = new Node(value);
         if (!head) {
             head = newNode;
             current = head;
@@ -42,10 +42,10 @@ void SinglyLinkedList::initialize(const std::vector<int> &data, Timeline &timeli
     timeline.addFrame(Frame(LinkedListPayload(toVector(), {}), 0, "Initialization complete."));
 }
 
-void SinglyLinkedList::insert(int value, Timeline &timeline) {
+void SinglyLinkedList::insert(int value, Timeline& timeline) {
     timeline.addFrame(Frame(LinkedListPayload(toVector(), {}), 0, "Starting insertion of " + std::to_string(value)));
 
-    Node *newNode = new Node(value);
+    Node* newNode = new Node(value);
 
     if (!head) {
         head = newNode;
@@ -53,7 +53,7 @@ void SinglyLinkedList::insert(int value, Timeline &timeline) {
         return;
     }
 
-    Node *current = head;
+    Node* current = head;
     size_t index = 0;
 
     std::vector<int> currentState = toVector();
@@ -66,7 +66,7 @@ void SinglyLinkedList::insert(int value, Timeline &timeline) {
     timeline.addFrame(Frame(LinkedListPayload(toVector(), {index + 1}), 8, "Successfully inserted " + std::to_string(value) + " at the tail."));
 }
 
-void SinglyLinkedList::remove(int value, Timeline &timeline) {
+void SinglyLinkedList::remove(int value, Timeline& timeline) {
     timeline.addFrame(Frame(LinkedListPayload(toVector(), {}), 0, "Attempting to remove " + std::to_string(value)));
 
     if (!head) {
@@ -76,14 +76,14 @@ void SinglyLinkedList::remove(int value, Timeline &timeline) {
 
     if (head->value == value) {
         timeline.addFrame(Frame(LinkedListPayload(toVector(), {0}), 2, "Value found at head. Removing..."));
-        Node *temp = head;
+        Node* temp = head;
         head = head->next;
         delete temp;
         timeline.addFrame(Frame(LinkedListPayload(toVector(), {}), 3, "Head removed successfully."));
         return;
     }
 
-    Node *current = head;
+    Node* current = head;
     size_t index = 0;
 
     std::vector<int> currentState = toVector();
@@ -92,7 +92,7 @@ void SinglyLinkedList::remove(int value, Timeline &timeline) {
         if (current->next->value == value) {
             timeline.addFrame(Frame(LinkedListPayload(currentState, {index + 1}), 8, "Target found! Unlinking node..."));
 
-            Node *nodeToRemove = current->next;
+            Node* nodeToRemove = current->next;
             current->next = current->next->next;
             delete nodeToRemove;
 
@@ -105,11 +105,11 @@ void SinglyLinkedList::remove(int value, Timeline &timeline) {
     timeline.addFrame(Frame(LinkedListPayload(toVector(), {}), 11, "Value " + std::to_string(value) + " was not found in the list."));
 }
 
-void SinglyLinkedList::search(int value, Timeline &timeline) {
+void SinglyLinkedList::search(int value, Timeline& timeline) {
     std::vector<int> currentState = toVector();
     timeline.addFrame(Frame(LinkedListPayload(currentState, {}), 0, "Searching for " + std::to_string(value)));
 
-    Node *current = head;
+    Node* current = head;
     size_t index = 0;
 
     while (current) {
@@ -124,11 +124,11 @@ void SinglyLinkedList::search(int value, Timeline &timeline) {
     timeline.addFrame(Frame(LinkedListPayload(currentState, {}), 6, "Value " + std::to_string(value) + " was not found in the list."));
 }
 
-void SinglyLinkedList::update(int oldValue, int newValue, Timeline &timeline) {
+void SinglyLinkedList::update(int oldValue, int newValue, Timeline& timeline) {
     std::vector<int> currentState = toVector();
     timeline.addFrame(Frame(LinkedListPayload(currentState, {}), 0, "Searching for " + std::to_string(oldValue)));
 
-    Node *current = head;
+    Node* current = head;
     size_t index = 0;
 
     while (current) {
@@ -144,7 +144,7 @@ void SinglyLinkedList::update(int oldValue, int newValue, Timeline &timeline) {
     timeline.addFrame(Frame(LinkedListPayload(currentState, {}), 7, "Value " + std::to_string(oldValue) + " was not found in the list. Updating canceled."));
 }
 
-void SinglyLinkedList::clear(Timeline &timeline) {
+void SinglyLinkedList::clear(Timeline& timeline) {
     timeline.addFrame(Frame(LinkedListPayload(toVector(), {}), 1, "Clearing the entire linked list..."));
 
     deleteNodes(head);

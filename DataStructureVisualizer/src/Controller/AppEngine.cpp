@@ -181,9 +181,9 @@ AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action)
     return AlgorithmType::None;
 }
             
-void syncCodePanelWithCurrentFrame(UIManager &uiManager,
-const Timeline &timeline) {
-    const Frame *currentFrame = timeline.getCurrentFrame();
+void syncCodePanelWithCurrentFrame(UIManager& uiManager,
+const Timeline& timeline) {
+    const Frame* currentFrame = timeline.getCurrentFrame();
     if (!currentFrame) {
         uiManager.setCodePanelHighlightedLine(-1);
         return;
@@ -226,7 +226,7 @@ StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
     }
 }
 
-IVisualizable *AppEngine::resolveStructure(StructureType structureType) {
+IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
     switch (structureType) {
         case StructureType::SinglyLinkedList:
         return new SinglyLinkedList();
@@ -303,10 +303,10 @@ void AppEngine::handleDataActionRequest() {
     Timeline timeline;
     bool handled = false;
     
-    auto *standard = dynamic_cast<IStandardStructure *>(activeStructure);
-    auto *heap = dynamic_cast<IHeapStructure *>(activeStructure);
-    auto *graph = dynamic_cast<IGraphStructure *>(activeStructure);
-    auto *gridGraph = dynamic_cast<GridGraph *>(activeStructure);
+    auto* standard = dynamic_cast<IStandardStructure*>(activeStructure);
+    auto* heap = dynamic_cast<IHeapStructure*>(activeStructure);
+    auto* graph = dynamic_cast<IGraphStructure*>(activeStructure);
+    auto* gridGraph = dynamic_cast<GridGraph*>(activeStructure);
     
     switch (action) {
         case 1: { // Insert
@@ -534,30 +534,30 @@ void AppEngine::run() {
     uiManager.shutdown();
 }
     
-void AppEngine::processInput(const sf::Event &event) {
+void AppEngine::processInput(const sf::Event& event) {
     if (event.is<sf::Event::Closed>()) {
         shouldClose = true;
         return;
     }
         
-    if (const auto *resized = event.getIf<sf::Event::Resized>()) {
+    if (const auto* resized = event.getIf<sf::Event::Resized>()) {
         sf::FloatRect visibleArea({0.f, 0.f}, {(float)resized->size.x, (float)resized->size.y});
         window.getWindow().setView(sf::View(visibleArea));
     }
         
     // Pass the event to Dear ImGui and your custom buttons
     uiManager.processEvent(window.getWindow(), event);
-    if (const auto *mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
+    if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (mousePressed->button == sf::Mouse::Button::Left && !uiManager.isMouseOverUI()) {
             sf::Vector2f worldPos =
             window.getWindow().mapPixelToCoords(mousePressed->position);
             renderer.handleMousePress(worldPos);
         }
-    } else if (const auto *mouseMoved = event.getIf<sf::Event::MouseMoved>()) {
+    } else if (const auto* mouseMoved = event.getIf<sf::Event::MouseMoved>()) {
         sf::Vector2f worldPos =
         window.getWindow().mapPixelToCoords(mouseMoved->position);
         renderer.handleMouseMove(worldPos);
-    } else if (const auto *mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
+    } else if (const auto* mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (mouseReleased->button == sf::Mouse::Button::Left) {
             renderer.handleMouseRelease();
         }
@@ -609,8 +609,8 @@ void AppEngine::render() {
     window.clear(theme.windowClearColor);
     renderer.drawBackground();
     
-    const Timeline &timeline = playbackController.getTimeline();
-    const Frame *currentFrame = timeline.getCurrentFrame();
+    const Timeline& timeline = playbackController.getTimeline();
+    const Frame* currentFrame = timeline.getCurrentFrame();
     if (currentFrame) {
         renderer.renderActiveState(currentFrame);
     }
