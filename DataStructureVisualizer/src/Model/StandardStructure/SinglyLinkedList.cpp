@@ -135,7 +135,7 @@ void SinglyLinkedList::update(int oldValue, int newValue, Timeline &timeline) {
         timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 3, "Comparing with node value " + std::to_string(current->value)));
         if (current->value == oldValue) {
             current->value = newValue;
-            timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 4, "Updated this index's value to " + std::to_string(newValue)));
+            timeline.addFrame(Frame(LinkedListPayload(toVector(), {index}), 4, "Updated this index's value to " + std::to_string(newValue)));
             return;
         }
         current = current->next;

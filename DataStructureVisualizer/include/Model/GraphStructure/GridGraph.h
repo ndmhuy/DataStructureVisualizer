@@ -29,6 +29,7 @@ class GridGraph : public IVisualizable {
     CellState getCellState(size_t r, size_t c) const;
 
     void runBFSShortestPath(std::pair<size_t, size_t> start, std::pair<size_t, size_t> target, Timeline& timeline);
+    void runAStar(std::pair<size_t, size_t> start, std::pair<size_t, size_t> target, Timeline& timeline);
 };
 
 #endif // GRIDGRAPH_H

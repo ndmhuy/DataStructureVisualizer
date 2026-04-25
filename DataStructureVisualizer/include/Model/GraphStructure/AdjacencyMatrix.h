@@ -12,7 +12,7 @@ class AdjacencyMatrix : public IGraphStructure {
     bool isValidVertex(size_t vertex) const;
 
     public:
-        AdjacencyMatrix(const LayoutConfig& config = LayoutConfig(), bool directed = false);
+    AdjacencyMatrix(const LayoutConfig& config = LayoutConfig(), bool directed = false);
 
     void addVertex(Timeline* timeline = nullptr) override;
     void addEdge(size_t from, size_t to, int weight = 1, Timeline* timeline = nullptr) override;
