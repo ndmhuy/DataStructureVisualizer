@@ -12,7 +12,7 @@ class IHeapStructure : public IVisualizable {
     int left(int n, int idx);
     int right(int n, int idx);
 
-    void shiftUp(int i, Timeline& timeline);
+    void shiftUp(int i, Timeline& timeline, bool isInsert = false);
     void fixNode(int i, Timeline& timeline);
     void heapify(int n, int idx, Timeline& timeline);
 
