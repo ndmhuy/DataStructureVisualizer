@@ -15,16 +15,21 @@ enum class CellState {
 class GridGraph : public IVisualizable {
     private:
     std::vector<std::vector<int>> grid; // 2D grid representation
-    int rows;
-    int cols;
+    size_t rows;
+    size_t cols;
 
     public:
-    GridGraph(int r, int c);
+    GridGraph(size_t r, size_t c);
 
     void clear(Timeline& timeline) override;
     StructureType getStructureType() const override;
 
-    void initialize(int r, int c, Timeline& timeline);
+    void initialize(size_t r, size_t c, Timeline& timeline);
+    void setCellState(size_t r, size_t c, CellState state, Timeline& timeline);
+    CellState getCellState(size_t r, size_t c) const;
+
+    void runBFSShortestPath(std::pair<size_t, size_t> start, std::pair<size_t, size_t> target, Timeline& timeline);
+    void runAStar(std::pair<size_t, size_t> start, std::pair<size_t, size_t> target, Timeline& timeline);
 };
 
 #endif // GRIDGRAPH_H

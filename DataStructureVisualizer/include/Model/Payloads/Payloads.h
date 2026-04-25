@@ -102,6 +102,7 @@ struct AStarPayload : public IPayload {
     std::vector<int> gCosts;
     std::vector<int> hCosts;
     std::vector<int> fCosts;
+    std::vector<size_t> previousVertices; // For path reconstruction
     std::vector<std::pair<int, size_t>> priorityQueueSnapShot;
     size_t targetVertex;
 
@@ -111,9 +112,10 @@ struct AStarPayload : public IPayload {
         std::vector<int> gCosts = {},
         std::vector<int> hCosts = {},
         std::vector<int> fCosts = {},
+        std::vector<size_t> previousVertices = {},
         std::vector<std::pair<int, size_t>> priorityQueueSnapShot = {},
         size_t targetVertex = 0)
-        : baseGraph(std::move(baseGraph)), gCosts(std::move(gCosts)), hCosts(std::move(hCosts)), fCosts(std::move(fCosts)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)), targetVertex(targetVertex) {}
+        : baseGraph(std::move(baseGraph)), gCosts(std::move(gCosts)), hCosts(std::move(hCosts)), fCosts(std::move(fCosts)), previousVertices(std::move(previousVertices)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)), targetVertex(targetVertex) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new AStarPayload(*this); }
@@ -135,6 +137,20 @@ struct AllPairsPayload : public IPayload {
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new AllPairsPayload(*this); }
+};
+
+struct GridPayload : public IPayload {
+    std::vector<std::vector<int>> gridData; // 0=Empty, 1=Wall, 2=Start, 3=Target, 4=Visited, 5=Path, etc
+    std::pair<size_t, size_t> currentCell;
+
+    GridPayload() = default;
+    GridPayload(
+        std::vector<std::vector<int>> gridData,
+        std::pair<size_t, size_t> currentCell = {std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max()})
+        : gridData(std::move(gridData)), currentCell(currentCell) {}
+
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new GridPayload(*this); }
 };
 
 #endif // PAYLOADS_H

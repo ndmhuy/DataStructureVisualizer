@@ -556,13 +556,97 @@ void Renderer::visit(const GraphPayload& payload) {
 }
 
 void Renderer::visit(const SingleSourcePayload& payload) {
-    // Similar to GraphPayload but might include distance labels
+    visit(payload.baseGraph);
+    
+    sf::Vector2f nodeSize = getNodeSize();
+    for (size_t i = 0; i < payload.distances.size(); ++i) {
+        if (i < defaultNodePositions.size()) {
+            std::string distStr = (payload.distances[i] >= 1e9) ? "INF" : std::to_string(payload.distances[i]);
+            drawTextPositioned(defaultNodePositions[i], "d: " + distStr, 14, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
+        }
+    }
 }
 
 void Renderer::visit(const AStarPayload& payload) {
-    // Similar to GraphPayload but might include heuristics
+    visit(payload.baseGraph);
+    
+    sf::Vector2f nodeSize = getNodeSize();
+    for (size_t i = 0; i < payload.fCosts.size(); ++i) {
+        if (i < defaultNodePositions.size()) {
+            std::string fStr = (payload.fCosts[i] >= 1e9) ? "INF" : std::to_string(payload.fCosts[i]);
+            std::string gStr = (payload.gCosts[i] >= 1e9) ? "INF" : std::to_string(payload.gCosts[i]);
+            std::string hStr = (payload.hCosts[i] >= 1e9) ? "INF" : std::to_string(payload.hCosts[i]);
+            
+            std::string text = "f:" + fStr + "\ng:" + gStr + "\nh:" + hStr;
+            drawTextPositioned(defaultNodePositions[i], text, 12, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
+        }
+    }
 }
 
 void Renderer::visit(const AllPairsPayload& payload) {
-    // Similar to GraphPayload but for all-pairs (e.g. Floyd-Warshall)
+    visit(payload.baseGraph);
+    
+    // Draw a small distance matrix if size is manageable
+    if (payload.distances.size() <= 10 && !payload.distances.empty()) {
+        float startX = 20.0f;
+        float startY = 100.0f;
+        float cellW = 40.0f;
+        float cellH = 30.0f;
+        
+        for (size_t i = 0; i < payload.distances.size(); ++i) {
+            for (size_t j = 0; j < payload.distances[i].size(); ++j) {
+                std::string distStr = (payload.distances[i][j] >= 1e9) ? "INF" : std::to_string(payload.distances[i][j]);
+                sf::Vector2f pos(startX + j * cellW, startY + i * cellH);
+                drawText(pos, distStr, 14, theme.textColor, TextPosition::TopLeft);
+            }
+        }
+    }
+}
+
+void Renderer::visit(const GridPayload& payload) {
+    const auto& grid = payload.gridData;
+    if (grid.empty() || grid[0].empty()) return;
+
+    size_t rows = grid.size();
+    size_t cols = grid[0].size();
+
+    sf::Vector2u winSize = window.getWindow().getSize();
+    float availableWidth = winSize.x * 0.8f;
+    float availableHeight = winSize.y * 0.8f;
+
+    float cellSize = std::min(availableWidth / cols, availableHeight / rows);
+    float gridWidth = cols * cellSize;
+    float gridHeight = rows * cellSize;
+
+    float startX = (winSize.x - gridWidth) / 2.0f;
+    float startY = (winSize.y - gridHeight) / 2.0f;
+
+    for (size_t r = 0; r < rows; ++r) {
+        for (size_t c = 0; c < cols; ++c) {
+            sf::RectangleShape cell(sf::Vector2f(cellSize - 2.0f, cellSize - 2.0f));
+            cell.setPosition({startX + c * cellSize + 1.0f, startY + r * cellSize + 1.0f});
+
+            int state = grid[r][c];
+            if (state == 0) { // Empty
+                cell.setFillColor(sf::Color(200, 200, 200));
+            } else if (state == 1) { // Wall
+                cell.setFillColor(sf::Color(50, 50, 50));
+            } else if (state == 2) { // Start
+                cell.setFillColor(sf::Color::Green);
+            } else if (state == 3) { // Target
+                cell.setFillColor(sf::Color::Red);
+            } else if (state == 4) { // Visited
+                cell.setFillColor(sf::Color::Cyan);
+            } else if (state == 5) { // Path
+                cell.setFillColor(sf::Color::Yellow);
+            }
+
+            if (payload.currentCell.first == r && payload.currentCell.second == c) {
+                cell.setOutlineThickness(3.0f);
+                cell.setOutlineColor(sf::Color::Magenta);
+            }
+
+            window.getWindow().draw(cell);
+        }
+    }
 }

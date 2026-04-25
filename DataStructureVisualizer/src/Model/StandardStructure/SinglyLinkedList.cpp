@@ -21,13 +21,11 @@ void SinglyLinkedList::deleteNodes(Node*& head) {
 
 SinglyLinkedList::SinglyLinkedList() : head(nullptr) {}
 
-SinglyLinkedList::~SinglyLinkedList() {
-    deleteNodes(head);
-}
+SinglyLinkedList::~SinglyLinkedList() { deleteNodes(head); }
 
 void SinglyLinkedList::initialize(const std::vector<int>& data, Timeline& timeline) {
     clear(timeline);
-    
+
     timeline.addFrame(Frame(LinkedListPayload(toVector(), {}), 0, "Initializing Singly Linked List from data..."));
 
     Node* current;
@@ -113,7 +111,7 @@ void SinglyLinkedList::search(int value, Timeline& timeline) {
 
     Node* current = head;
     size_t index = 0;
-    
+
     while (current) {
         timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 2, "Comparing with node value " + std::to_string(current->value)));
         if (current->value == value) {
@@ -132,7 +130,7 @@ void SinglyLinkedList::update(int oldValue, int newValue, Timeline& timeline) {
 
     Node* current = head;
     size_t index = 0;
-    
+
     while (current) {
         timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 2, "Comparing with node value " + std::to_string(current->value)));
         if (current->value == oldValue) {

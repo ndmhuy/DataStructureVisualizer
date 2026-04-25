@@ -1,7 +1,16 @@
 #include "Model/GraphStructure/AdjacencyMatrix.h"
 #include <algorithm>
 
-AdjacencyMatrix::AdjacencyMatrix(bool directed) : isDirected(directed) { vertexCount = 0; }
+AdjacencyMatrix::AdjacencyMatrix(const LayoutConfig& config, bool directed) : IGraphStructure(config), isDirected(directed) {}
+
+void AdjacencyMatrix::addVertex(Timeline* timeline) {
+    resizeMatrix(vertexCount + 1);
+    ++vertexCount;
+
+    if (timeline) {
+        timeline->addFrame(Frame(makeGraphPayload({vertexCount - 1}), 0, "Added vertex " + std::to_string(vertexCount - 1)));
+    }
+}
 
 void AdjacencyMatrix::resizeMatrix(size_t newSize) {
     matrix.resize(newSize);
@@ -14,7 +23,7 @@ bool AdjacencyMatrix::isValidVertex(size_t vertex) const {
     return vertex < vertexCount;
 }
 
-void AdjacencyMatrix::addEdge(size_t from, size_t to, int weight) {
+void AdjacencyMatrix::addEdge(size_t from, size_t to, int weight, Timeline* timeline) {
     if (from >= vertexCount || to >= vertexCount) {
         resizeMatrix(std::max(from, to) + 1);
         vertexCount = matrix.size();
@@ -26,12 +35,16 @@ void AdjacencyMatrix::addEdge(size_t from, size_t to, int weight) {
     }
 }
 
-void AdjacencyMatrix::deleteEdge(size_t from, size_t to) {
+void AdjacencyMatrix::deleteEdge(size_t from, size_t to, Timeline* timeline) {
     if (isValidVertex(from) && isValidVertex(to)) {
         matrix[from][to] = 0;
         if (!isDirected) {
             matrix[to][from] = 0;
         }
+    }
+
+    if (timeline) {
+        timeline->addFrame(Frame(makeGraphPayload(), 0, "Deleted edge from " + std::to_string(from) + " to " + std::to_string(to)));
     }
 }
 
@@ -88,18 +101,18 @@ std::vector<Edge> AdjacencyMatrix::getEdgesFromVertex(size_t vertex) const {
 
 void AdjacencyMatrix::initialize(const std::vector<Edge>& startingEdges, Timeline& timeline) {
     clear(timeline);
-    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initializing Adjacency Matrix with given edges..."));
+    timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Initializing Adjacency Matrix with given edges..."));
     for (const auto& edge : startingEdges) {
         addEdge(edge.from, edge.to, edge.weight);
     }
-    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initialization complete."));
+    timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Initialization complete."));
 }
 
 void AdjacencyMatrix::clear(Timeline& timeline) {
-    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Clearing Adjacency Matrix..."));
+    timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Clearing Adjacency Matrix..."));
     matrix.clear();
     vertexCount = 0;
-    timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Adjacency Matrix cleared."));
+    timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Adjacency Matrix cleared."));
 }
 
 StructureType AdjacencyMatrix::getStructureType() const {
