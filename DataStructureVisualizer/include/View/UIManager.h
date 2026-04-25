@@ -82,15 +82,20 @@ public:
     HEAP:(1)- Min Heap (2)- Max Heap
     1/Init:
     2/Insert:
-    3/Pop:
-    4/Clear:
+    3/ExtractTop:
+    4/Peek:
+    5/Search:
+    6/Delete:
+    7/Update:
+    8/Clear:
 
     AVL TREE:(3)
     1/Init: 
     2/Insert:
     3/Search:
     4/Delete:
-    5/Clear
+    5/Update:
+    6/Clear
 
     SPA: (4)- Grid
     1/ Init: N=(ô nhập liệu 1), M=(ô nhập liệu 2)/ File browser
