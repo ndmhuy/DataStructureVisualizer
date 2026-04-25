@@ -3,34 +3,34 @@
 const std::vector<std::string> &
 PseudocodeManager::getPseudocode(AlgorithmType type) {
     switch (type) {
-    case AlgorithmType::None:
-        return {"No algorithm selected."};
-    case AlgorithmType::SinglyLinkedListInsert:
-        return SinglyLinkedListInsertCode;
-    case AlgorithmType::SinglyLinkedListDelete:
-        return SinglyLinkedListDeleteCode;
-    case AlgorithmType::SinglyLinkedListSearch:
-        return SinglyLinkedListSearchCode;
-    case AlgorithmType::SinglyLinkedListUpdate:
-        return SinglyLinkedListUpdateCode;
-    case AlgorithmType::GraphGridBFSShortestPath:
-        return GraphGridBFSShortestPathCode;
-    case AlgorithmType::GraphGridAStar:
-        return GraphGridAStarCode;
-    case AlgorithmType::GraphDAGShortestPath:
-        return GraphDAGShortestPathCode;
-    case AlgorithmType::GraphDijkstra:
-        return GraphDijkstraCode;
-    case AlgorithmType::GraphAStar:
-        return GraphAStarCode;
-    case AlgorithmType::GraphBellmanFord:
-        return GraphBellmanFordCode;
-    case AlgorithmType::GraphFloydWarshall:
-        return GraphFloydWarshallCode;
-    case AlgorithmType::GraphJohnson:
-        return GraphJohnsonCode;
-    default:
-        return {"No pseudocode available for this algorithm."};
+        case AlgorithmType::None:
+            return {"No algorithm selected."};
+        case AlgorithmType::SinglyLinkedListInsert:
+            return SinglyLinkedListInsertCode;
+        case AlgorithmType::SinglyLinkedListDelete:
+            return SinglyLinkedListDeleteCode;
+        case AlgorithmType::SinglyLinkedListSearch:
+            return SinglyLinkedListSearchCode;
+        case AlgorithmType::SinglyLinkedListUpdate:
+            return SinglyLinkedListUpdateCode;
+        case AlgorithmType::GraphGridBFSShortestPath:
+            return GraphGridBFSShortestPathCode;
+        case AlgorithmType::GraphGridAStar:
+            return GraphGridAStarCode;
+        case AlgorithmType::GraphDAGShortestPath:
+            return GraphDAGShortestPathCode;
+        case AlgorithmType::GraphDijkstra:
+            return GraphDijkstraCode;
+        case AlgorithmType::GraphAStar:
+            return GraphAStarCode;
+        case AlgorithmType::GraphBellmanFord:
+            return GraphBellmanFordCode;
+        case AlgorithmType::GraphFloydWarshall:
+            return GraphFloydWarshallCode;
+        case AlgorithmType::GraphJohnson:
+            return GraphJohnsonCode;
+        default:
+            return {"No pseudocode available for this algorithm."};
     }
 }
 
