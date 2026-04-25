@@ -44,8 +44,12 @@ private:
     sf::Texture nodeTexture;
     sf::Texture arrayTexture;
     std::map<size_t, sf::Vector2f> customNodePositions;
-    std::map<size_t, sf::Vector2f> defaultNodePositions;
+    std::map<size_t, sf::Vector2f> defaultNodePositions; 
+    std::map<size_t, std::vector<size_t>> currentChildren;
     int draggedNodeIndex = -1;
+    bool hasMovedDuringDrag = false;
+    std::map<size_t, sf::Vector2f> preDragPositions;
+    std::vector<std::map<size_t, sf::Vector2f>> positionHistory;
     sf::Vector2f dragOffset;
     sf::Sprite bgSprite;
 
@@ -90,10 +94,11 @@ public:
     sf::Vector2f getArraySize() const; // in main.cpp have to use to access nodeH
 
     // Drag and Drop handlers
-    void handleMousePress(sf::Vector2f mousePos);
+    bool handleMousePress(sf::Vector2f mousePos);
     void handleMouseMove(sf::Vector2f mousePos);
-    void handleMouseRelease();
+    bool handleMouseRelease();
     void resetCustomPositions();
+    void undoLastDrag();
 
     // Generic and positional text helpers.
     void drawText(sf::Vector2f pos, const std::string& text, unsigned int size,

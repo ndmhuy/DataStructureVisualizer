@@ -197,6 +197,40 @@ bool isGraphStructureType(StructureType structureType) {
     structureType == StructureType::AdjacencyMatrix ||
     structureType == StructureType::GridGraph;
 }
+
+bool isPanning = false;
+sf::Vector2i lastPanMousePos;
+
+enum class UndoAction { NodeDrag, CameraPan };
+std::vector<UndoAction> undoHistory;
+std::vector<sf::Vector2f> viewCenterHistory;
+sf::Vector2f prePanCenter;
+
+void clearUndoHistory() {
+    undoHistory.clear();
+    viewCenterHistory.clear();
+}
+
+void clampView(sf::View& view, const sf::Vector2u& winSize) {
+    sf::Vector2f viewCenter = view.getCenter();
+    sf::Vector2f viewSize = view.getSize();
+    float halfW = viewSize.x / 2.0f;
+    float halfH = viewSize.y / 2.0f;
+    
+    float winW = static_cast<float>(winSize.x);
+    float winH = static_cast<float>(winSize.y);
+    float limitMinX = -winW * 1.5f;
+    float limitMaxX = winW * 2.5f;
+    float limitMinY = -winH * 1.5f;
+    float limitMaxY = winH * 2.5f;
+    
+    if (viewCenter.x - halfW < limitMinX) viewCenter.x = limitMinX + halfW;
+    if (viewCenter.x + halfW > limitMaxX) viewCenter.x = limitMaxX - halfW;
+    if (viewCenter.y - halfH < limitMinY) viewCenter.y = limitMinY + halfH;
+    if (viewCenter.y + halfH > limitMaxY) viewCenter.y = limitMaxY - halfH;
+
+    view.setCenter(viewCenter);
+}
 } // namespace
             
 AppEngine::AppEngine()
@@ -248,6 +282,8 @@ IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
 }
 
 void AppEngine::switchActiveStructure(StructureType structureType) {
+    window.getWindow().setView(window.getWindow().getDefaultView());
+
     if (activeStructureType == structureType) {
         return;
     }
@@ -259,7 +295,9 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
     
     activeStructureType = structureType;
     activeStructure = resolveStructure(structureType);
-    
+    renderer.resetCustomPositions();
+    clearUndoHistory();
+
     Timeline timeline;
     if (activeStructure) {
         activeStructure->clear(timeline);
@@ -322,6 +360,9 @@ void AppEngine::handleDataActionRequest() {
                     (mode == 1) ? parseIntList(input1) : readIntListFromFile(input1);
                     if (!values.empty()) {
                         standard->initialize(values, timeline);
+                        renderer.resetCustomPositions();
+                        clearUndoHistory();
+                        window.getWindow().setView(window.getWindow().getDefaultView());
                         handled = true;
                     }
                 }
@@ -337,6 +378,9 @@ void AppEngine::handleDataActionRequest() {
                     (mode == 1) ? parseIntList(input1) : readIntListFromFile(input1);
                     if (!values.empty()) {
                         heap->initialize(values, timeline);
+                        renderer.resetCustomPositions();
+                        clearUndoHistory();
+                        window.getWindow().setView(window.getWindow().getDefaultView());
                         handled = true;
                     }
                 }
@@ -347,6 +391,9 @@ void AppEngine::handleDataActionRequest() {
                     std::vector<Edge> edges = parseEdgesFromInts(rawValues);
                     if (!edges.empty()) {
                         graph->initialize(edges, timeline);
+                        renderer.resetCustomPositions();
+                        clearUndoHistory();
+                        window.getWindow().setView(window.getWindow().getDefaultView());
                         handled = true;
                     }
                 }
@@ -407,11 +454,17 @@ void AppEngine::handleDataActionRequest() {
                     } else {
                         heap->initialize(values, timeline);
                     }
+                    renderer.resetCustomPositions();
+                    clearUndoHistory();
+                    window.getWindow().setView(window.getWindow().getDefaultView());
                     handled = true;
                 }
             } else if (graph && mode == 1) {
                 std::vector<Edge> edges = generateRandomEdges(8, 12, 1, 20);
                 graph->initialize(edges, timeline);
+                renderer.resetCustomPositions();
+                clearUndoHistory();
+                window.getWindow().setView(window.getWindow().getDefaultView());
                 handled = true;
             }
             break;
@@ -547,19 +600,105 @@ void AppEngine::processInput(const sf::Event& event) {
         
     // Pass the event to Dear ImGui and your custom buttons
     uiManager.processEvent(window.getWindow(), event);
+        if (const auto* wheelScrolled = event.getIf<sf::Event::MouseWheelScrolled>()) {
+        if (!uiManager.isMouseOverUI()) {
+            sf::View view = window.getWindow().getView();
+            const sf::Vector2i pixelPos = wheelScrolled->position;
+            const sf::Vector2f worldPosBeforeZoom = window.getWindow().mapPixelToCoords(pixelPos, view);
+
+            const float zoomFactor = 1.1f;
+            float zoom = 1.0f;
+            if (wheelScrolled->delta > 0) { // Zoom in
+                zoom = 1.f / zoomFactor;
+            } else if (wheelScrolled->delta < 0) { // Zoom out
+                zoom = zoomFactor;
+            }
+
+                // Lấy kích thước hiện tại và kích thước giới hạn
+                sf::Vector2f currentSize = view.getSize();
+                sf::Vector2u winSize = window.getWindow().getSize();
+                
+                float maxWidth = static_cast<float>(winSize.x);   // Zoom out tối đa (1.0x)
+                float minWidth = maxWidth * 0.1f;                 // Zoom in tối đa (10.0x)
+
+                // Tính toán zoom an toàn
+                float expectedWidth = currentSize.x * zoom;
+                if (expectedWidth > maxWidth) {
+                    zoom = maxWidth / currentSize.x;
+                } else if (expectedWidth < minWidth) {
+                    zoom = minWidth / currentSize.x;
+                }
+
+                if (zoom != 1.0f) {
+                    view.zoom(zoom);
+                    window.getWindow().setView(view);
+
+                    const sf::Vector2f worldPosAfterZoom = window.getWindow().mapPixelToCoords(pixelPos, view);
+                    view.move(worldPosBeforeZoom - worldPosAfterZoom);
+                    
+                    // Giữ View không bị trôi ra ngoài màn hình quá xa
+                    clampView(view, winSize);
+                    window.getWindow().setView(view);
+                }
+        }
+    }
+
     if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (mousePressed->button == sf::Mouse::Button::Left && !uiManager.isMouseOverUI()) {
-            sf::Vector2f worldPos =
-            window.getWindow().mapPixelToCoords(mousePressed->position);
-            renderer.handleMousePress(worldPos);
+            sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mousePressed->position);
+            if (!renderer.handleMousePress(worldPos)) {
+                isPanning = true;
+                lastPanMousePos = mousePressed->position;
+                    prePanCenter = window.getWindow().getView().getCenter();
+            }
         }
     } else if (const auto* mouseMoved = event.getIf<sf::Event::MouseMoved>()) {
-        sf::Vector2f worldPos =
-        window.getWindow().mapPixelToCoords(mouseMoved->position);
-        renderer.handleMouseMove(worldPos);
+        if (isPanning) {
+            sf::View view = window.getWindow().getView();
+            sf::Vector2f oldPos = window.getWindow().mapPixelToCoords(lastPanMousePos, view);
+            sf::Vector2f newPos = window.getWindow().mapPixelToCoords(mouseMoved->position, view);
+            view.move(oldPos - newPos);
+            
+            clampView(view, window.getWindow().getSize());
+            window.getWindow().setView(view);
+            lastPanMousePos = mouseMoved->position;
+        } else {
+            sf::Vector2f worldPos = window.getWindow().mapPixelToCoords(mouseMoved->position);
+            renderer.handleMouseMove(worldPos);
+        }
     } else if (const auto* mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (mouseReleased->button == sf::Mouse::Button::Left) {
-            renderer.handleMouseRelease();
+            if (isPanning) {
+                isPanning = false;
+                    sf::Vector2f currentCenter = window.getWindow().getView().getCenter();
+                    if (currentCenter != prePanCenter) {
+                        viewCenterHistory.push_back(prePanCenter);
+                        undoHistory.push_back(UndoAction::CameraPan);
+                    }
+            } else {
+                    if (renderer.handleMouseRelease()) {
+                        undoHistory.push_back(UndoAction::NodeDrag);
+                    }
+            }
+        }
+    } else if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+        if (keyPressed->code == sf::Keyboard::Key::Z && 
+           (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl))) {
+            if (!uiManager.isKeyboardCapturedByUI()) {
+                    if (!undoHistory.empty()) {
+                        UndoAction action = undoHistory.back();
+                        undoHistory.pop_back();
+                        if (action == UndoAction::NodeDrag) {
+                            renderer.undoLastDrag();
+                        } else if (action == UndoAction::CameraPan) {
+                            sf::Vector2f oldCenter = viewCenterHistory.back();
+                            viewCenterHistory.pop_back();
+                            sf::View view = window.getWindow().getView();
+                            view.setCenter(oldCenter);
+                            window.getWindow().setView(view);
+                        }
+                    }
+            }
         }
     }
 }
@@ -573,10 +712,19 @@ void AppEngine::update(sf::Time deltaTime) {
         uiManager.setShowMainMenu(true);
         switchActiveStructure(StructureType::None);
     }
-    
+
+    if (uiManager.consumeThemeScaleRequest()) {
+        theme.nodeScale = uiManager.getTheme().nodeScale;
+        theme.arrayScale = uiManager.getTheme().arrayScale;
+    }
+
     if (uiManager.consumeThemeToggleRequest()) {
         isDarkMode = !isDarkMode;
+        float currentNodeScale = theme.nodeScale;
+        float currentArrayScale = theme.arrayScale;
         theme = isDarkMode ? Theme::getDarkTheme() : Theme::getDefaultTheme();
+        theme.nodeScale = currentNodeScale;
+        theme.arrayScale = currentArrayScale;
         if (!uiManager.applyTheme(theme)) {
             std::cerr
             << "Warning: AppEngine::update failed to apply theme to UIManager."
@@ -614,8 +762,13 @@ void AppEngine::render() {
     if (currentFrame) {
         renderer.renderActiveState(currentFrame);
     }
-    
+    sf::View currentView = window.getWindow().getView();
+    window.getWindow().setView(window.getWindow().getDefaultView());
+
+    // 3. Draw the ImGui UI on top
     uiManager.render(window.getWindow());
-    
-    window.display();
+    window.getWindow().setView(currentView);
+
+    // 4. Push to monitor
+    window.display(); 
 }
