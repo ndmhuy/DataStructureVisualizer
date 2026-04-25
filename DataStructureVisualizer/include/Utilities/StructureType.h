@@ -21,6 +21,7 @@ enum class StructureType {
     // Graphs
     AdjacencyList,
     AdjacencyMatrix,
+    GridGraph,
 
     None // Default
 };
