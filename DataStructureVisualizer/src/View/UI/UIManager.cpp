@@ -95,8 +95,8 @@ bool UIManager::applyTheme(const Theme& selectedTheme) {
         ok = false;
     }
 
-    play.setActive(isPlay);
-    pause.setActive(!isPlay);
+    play.setActive(isshowingPlay);
+    pause.setActive(!isshowingPlay);
 
     return ok;
 }
@@ -107,16 +107,22 @@ bool UIManager::consumeThemeToggleRequest() {
     return res;
 }
 
+bool UIManager::consumeThemeScaleRequest() {
+    bool res = themeScaleChanged;
+    themeScaleChanged = false;
+    return res;
+}
+
 void UIManager::processEvent(sf::RenderWindow& window, const sf::Event& event) {
     ImGui::SFML::ProcessEvent(window, event);
+
+    if (event.is<sf::Event::Resized>()) {
+        resize(window);
+    }
 
     // If the mouse is in the Menu of ImGUI -> ignore this click
     if (ImGui::GetIO().WantCaptureMouse) {
         return;
-    }
-
-    if (event.is<sf::Event::Resized>()) {
-        resize(window);
     }
 
     if (isMainMenu) {
@@ -124,16 +130,10 @@ void UIManager::processEvent(sf::RenderWindow& window, const sf::Event& event) {
     }
 
     if (play.handleEvent(window, event)) {
-        isPlay = false;
-        play.setActive(isPlay);
-        pause.setActive(!isPlay);
         playClicked = true;
     }
 
     if (pause.handleEvent(window, event)) {
-        isPlay = true;
-        play.setActive(isPlay);
-        pause.setActive(!isPlay);
         pauseClicked = true;
     }
 
@@ -160,6 +160,7 @@ void UIManager::resize(const sf::RenderWindow& window) {
     stepBackward.resize(sf::Vector2f{theme.uiStepBackwardButtonXRatio * x, theme.uiButtonsYRatio * y}, rad);
     
     slider.resize(window);
+    codePanel.resize(window);
 }
 
 void UIManager::update(sf::RenderWindow& window, const sf::Time& deltatime) {
@@ -231,7 +232,14 @@ void UIManager::render(sf::RenderWindow& window) {
             navMenu.resetState();
         }
 
-        ImGui::SetCursorPos(ImVec2(winSize.x - 110.0f, 10.0f));
+        ImGui::SameLine(0.0f, 30.0f);
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::SliderFloat("##ScaleApp", &theme.nodeScale, 0.3f, 2.0f, "Size %.1f")) {
+            theme.arrayScale = theme.nodeScale;
+            themeScaleChanged = true;
+        }
+        
+        ImGui::SameLine(0.0f, 20.0f);
         if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
@@ -242,11 +250,12 @@ void UIManager::render(sf::RenderWindow& window) {
         ImGui::End();
 
         // Render Component
+        inputMenu.setDS(navMenu.getSelectedDS());
         inputMenu.render(window);
         codePanel.render(window);
         slider.render(window);
 
-        if (isPlay) {
+        if (isshowingPlay) {
             play.render(window);
         } else {
             pause.render(window);
@@ -270,6 +279,27 @@ void UIManager::shutdown() {
 // ==========================================
 // Interact with Navigation Menu
 // ==========================================
+void UIManager::reset() {
+    isMainMenu = true;          // Bật lại màn hình Main Menu
+    resetDSSelection();         // Xóa cờ chọn Data Structure hiện tại
+    inputMenu.setDS(-1);        // Xóa menu nhập liệu của DS cũ
+    inputMenu.resetState();     // Xóa toàn bộ popup, form, textbox đang hiện
+    resetInputAction();         // Đặt lại action
+    clearCodePanel();           // Xóa mảng mã giả
+    resetSpeed();               // Trả Speed Slider về 1.0x
+
+    // Xóa cờ các nút điều khiển
+    playClicked = false;
+    pauseClicked = false;
+    stepForwardClicked = false;
+    stepBackwardClicked = false;
+
+    //Reset Navigation Menu
+    //navMenu.resetState();
+
+    syncPlaybackUI(false, true, true, true); // Đặt nút Playback về trạng thái vô hiệu hóa (Rỗng)
+}
+
 int UIManager::getSelectedDS() const {
     return navMenu.getSelectedDS();
 }
@@ -304,6 +334,14 @@ std::string UIManager::getInputString2() const {
     return inputMenu.getString2();
 }
 
+std::string UIManager::getInputString3() const {
+    return inputMenu.getString2();
+}
+
+std::string UIManager::getInputString4() const {
+    return inputMenu.getString4();
+}
+
 void UIManager::resetInputAction() {
     inputMenu.resetAction();
 }
@@ -336,6 +374,23 @@ bool UIManager::checkPauseClicked() {
     bool res = pauseClicked;
     pauseClicked = false;
     return res;
+}
+
+void UIManager::syncPlaybackUI(bool currentIsPlaying, bool isAtBeginning, bool isAtEnd, bool isEmpty) {
+    if (isEmpty) {
+        isshowingPlay = true;
+        play.setActive(false);
+        pause.setActive(false);
+        stepForward.setActive(false);
+        stepBackward.setActive(false);
+        return;
+    }
+
+    isshowingPlay = !currentIsPlaying;
+    play.setActive(isshowingPlay && !isAtEnd); // Nếu đã đến end thì disable Play
+    pause.setActive(!isshowingPlay);           // Nếu đang chạy thì Pause active
+    stepForward.setActive(!isAtEnd && !currentIsPlaying);           // Không thể forward nếu đã ở cuối
+    stepBackward.setActive(!isAtBeginning && !currentIsPlaying);    // Không thể backward nếu ở đầu
 }
 
 bool UIManager::checkStepForwardClicked() {
@@ -389,4 +444,8 @@ bool UIManager::checkBackToMenuClicked() {
 
 bool UIManager::isMouseOverUI() const {
     return ImGui::GetIO().WantCaptureMouse;
+}
+
+bool UIManager::isKeyboardCapturedByUI() const {
+    return ImGui::GetIO().WantCaptureKeyboard;
 }

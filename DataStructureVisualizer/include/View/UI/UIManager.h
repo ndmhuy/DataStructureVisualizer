@@ -17,11 +17,12 @@ class UIManager {
 private:
     // state values
     bool initialized = false;
-    bool isPlay = true; // Determine if it's play or pause button, initially play
+    bool isshowingPlay = true; // Determine if it's play or pause button, initially play
     Theme theme = Theme::getDefaultTheme();
     bool isMainMenu = true; // Main menu is visible?
     bool isDarkMode = false;
     bool themeToggleRequested = false;
+    bool themeScaleChanged = false;
     bool backToMenuClicked = false;
     Button play;
     Button pause;
@@ -58,22 +59,71 @@ public:
 
     bool applyTheme(const Theme& selectedTheme);
     bool consumeThemeToggleRequest();
+    bool consumeThemeScaleRequest();
 
     void shutdown(); // shutdown ImGui
 
     // --- Interact Navigation Menu ---
+<<<<<<< HEAD:DataStructureVisualizer/include/View/UI/UIManager.h
     int getSelectedDS() const; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
     void resetDSSelection(); // Call after getSelectedDS()
+=======
+    void reset(); // Khôi phục toàn bộ UI về trạng thái mặc định (Gọi khi Back to Menu)
+    int getSelectedDS() const; // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: ADJ Matrix, 6: ADJ List
+    void resetDSSelection(); 
+>>>>>>> #12-CompleteGUI:DataStructureVisualizer/include/View/UIManager.h
     void setShowMainMenu(bool show);
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
     bool isMouseOverUI() const;
+    bool isKeyboardCapturedByUI() const;
 
     // --- Interact InputMenu ---
-    int getInputAction() const; // 0: no action, 1: Insert, 2: Delete, 3: Search, 4: Update, 5: Random.
-    int getInputMode() const; //Insert: 0. Single 1. Array 2. File //Random: 0.Single 1.Array //Delete,Search,Update: 0
+    // Each DS has different input menu:
+    /*
+    SINGLY LINKED LIST: (0)
+    1/Init: 
+    2/Insert:
+    3/Search
+    4/Delete
+    5/Update
+    6/Clear
+
+    HEAP:(1)- Min Heap (2)- Max Heap
+    1/Init:
+    2/Insert:
+    3/Pop:
+    4/Clear:
+
+    AVL TREE:(3)
+    1/Init: 
+    2/Insert:
+    3/Search:
+    4/Delete:
+    5/Clear
+
+    SPA: (4)- Grid
+    1/ Init: N=(ô nhập liệu 1), M=(ô nhập liệu 2)/ File browser
+    2/ Random: N=(ô nhập liệu 1), M=(ô nhập liệu 2)
+    3/ Set obstacles: i=(ô nhập liệu 1), j=(ô nhập liệu 2)
+    4/ BFS: from x1=(ô nhập liệu 1), y1=(ô nhập liệu 2) to x2=(ô nhập liệu 3), y2=(ô nhập liệu 4)
+    5/ Clear: nút Confirm 
+
+    SPA: (5)- ADJ Matrix (6)- ADJ List
+    1/Init from file:
+    2/Create Node:
+    3/Create Egde:
+    4/Single Source Shortest Path:
+    5/One Pair Shortest Path:
+    6/All Pairs Shortest Path:
+    7/Clear
+*/
+    int getInputAction() const;
+    int getInputMode() const; 
     std::string getInputString1() const;
-    std::string getInputString2() const; //Only get if Action 4, Mode 0
+    std::string getInputString2() const;
+    std::string getInputString3() const;
+    std::string getInputString4() const;
     void resetInputAction(); //Call after done getAction
 
     // --- Interact CodePanel ---
@@ -82,11 +132,18 @@ public:
     void clearCodePanel(); //Clean after done showing code
 
     // --- Interact Buttons ---
+    
     bool checkPlayClicked();
     bool checkPauseClicked();
     bool checkStepForwardClicked();
     bool checkStepBackwardClicked();
+<<<<<<< HEAD:DataStructureVisualizer/include/View/UI/UIManager.h
     void setPlaybackControlsEnabled(bool enabled);
+=======
+    
+    void syncPlaybackUI(bool currentIsPlaying, bool isAtBeginning, bool isAtEnd, bool isEmpty);
+
+>>>>>>> #12-CompleteGUI:DataStructureVisualizer/include/View/UIManager.h
 
     //-Interact with Slider
     float getSpeed() const;

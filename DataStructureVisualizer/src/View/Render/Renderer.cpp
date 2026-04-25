@@ -1,6 +1,9 @@
 #include "View/Render/Renderer.h"
 #include "Model/Frame.h"
 #include <algorithm>
+#include <climits>
+
+const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();;
 
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
@@ -24,7 +27,10 @@ bool Renderer::loadAssets() {
 }
 
 void Renderer::drawBackground() {
+    sf::View currentView = window.getWindow().getView();
+    window.getWindow().setView(window.getWindow().getDefaultView());
     window.getWindow().draw(bgSprite);
+    window.getWindow().setView(currentView);
 }
 
 void Renderer::drawImageNode(sf::Vector2f pos, const std::string& text, bool isHighlighted) {
@@ -304,9 +310,21 @@ void Renderer::drawTextBottomRight(sf::Vector2f center, sf::Vector2f objSize, fl
 
 void Renderer::resetCustomPositions() {
     customNodePositions.clear();
+    positionHistory.clear();
     draggedNodeIndex = -1;
+    hasMovedDuringDrag = false;
+    defaultNodePositions.clear();
+    preDragPositions.clear();
+    currentChildren.clear();
 }
-void Renderer::handleMousePress(sf::Vector2f mousePos) {
+
+void Renderer::undoLastDrag() {
+    if (!positionHistory.empty()) {
+        customNodePositions = positionHistory.back();
+        positionHistory.pop_back();
+    }
+}
+bool Renderer::handleMousePress(sf::Vector2f mousePos) {
     sf::Vector2f nodeSize = getNodeSize();
     float radius = std::max(nodeSize.x, nodeSize.y) / 2.0f;
     if (radius < 20.0f) radius = 35.0f; 
@@ -324,17 +342,28 @@ void Renderer::handleMousePress(sf::Vector2f mousePos) {
         if (std::sqrt(dx * dx + dy * dy) <= radius) {
             draggedNodeIndex = id;
             dragOffset = pos - mousePos;
-            return;
+            preDragPositions = customNodePositions;
+            hasMovedDuringDrag = false;
+            return true;
         }
     }
+    return false;
 }
 void Renderer::handleMouseMove(sf::Vector2f mousePos) {
     if (draggedNodeIndex != -1) {
+        hasMovedDuringDrag = true;
         customNodePositions[draggedNodeIndex] = mousePos + dragOffset;
     }
 }
-void Renderer::handleMouseRelease() {
+bool Renderer::handleMouseRelease() {
+    bool recorded = false;
+    if (draggedNodeIndex != -1 && hasMovedDuringDrag) {
+        positionHistory.push_back(preDragPositions);
+        recorded = true;
+    }
+    hasMovedDuringDrag = false;
     draggedNodeIndex = -1;
+    return recorded;
 }
 
 void Renderer::renderActiveState(const Frame* currentFrame) {
@@ -348,16 +377,30 @@ void Renderer::visit(const LinkedListPayload& payload) {
     if (payload.values.empty()) return;
 
     sf::Vector2f nodeSize = getNodeSize();
-    float spacing = 50.0f;
+    float spacing = 50.0f * theme.nodeScale;
     float totalWidth = payload.values.size() * (nodeSize.x + spacing) - spacing;
 
     sf::Vector2u winSize = window.getWindow().getSize();
     float startX = (winSize.x - totalWidth) / 2.0f + nodeSize.x / 2.0f;
     float startY = winSize.y / 2.0f;
 
+    currentChildren.clear();
+    for (size_t i = 0; i + 1 < payload.values.size(); ++i) {
+        currentChildren[i].push_back(i + 1); // Mỗi node nối với node tiếp theo
+    }
+
+    defaultNodePositions.clear();
     std::vector<sf::Vector2f> positions(payload.values.size());
     for (size_t i = 0; i < payload.values.size(); ++i) {
-        positions[i] = {startX + i * (nodeSize.x + spacing), startY};
+        sf::Vector2f calcPos = {startX + i * (nodeSize.x + spacing), startY};
+        defaultNodePositions[i] = calcPos;
+
+        auto customPosIt = customNodePositions.find(i);
+        if (customPosIt != customNodePositions.end()) {
+            positions[i] = customPosIt->second;
+        } else {
+            positions[i] = calcPos;
+        }
     }
 
     // Draw edges
@@ -373,7 +416,73 @@ void Renderer::visit(const LinkedListPayload& payload) {
 }
 
 void Renderer::visit(const TreePayload& payload) {
-    // Tree rendering logic (to be expanded with payload.positions)
+    const auto& nodes = payload.nodes; // This nodes only contains non-null nodes, which is different from old way, we store ~ 2^h-1 nodes
+    const auto& highlights = payload.highlightedNodes;
+    
+    if (nodes.empty())
+        return;
+    
+    sf::Vector2u winSize = window.getWindow().getSize();
+    // Since this is new way we need to find the actual height
+    size_t maxId = 0;
+    for (const auto& node : nodes) {
+        if (node.id > maxId) maxId = node.id;
+    }
+    float virtualHeight = std::ceil(std::log2(maxId + 2)); 
+
+    // Coordinate mapping instead of array
+    // We use map since node id is not filled completely from 0 to final id
+    std::map<size_t, sf::Vector2f> positions;
+
+    // Adapt with window.size()
+    float startX = static_cast<float>(winSize.x) / 2.0f;
+    float startY = static_cast<float>(winSize.y) * 0.15f;
+    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
+    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
+
+    for (const auto& node : nodes) {
+        size_t id = node.id;
+        int level = std::floor(std::log2(id + 1));
+        int posInLevel = id - (std::pow(2, level) - 1);
+        
+        float levelSpacing = distanceHorizontal * std::pow(2, virtualHeight - level);
+        int nodesInLevel = std::pow(2, level);
+        float levelWidth = levelSpacing * nodesInLevel;
+
+        float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
+        float currentY = startY + level * distanceVertical;
+
+        positions[id] = {currentX, currentY};
+    }
+
+    // Draw edges (with arrow) then draw nodes
+    sf::Vector2f nodeSize = getNodeSize();
+    for (const auto& node : nodes) {
+        // Lambda function 
+        // As my understanding, this is "small" function that is just used for specific part and dont need using anywhere else
+        auto drawEdgeIfExist = [&](size_t childId) {
+            if (positions.count(childId)) {
+                bool isHighlighted = std::find(highlights.begin(), highlights.end(), node.id) != highlights.end();
+                bool isHighlightedChild = std::find(highlights.begin(), highlights.end(), childId) != highlights.end();
+                
+                // arrow: parent to child
+                drawLineWithArrow(positions[node.id], nodeSize, ShapeType::Circle,
+                                  positions[childId], nodeSize, ShapeType::Circle,
+                                  3.0f, 12.0f, isHighlighted && isHighlightedChild);
+            }
+        };
+
+        if (node.leftId != INVALID_INDEX) // != static_cast<size_t>(-1)
+            drawEdgeIfExist(node.leftId);
+
+        if (node.rightId != INVALID_INDEX)
+            drawEdgeIfExist(node.rightId);
+    } 
+
+    for (const auto& node : nodes) {
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), node.id) != highlights.end();
+        drawImageNode(positions[node.id], std::to_string(node.value), isHighlighted);
+    }
 }
 
 void Renderer::visit(const HeapPayload& payload) {
@@ -383,51 +492,63 @@ void Renderer::visit(const HeapPayload& payload) {
     if (heapArray.empty())
         return;
     
+    sf::Vector2u winSize = window.getWindow().getSize();
     // Coordinates temp buffer
     std::vector<sf::Vector2f> positions(heapArray.size());
 
-    // Assume the resolution is 1600:900, otherwise we have to use the current resolution
-    // to compute the suitable values
-    float startX = 800;
-    float startY = 225;
-    float distanceHorizontal = 30; // Deepest leaf nodes
-    float distanceVertical = 50;
-    float height = ceil(log2(heapArray.size()));
+    // Adapt with window.size()
+    float startX = static_cast<float>(winSize.x) / 2.0f;
+    float startY = static_cast<float>(winSize.y) * 0.15f; 
+    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
+    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
+    float height = std::ceil(log2(heapArray.size()+1));
 
-    for (size_t i = 0; i < heapArray.size(); i++) {
+    for (size_t idx = 0; idx < heapArray.size(); idx++) {
         // Coordinates calculation
-        int level = std::floor(log2(i + 1));
-        int posInLevel = i - (std::pow(2, level) - 1);
+        int level = std::floor(log2(idx + 1));
+        int posInLevel = idx - (std::pow(2, level) - 1);
         float levelSpacing = distanceHorizontal * std::pow(2, height - level);
         int nodesInLevel = std::pow(2, level);
         float levelWidth = levelSpacing * nodesInLevel;
 
-        float currentY = startY + level * distanceVertical;
         float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
+        float currentY = startY + level * distanceVertical;
 
-        positions[i] = {currentX, currentY};
+        size_t left = 2 * idx + 1;
+        size_t right = 2 * idx + 2;
+        if (left < heapArray.size()) currentChildren[idx].push_back(left);
+        if (right < heapArray.size()) currentChildren[idx].push_back(right);
+
+        sf::Vector2f calcPos = {currentX, currentY};
+        defaultNodePositions[idx] = calcPos;
+
+        auto customPosIt = customNodePositions.find(idx);
+        if (customPosIt != customNodePositions.end()) {
+            positions[idx] = customPosIt->second;
+        } else {
+            positions[idx] = calcPos;
+        }
     }
 
     // Draw edges then draw nodes
     sf::Vector2f nodeSize = getNodeSize();
-    for (size_t i = 0; i < heapArray.size(); ++i) {
-        bool isHighlighted = std::find(highlights.begin(), highlights.end(), i) != highlights.end();
-        size_t parentIdx = (i > 0) ? ((i - 1) / 2) : SIZE_MAX;
+    for (size_t idx = 1; idx < heapArray.size(); ++idx) {
+        size_t parentIdx = (idx - 1) / 2;
 
-        if (parentIdx != SIZE_MAX) {
-            // Highlighting
-            bool isHighlightedParent = std::find(highlights.begin(), highlights.end(), parentIdx) != highlights.end();
-            drawLine(
-                positions[i], nodeSize, ShapeType::Circle,
-                positions[parentIdx], nodeSize, ShapeType::Circle,
-                3.0f, isHighlighted && isHighlightedParent
-            );
-        }
+        // Highlighting
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
+        bool isHighlightedParent = std::find(highlights.begin(), highlights.end(), parentIdx) != highlights.end();
+
+        drawLine(
+            positions[idx], nodeSize, ShapeType::Circle,
+            positions[parentIdx], nodeSize, ShapeType::Circle,
+            3.0f, isHighlighted && isHighlightedParent
+        );
     } 
 
-    for (size_t i = 0; i < heapArray.size(); ++i) {
-        bool isHighlighted = std::find(highlights.begin(), highlights.end(), i) != highlights.end();
-        drawImageNode(positions[i], std::to_string(heapArray[i]), isHighlighted);
+    for (size_t idx = 0; idx < heapArray.size(); ++idx) {
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
+        drawImageNode(positions[idx], std::to_string(heapArray[idx]), isHighlighted);
     }
 }
 
@@ -447,6 +568,7 @@ void Renderer::visit(const GraphPayload& payload) {
     float radius = std::min(cx, cy) - 100.0f;
     if (radius < 50.0f) radius = 50.0f;
 
+    currentChildren.clear(); 
     defaultNodePositions.clear();
     std::vector<sf::Vector2f> positions(vertices.size());
     for (size_t i = 0; i < vertices.size(); ++i) {
