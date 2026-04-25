@@ -2,6 +2,7 @@
 #define APPENGINE_H
 
 #include "Controller/Playback.h"
+#include "Controller/DataManager.h"
 
 #include "Model/IVisualizable.h"
 
@@ -14,16 +15,16 @@
 
 class AppEngine {
 private:
-  Window window;
-  bool shouldClose = false;
-  bool isDarkMode = false;
-  Theme theme;
-  Renderer renderer;
-  UIManager uiManager;
-  Playback playbackController;
-
-  int currentDS = -1; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4:
-                      // SPAGrid, 5: SPAMatrix, 6: SPAList
+    Window window;
+    bool shouldClose = false;
+    bool isDarkMode = false;
+    Theme theme;
+    Renderer renderer;
+    UIManager uiManager;
+    DataManager dataManager;
+    Playback playbackController;
+    
+    int currentDS = -1; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
 
   IVisualizable *activeStructure = nullptr;
   StructureType activeStructureType = StructureType::None;
