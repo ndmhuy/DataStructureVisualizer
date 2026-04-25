@@ -64,14 +64,9 @@ public:
     void shutdown(); // shutdown ImGui
 
     // --- Interact Navigation Menu ---
-<<<<<<< HEAD:DataStructureVisualizer/include/View/UI/UIManager.h
-    int getSelectedDS() const; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
-    void resetDSSelection(); // Call after getSelectedDS()
-=======
     void reset(); // Khôi phục toàn bộ UI về trạng thái mặc định (Gọi khi Back to Menu)
     int getSelectedDS() const; // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: ADJ Matrix, 6: ADJ List
     void resetDSSelection(); 
->>>>>>> #12-CompleteGUI:DataStructureVisualizer/include/View/UIManager.h
     void setShowMainMenu(bool show);
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
@@ -142,13 +137,9 @@ public:
     bool checkPauseClicked();
     bool checkStepForwardClicked();
     bool checkStepBackwardClicked();
-<<<<<<< HEAD:DataStructureVisualizer/include/View/UI/UIManager.h
-    void setPlaybackControlsEnabled(bool enabled);
-=======
     
     void syncPlaybackUI(bool currentIsPlaying, bool isAtBeginning, bool isAtEnd, bool isEmpty);
 
->>>>>>> #12-CompleteGUI:DataStructureVisualizer/include/View/UIManager.h
 
     //-Interact with Slider
     float getSpeed() const;
