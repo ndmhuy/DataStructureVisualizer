@@ -7,6 +7,7 @@
 #include "Model/GraphStructure/AdjacencyList.h"
 #include "Model/GraphStructure/AdjacencyMatrix.h"
 #include "Model/GraphStructure/IGraphStructure.h"
+#include "Model/GraphStructure/GridGraph.h"
 #include "Model/HeapStructure/MaxHeap.h"
 #include "Model/HeapStructure/IHeapStructure.h"
 #include "Model/HeapStructure/MinHeap.h"
@@ -140,6 +141,19 @@ AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action)
                 return AlgorithmType::SinglyLinkedListUpdate;
             }
             break;
+        case StructureType::GridGraph:
+            if (action == 6) return AlgorithmType::GraphGridBFSShortestPath;
+            if (action == 7) return AlgorithmType::GraphAStar;
+            break;
+        case StructureType::AdjacencyList:
+        case StructureType::AdjacencyMatrix:
+            if (action == 8) return AlgorithmType::GraphDAGShortestPath;
+            if (action == 9) return AlgorithmType::GraphDijkstra;
+            if (action == 10) return AlgorithmType::GraphAStar;
+            if (action == 11) return AlgorithmType::GraphBellmanFord;
+            if (action == 12) return AlgorithmType::GraphFloydWarshall;
+            if (action == 13) return AlgorithmType::GraphJohnson;
+            break;
         default:
             break;
     }
@@ -159,7 +173,7 @@ void syncCodePanelWithCurrentFrame(UIManager& uiManager, const Timeline& timelin
 
 
 bool isGraphStructureType(StructureType structureType) {
-    return structureType == StructureType::AdjacencyList || structureType == StructureType::AdjacencyMatrix;
+    return structureType == StructureType::AdjacencyList || structureType == StructureType::AdjacencyMatrix || structureType == StructureType::GridGraph;
 }
 } // namespace
 
@@ -177,8 +191,10 @@ StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
             return StructureType::MinHeap;
         case 2:
             return StructureType::AVLTree;
-        case 3:
-            return StructureType::AdjacencyList;
+        case 3: return StructureType::AVLTree;
+        case 4: return StructureType::GridGraph;
+        case 5: return StructureType::AdjacencyMatrix;
+        case 6: return StructureType::AdjacencyList;
         default:
             return StructureType::None;
     }
@@ -198,6 +214,8 @@ IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
             return new AdjacencyList(LayoutConfig{});
         case StructureType::AdjacencyMatrix:
             return new AdjacencyMatrix(LayoutConfig{});
+        case StructureType::GridGraph:
+            return new GridGraph(10, 10);
         default:
             return nullptr;
     }
@@ -260,6 +278,7 @@ void AppEngine::handleDataActionRequest() {
     auto* standard = dynamic_cast<IStandardStructure*>(activeStructure);
     auto* heap = dynamic_cast<IHeapStructure*>(activeStructure);
     auto* graph = dynamic_cast<IGraphStructure*>(activeStructure);
+    auto* gridGraph = dynamic_cast<GridGraph*>(activeStructure);
 
     switch (action) {
         case 1: { // Insert
@@ -364,6 +383,38 @@ void AppEngine::handleDataActionRequest() {
                 graph->initialize(edges, timeline);
                 handled = true;
             }
+            break;
+        }
+        case 6: { // BFS
+            if (gridGraph) { gridGraph->runBFSShortestPath({0,0}, {9,9}, timeline); handled = true; }
+            break;
+        }
+        case 7: { // Grid AStar
+            if (gridGraph) { gridGraph->runBFSShortestPath({0,0}, {9,9}, timeline); handled = true; } // Placeholder
+            break;
+        }
+        case 8: { // DAG
+            if (graph) { graph->runDAGShortestPath(0, timeline); handled = true; }
+            break;
+        }
+        case 9: { // Dijkstra
+            if (graph) { graph->runDijkstra(0, timeline); handled = true; }
+            break;
+        }
+        case 10: { // AStar Graph
+            if (graph) { graph->runAStar(0, graph->size() > 1 ? graph->size() - 1 : 0, timeline); handled = true; }
+            break;
+        }
+        case 11: { // Bellman-Ford
+            if (graph) { graph->runBellmanFord(0, timeline); handled = true; }
+            break;
+        }
+        case 12: { // Floyd-Warshall
+            if (graph) { graph->runFloydWarshall(timeline); handled = true; }
+            break;
+        }
+        case 13: { // Johnson
+            if (graph) { graph->runJohnson(timeline); handled = true; }
             break;
         }
         default:
