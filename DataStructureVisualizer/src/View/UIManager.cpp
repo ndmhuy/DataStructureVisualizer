@@ -223,7 +223,6 @@ void UIManager::render(sf::RenderWindow& window) {
         if (ImGui::Button("Home", ImVec2(80.0f, 35.0f))) {
             backToMenuClicked = true;
             isMainMenu = true;
-            // isMainMenu = true; // Tạm khóa cờ chuyển màn hình để luôn giữ UI ở Workspace
         }
 
         ImGui::SetCursorPos(ImVec2(winSize.x - 110.0f, 10.0f));
