@@ -620,21 +620,22 @@ void AppEngine::update(sf::Time deltaTime) {
         switchActiveStructure(StructureType::None);
     }
 
+    if (uiManager.consumeThemeScaleRequest()) {
+        theme.nodeScale = uiManager.getTheme().nodeScale;
+        theme.arrayScale = uiManager.getTheme().arrayScale;
+    }
+
     if (uiManager.consumeThemeToggleRequest()) {
         isDarkMode = !isDarkMode;
-        float currentScale = theme.nodeScale;
+        float currentNodeScale = theme.nodeScale;
+        float currentArrayScale = theme.arrayScale;
         theme = isDarkMode ? Theme::getDarkTheme() : Theme::getDefaultTheme();
-        theme.nodeScale = currentScale;
-        theme.arrayScale = currentScale;
+        theme.nodeScale = currentNodeScale;
+        theme.arrayScale = currentArrayScale;
         if (!uiManager.applyTheme(theme)) {
             std::cerr << "Warning: AppEngine::update failed to apply theme to UIManager." << std::endl;
         }
         uiManager.resize(window.getWindow());
-    }
-    
-    if (uiManager.consumeThemeScaleRequest()) {
-        theme.nodeScale = uiManager.getTheme().nodeScale;
-        theme.arrayScale = uiManager.getTheme().arrayScale;
     }
 
     playbackController.setSpeed(uiManager.getSpeed());
