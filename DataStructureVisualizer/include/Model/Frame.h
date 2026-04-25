@@ -19,6 +19,7 @@ public:
     Frame(const SingleSourcePayload& p, int lineId, const std::string& msg);
     Frame(const AStarPayload& p, int lineId, const std::string& msg);
     Frame(const AllPairsPayload& p, int lineId, const std::string& msg);
+    Frame(const GridPayload& p, int lineId, const std::string& msg);
 
     // Rule of Three: destructor, copy constructor, assignment operator
     ~Frame();

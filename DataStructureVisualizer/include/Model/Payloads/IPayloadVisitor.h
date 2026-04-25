@@ -9,7 +9,7 @@ struct GraphPayload;
 struct SingleSourcePayload;
 struct AStarPayload;
 struct AllPairsPayload;
-
+struct GridPayload;
 class IPayloadVisitor {
 public:
     virtual ~IPayloadVisitor() = default;
@@ -21,6 +21,7 @@ public:
     virtual void visit(const SingleSourcePayload& payload) = 0;
     virtual void visit(const AStarPayload& payload) = 0;
     virtual void visit(const AllPairsPayload& payload) = 0;
+    virtual void visit(const GridPayload& payload) = 0;
 };
 
 #endif // IPAYLOADVISITOR_H

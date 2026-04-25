@@ -14,34 +14,35 @@
 
 class AppEngine {
 private:
-    Window window;
-    bool shouldClose = false;
-    bool isDarkMode = false;
-    Theme theme;
-    Renderer renderer;
-    UIManager uiManager;
-    Playback playbackController;
-    
-    int currentDS = -1; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
+  Window window;
+  bool shouldClose = false;
+  bool isDarkMode = false;
+  Theme theme;
+  Renderer renderer;
+  UIManager uiManager;
+  Playback playbackController;
 
-    IVisualizable* activeStructure = nullptr;
-    StructureType activeStructureType = StructureType::None;
+  int currentDS = -1; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4:
+                      // SPAGrid, 5: SPAMatrix, 6: SPAList
 
-    static StructureType mapMenuSelectionToStructureType(int selectedDS);
-    IVisualizable* resolveStructure(StructureType structureType);
-    void handleStructureSwitchRequest();
-    void switchActiveStructure(StructureType structureType);
-    void handleDataActionRequest();
+  IVisualizable *activeStructure = nullptr;
+  StructureType activeStructureType = StructureType::None;
+
+  static StructureType mapMenuSelectionToStructureType(int selectedDS);
+  IVisualizable *resolveStructure(StructureType structureType);
+  void handleStructureSwitchRequest();
+  void switchActiveStructure(StructureType structureType);
+  void handleDataActionRequest();
 
 public:
-    AppEngine();
-    ~AppEngine();
+  AppEngine();
+  ~AppEngine();
 
-    void run();
+  void run();
 
-    void processInput(const sf::Event& event);
-    void update(sf::Time deltaTime);
-    void render();
+  void processInput(const sf::Event &event);
+  void update(sf::Time deltaTime);
+  void render();
 };
 
 #endif // APPENGINE_H
