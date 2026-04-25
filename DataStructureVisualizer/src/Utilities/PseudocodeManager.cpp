@@ -11,6 +11,8 @@ PseudocodeManager::getPseudocode(AlgorithmType type) {
     return SinglyLinkedListDeleteCode;
   case AlgorithmType::SinglyLinkedListSearch:
     return SinglyLinkedListSearchCode;
+  case AlgorithmType::SinglyLinkedListUpdate:
+    return SinglyLinkedListUpdateCode;
   case AlgorithmType::GraphGridBFSShortestPath:
     return GraphGridBFSShortestPathCode;
   case AlgorithmType::GraphDAGShortestPath:
@@ -65,7 +67,17 @@ const std::vector<std::string> PseudocodeManager::SinglyLinkedListSearchCode = {
     "    if curr.value == value:",        // Line 3
     "      return true",                  // Line 4
     "    curr = curr.next",               // Line 5
-    "  return false"                      // Line 6
+};
+
+const std::vector<std::string> PseudocodeManager::SinglyLinkedListUpdateCode = {
+    "function update(oldV, newV):",       // Line 0
+    "  curr = head",                      // Line 1
+    "  while curr is not null:",          // Line 2
+    "    if curr.value == oldV:",         // Line 3
+    "      curr.value = newV",            // Line 4
+    "      return true",                  // Line 5
+    "    curr = curr.next",               // Line 6
+    "  return false"                      // Line 7
 };
 
 const std::vector<std::string> PseudocodeManager::GraphGridBFSShortestPathCode = {
@@ -81,7 +93,7 @@ const std::vector<std::string> PseudocodeManager::GraphGridBFSShortestPathCode =
     "  while q is not empty:",            // Line 9
     "    u = q.dequeue()",                // Line 10
     "    if u == target:",                // Line 11
-    "      return dist[target]",          // Line 12
+    "      return getPath(prev, tgt)",    // Line 12
     "    for dir in dirs:",               // Line 13
     "      v = u + dir",                  // Line 14
     "      if valid(v) and !vis[v]:",     // Line 15
