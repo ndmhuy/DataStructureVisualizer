@@ -12,10 +12,11 @@ class AdjacencyMatrix : public IGraphStructure {
     bool isValidVertex(size_t vertex) const;
 
     public:
-    AdjacencyMatrix(bool directed = false);
+    AdjacencyMatrix(const LayoutConfig& config = LayoutConfig(), bool directed = false);
 
-    void addEdge(size_t from, size_t to, int weight = 1) override;
-    void deleteEdge(size_t from, size_t to) override;
+    void addVertex(Timeline* timeline = nullptr) override;
+    void addEdge(size_t from, size_t to, int weight = 1, Timeline* timeline = nullptr) override;
+    void deleteEdge(size_t from, size_t to, Timeline* timeline = nullptr) override;
     bool hasEdge(size_t from, size_t to) const override;
 
     std::vector<size_t> getVertices() const override;
