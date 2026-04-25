@@ -405,29 +405,6 @@ bool UIManager::checkStepBackwardClicked() {
     return res;
 }
 
-void UIManager::setPlaybackControlsEnabled(bool enabled) {
-    playClicked = false;
-    pauseClicked = false;
-    stepForwardClicked = false;
-    stepBackwardClicked = false;
-
-    if (!enabled) {
-        isPlay = true;
-        play.setActive(false);
-        pause.setActive(false);
-        stepForward.setActive(false);
-        stepBackward.setActive(false);
-        return;
-    }
-
-    // When entering a new structure screen, start in paused/play-ready state.
-    isPlay = true;
-    play.setActive(true);
-    pause.setActive(false);
-    stepForward.setActive(true);
-    stepBackward.setActive(true);
-}
-
 float UIManager::getSpeed() const {
     return speed;
 }
