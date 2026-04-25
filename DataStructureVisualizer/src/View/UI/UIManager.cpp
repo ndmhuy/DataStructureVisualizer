@@ -116,13 +116,13 @@ bool UIManager::consumeThemeScaleRequest() {
 void UIManager::processEvent(sf::RenderWindow& window, const sf::Event& event) {
     ImGui::SFML::ProcessEvent(window, event);
 
+    if (event.is<sf::Event::Resized>()) {
+        resize(window);
+    }
+
     // If the mouse is in the Menu of ImGUI -> ignore this click
     if (ImGui::GetIO().WantCaptureMouse) {
         return;
-    }
-
-    if (event.is<sf::Event::Resized>()) {
-        resize(window);
     }
 
     if (isMainMenu) {
