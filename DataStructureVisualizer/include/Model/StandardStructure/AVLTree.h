@@ -3,6 +3,7 @@
 
 #include "Model/StandardStructure/IStandardStructure.h"
 #include "Model/Timeline.h"
+#include "Model/Payloads/Payloads.h"
 #include <vector>
 #include <unordered_map>
 
@@ -23,9 +24,9 @@ class AVLTree : public IStandardStructure {
     };
     
     Node* root;
-    std::unordered_map<int, int> getNodeIndex; // value -> index -> highlighting
+    std::unordered_map<int, size_t> getNodeIndex; // value -> node id for highlighting
 
-    std::vector<int> toVector();
+    TreePayload makeTreePayload(const std::vector<size_t>& highlightedNodes = {});
     void deleteNodes(Node*& root);
 
     Node* rotateRight(Node* root, Timeline& timeline);
@@ -47,6 +48,7 @@ class AVLTree : public IStandardStructure {
     void insert(int value, Timeline& timeline) override;
     void remove(int value, Timeline& timeline) override;
     void search(int value, Timeline& timeline) override;
+    void update(int oldValue, int newValue, Timeline& timeline) override;
     void clear(Timeline& timeline) override;
 
     StructureType getStructureType() const override;
