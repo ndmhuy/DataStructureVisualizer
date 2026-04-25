@@ -1,6 +1,9 @@
 #include "View/Render/Renderer.h"
 #include "Model/Frame.h"
 #include <algorithm>
+#include <climits>
+
+const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();;
 
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
@@ -378,7 +381,73 @@ void Renderer::visit(const LinkedListPayload& payload) {
 }
 
 void Renderer::visit(const TreePayload& payload) {
-    // Tree rendering logic (to be expanded with payload.positions)
+    const auto& nodes = payload.nodes; // This nodes only contains non-null nodes, which is different from old way, we store ~ 2^h-1 nodes
+    const auto& highlights = payload.highlightedNodes;
+    
+    if (nodes.empty())
+        return;
+    
+    sf::Vector2u winSize = window.getWindow().getSize();
+    // Since this is new way we need to find the actual height
+    size_t maxId = 0;
+    for (const auto& node : nodes) {
+        if (node.id > maxId) maxId = node.id;
+    }
+    float virtualHeight = std::ceil(std::log2(maxId + 2)); 
+
+    // Coordinate mapping instead of array
+    // We use map since node id is not filled completely from 0 to final id
+    std::map<size_t, sf::Vector2f> positions;
+
+    // Adapt with window.size()
+    float startX = static_cast<float>(winSize.x) / 2.0f;
+    float startY = static_cast<float>(winSize.y) * 0.15f;
+    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
+    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
+
+    for (const auto& node : nodes) {
+        size_t id = node.id;
+        int level = std::floor(std::log2(id + 1));
+        int posInLevel = id - (std::pow(2, level) - 1);
+        
+        float levelSpacing = distanceHorizontal * std::pow(2, virtualHeight - level);
+        int nodesInLevel = std::pow(2, level);
+        float levelWidth = levelSpacing * nodesInLevel;
+
+        float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
+        float currentY = startY + level * distanceVertical;
+
+        positions[id] = {currentX, currentY};
+    }
+
+    // Draw edges (with arrow) then draw nodes
+    sf::Vector2f nodeSize = getNodeSize();
+    for (const auto& node : nodes) {
+        // Lambda function 
+        // As my understanding, this is "small" function that is just used for specific part and dont need using anywhere else
+        auto drawEdgeIfExist = [&](size_t childId) {
+            if (positions.count(childId)) {
+                bool isHighlighted = std::find(highlights.begin(), highlights.end(), node.id) != highlights.end();
+                bool isHighlightedChild = std::find(highlights.begin(), highlights.end(), childId) != highlights.end();
+                
+                // arrow: parent to child
+                drawLineWithArrow(positions[node.id], nodeSize, ShapeType::Circle,
+                                  positions[childId], nodeSize, ShapeType::Circle,
+                                  3.0f, 12.0f, isHighlighted && isHighlightedChild);
+            }
+        };
+
+        if (node.leftId != INVALID_INDEX) // != static_cast<size_t>(-1)
+            drawEdgeIfExist(node.leftId);
+
+        if (node.rightId != INVALID_INDEX)
+            drawEdgeIfExist(node.rightId);
+    } 
+
+    for (const auto& node : nodes) {
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), node.id) != highlights.end();
+        drawImageNode(positions[node.id], std::to_string(node.value), isHighlighted);
+    }
 }
 
 void Renderer::visit(const HeapPayload& payload) {
@@ -388,51 +457,50 @@ void Renderer::visit(const HeapPayload& payload) {
     if (heapArray.empty())
         return;
     
+    sf::Vector2u winSize = window.getWindow().getSize();
     // Coordinates temp buffer
     std::vector<sf::Vector2f> positions(heapArray.size());
 
-    // Assume the resolution is 1600:900, otherwise we have to use the current resolution
-    // to compute the suitable values
-    float startX = 800;
-    float startY = 225;
-    float distanceHorizontal = 30; // Deepest leaf nodes
-    float distanceVertical = 50;
-    float height = ceil(log2(heapArray.size()));
+    // Adapt with window.size()
+    float startX = static_cast<float>(winSize.x) / 2.0f;
+    float startY = static_cast<float>(winSize.y) * 0.15f; 
+    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
+    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
+    float height = std::ceil(log2(heapArray.size()+1));
 
-    for (size_t i = 0; i < heapArray.size(); i++) {
+    for (size_t idx = 0; idx < heapArray.size(); idx++) {
         // Coordinates calculation
-        int level = std::floor(log2(i + 1));
-        int posInLevel = i - (std::pow(2, level) - 1);
+        int level = std::floor(log2(idx + 1));
+        int posInLevel = idx - (std::pow(2, level) - 1);
         float levelSpacing = distanceHorizontal * std::pow(2, height - level);
         int nodesInLevel = std::pow(2, level);
         float levelWidth = levelSpacing * nodesInLevel;
 
-        float currentY = startY + level * distanceVertical;
         float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
+        float currentY = startY + level * distanceVertical;
 
-        positions[i] = {currentX, currentY};
+        positions[idx] = {currentX, currentY};
     }
 
     // Draw edges then draw nodes
     sf::Vector2f nodeSize = getNodeSize();
-    for (size_t i = 0; i < heapArray.size(); ++i) {
-        bool isHighlighted = std::find(highlights.begin(), highlights.end(), i) != highlights.end();
-        size_t parentIdx = (i > 0) ? ((i - 1) / 2) : SIZE_MAX;
+    for (size_t idx = 1; idx < heapArray.size(); ++idx) {
+        size_t parentIdx = (idx - 1) / 2;
 
-        if (parentIdx != SIZE_MAX) {
-            // Highlighting
-            bool isHighlightedParent = std::find(highlights.begin(), highlights.end(), parentIdx) != highlights.end();
-            drawLine(
-                positions[i], nodeSize, ShapeType::Circle,
-                positions[parentIdx], nodeSize, ShapeType::Circle,
-                3.0f, isHighlighted && isHighlightedParent
-            );
-        }
+        // Highlighting
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
+        bool isHighlightedParent = std::find(highlights.begin(), highlights.end(), parentIdx) != highlights.end();
+
+        drawLine(
+            positions[idx], nodeSize, ShapeType::Circle,
+            positions[parentIdx], nodeSize, ShapeType::Circle,
+            3.0f, isHighlighted && isHighlightedParent
+        );
     } 
 
-    for (size_t i = 0; i < heapArray.size(); ++i) {
-        bool isHighlighted = std::find(highlights.begin(), highlights.end(), i) != highlights.end();
-        drawImageNode(positions[i], std::to_string(heapArray[i]), isHighlighted);
+    for (size_t idx = 0; idx < heapArray.size(); ++idx) {
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
+        drawImageNode(positions[idx], std::to_string(heapArray[idx]), isHighlighted);
     }
 }
 
