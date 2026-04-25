@@ -8,12 +8,27 @@ namespace {
     int NumberSpaceFilter(ImGuiInputTextCallbackData* data) {
         if (data->EventChar >= '0' && data->EventChar <= '9') return 0;
         if (data->EventChar == ' ') return 0;
+        if (data->EventChar =='+'&&data->EventChar=='-') return 0;
         return 1;
     }
     int NumberOnlyFilter(ImGuiInputTextCallbackData* data) {
         if (data->EventChar >= '0' && data->EventChar <= '9') return 0;
+        if (data->EventChar =='+'&&data->EventChar=='-') return 0;
         return 1;
     }
+    int UnsignedNumberOnlyFilter(ImGuiInputTextCallbackData* data) {
+        if (data->EventChar >= '0' && data->EventChar <= '9') return 0;
+        return 1;
+    }
+}
+
+std::vector<std::string> InputMenu::getCurrentMenu() const {
+    if (currentDS == 0) return {"Init", "Insert", "Search", "Delete", "Update", "Clear"};
+    if (currentDS == 1 || currentDS == 2) return {"Init", "Insert", "Pop", "Clear"};
+    if (currentDS == 3) return {"Init", "Insert", "Search", "Delete", "Clear"};
+    if (currentDS == 4) return {"Init", "Random", "Set obstacles", "BFS", "Clear"};
+    if (currentDS == 5 || currentDS == 6) return {"Init", "Create Node", "Create Edge", "SSSP", "OPSP", "APSP", "Clear"};
+    return {};
 }
 
 bool InputMenu::init(const Theme& theme){
@@ -56,8 +71,18 @@ void InputMenu::render(const sf::RenderWindow& window){
 
     // Set position for menu
     int y = window.getSize().y;
+    float defaultY = theme.inputMenuAnchorYRatio * y - theme.inputMenuAnchorHeightOffsetMultiplier * height;
+    
+    // Tính toán chiều cao thực tế của menu để không bị tràn màn hình (vertical overflow)
+    int currentItemsCount = isopenMenu ? getCurrentMenu().size() : 1;
+    float totalMenuHeight = currentItemsCount * height;
+
+    if (defaultY + totalMenuHeight > y) {
+        defaultY = y - totalMenuHeight - 10.0f; // Căn lề dưới (padding bottom) một khoảng an toàn
+    }
+
     ImGui::SetNextWindowPos(
-        ImVec2(0, theme.inputMenuAnchorYRatio * y - theme.inputMenuAnchorHeightOffsetMultiplier * height),
+        ImVec2(0, defaultY),
         ImGuiCond_Always
     );
 
@@ -73,13 +98,16 @@ void InputMenu::render(const sf::RenderWindow& window){
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, colorAccent);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, colorAccent);
 
-    if (ImGui::Button(isopenMenu ? "<" : ">", ImVec2(theme.inputMenuToggleWidth, height))) {
+    // Mở rộng nút Toggle để bằng với chiều cao của menu, tạo thành một khối liền mạch
+    if (ImGui::Button(isopenMenu ? "<" : ">", ImVec2(theme.inputMenuToggleWidth, isopenMenu ? totalMenuHeight : height))) {
         isopenMenu = !isopenMenu;
         if (!isopenMenu) {
             currentOption = -1;
         } else {
             inputBuf1[0] = '\0';
             inputBuf2[0] = '\0';
+            inputBuf3[0] = '\0';
+            inputBuf4[0] = '\0';
         }
     }
     ImGui::PopStyleColor(3);
@@ -92,18 +120,22 @@ void InputMenu::render(const sf::RenderWindow& window){
         ImGui::SameLine(); 
         ImGui::BeginGroup();
 
-        for (int i = 0; i < 5; ++i){
+        std::vector<std::string> currentMenu = getCurrentMenu();
+        int menuCount = currentMenu.size();
+        for (int i = 0; i < menuCount; ++i){
             bool isActive = (currentOption == i);
 
             ImGui::PushStyleColor(ImGuiCol_Button, isActive ? colorAccent : colorPrimary);
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, colorAccent);
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, colorAccent);
 
-            if (ImGui::Button(menu[i], ImVec2(length, height))) {
+            if (ImGui::Button(currentMenu[i].c_str(), ImVec2(length, height))) {
                 if (currentOption != i) {
                     currentOption = i;
                     inputBuf1[0] = '\0';
                     inputBuf2[0] = '\0';
+                    inputBuf3[0] = '\0';
+                    inputBuf4[0] = '\0';
                 }
             }
             ImGui::PopStyleColor(3);
@@ -195,83 +227,237 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
 
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + theme.inputMenuLabelXOffset);
 
-    if (cur == 0) { // Insert
-        if (DrawButton("Single", insertSubMode == 0, 60.0f)) {
-            if (insertSubMode != 0) {
-                insertSubMode = 0;
-                inputBuf1[0] = '\0';
-            }
+    auto DrawInitModes = [&]() {
+        if (DrawButton("Array", insertSubMode == 0, 60.0f)) {
+            if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; }
         }
         ImGui::SameLine();
-        if (DrawButton("Array", insertSubMode == 1, 60.0f)) {
-            if (insertSubMode != 1) {
-                insertSubMode = 1;
-                inputBuf1[0] = '\0';
-            }
+        if (DrawButton("Random", insertSubMode == 1, 60.0f)) {
+            if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; }
         }
         ImGui::SameLine();
         if (DrawButton("File", insertSubMode == 2, 60.0f)) {
-            if (insertSubMode != 2) {
-                insertSubMode = 2;
-                inputBuf1[0] = '\0';
-            }
+            if (insertSubMode != 2) { insertSubMode = 2; inputBuf1[0] = '\0'; }
         }
-        
         ImGui::SameLine(0, 15.0f);
         if (insertSubMode == 0) {
-            DrawInput("##in_single", inputBuf1, sizeof(inputBuf1), 100.0f, NumberOnlyFilter);
+            DrawInput("##in_array", inputBuf1, sizeof(inputBuf1), 200.0f, NumberSpaceFilter);
             ImGui::SameLine();
-            if (DrawButton("Add", false, 60.0f)) {
-                outMode = 0; outString1 = inputBuf1; outString2 = "";
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
                 hasAction = 1; currentOption = -1; isopenMenu = false;
             }
         } else if (insertSubMode == 1) {
-            DrawInput("##in_array", inputBuf1, sizeof(inputBuf1), 200.0f, NumberSpaceFilter);
-            ImGui::SameLine();
-            if (DrawButton("Load", false, 60.0f)) {
-                outMode = 1; outString1 = inputBuf1; outString2 = "";
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 1; outString1 = ""; outString2 = ""; outString3 = ""; outString4 = "";
                 hasAction = 1; currentOption = -1; isopenMenu = false;
             }
         } else if (insertSubMode == 2) {
             DrawInput("##in_file", inputBuf1, sizeof(inputBuf1), 150.0f, nullptr);
             ImGui::SameLine();
-            if (DrawButton("Browse", false, 60.0f)) {
-                fileDialog.Open(); // Kích hoạt pop-up Browse
-            }
+            if (DrawButton("Browse", false, 60.0f)) fileDialog.Open();
             ImGui::SameLine();
-            if (DrawButton("Load", false, 60.0f)) {
-                outMode = 2; outString1 = inputBuf1; outString2 = "";
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 2; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
                 hasAction = 1; currentOption = -1; isopenMenu = false;
             }
         }
-    } else if (cur == 1) { // Random
-        if (DrawButton("Single", false, 80.0f)) {
-            outMode = 0; outString1 = ""; outString2 = "";
-            hasAction = 5; currentOption = -1; isopenMenu = false;
+    };
+
+    auto DrawInsertModes = [&](int actionVal) {
+        if (DrawButton("Single", insertSubMode == 0, 60.0f)) {
+            if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; }
         }
         ImGui::SameLine();
-        if (DrawButton("Array", false, 80.0f)) {
-            outMode = 1; outString1 = ""; outString2 = "";
-            hasAction = 5; currentOption = -1; isopenMenu = false;
+        if (DrawButton("Random", insertSubMode == 1, 60.0f)) {
+            if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; }
         }
-    } else if (cur == 2 || cur == 3) { // Delete, Search
-        DrawInput("##in_del_search", inputBuf1, sizeof(inputBuf1), 100.0f, NumberOnlyFilter);
+        ImGui::SameLine(0, 15.0f);
+        if (insertSubMode == 0) {
+            DrawInput("##in_single", inputBuf1, sizeof(inputBuf1), 100.0f, NumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
+                hasAction = actionVal; currentOption = -1; isopenMenu = false;
+            }
+        } else if (insertSubMode == 1) {
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 1; outString1 = ""; outString2 = ""; outString3 = ""; outString4 = "";
+                hasAction = actionVal; currentOption = -1; isopenMenu = false;
+            }
+        }
+    };
+
+    auto DrawSingleInput = [&](int actionVal) {
+        DrawInput("##in_single", inputBuf1, sizeof(inputBuf1), 100.0f, NumberOnlyFilter);
         ImGui::SameLine();
         if (DrawButton("OK", false, 60.0f)) {
-            outMode = 0; outString1 = inputBuf1; outString2 = "";
-            hasAction = cur; currentOption = -1; isopenMenu = false;
+            outMode = 0; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
+            hasAction = actionVal; currentOption = -1; isopenMenu = false;
         }
-    } else if (cur == 4) { // Update
-        ImGui::SetCursorPosY(textY); ImGui::Text("From"); ImGui::SameLine();
-        DrawInput("##in_upd_from", inputBuf1, sizeof(inputBuf1), 80.0f, NumberOnlyFilter);
-        ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
-        ImGui::SetCursorPosY(textY); ImGui::Text("To"); ImGui::SameLine();
-        DrawInput("##in_upd_to", inputBuf2, sizeof(inputBuf2), 80.0f, NumberOnlyFilter);
-        ImGui::SameLine();
-        if (DrawButton("OK", false, 60.0f)) {
-            outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2;
-            hasAction = 4; currentOption = -1; isopenMenu = false;
+    };
+
+    auto DrawConfirm = [&](int actionVal) {
+        if (DrawButton("Confirm", false, 80.0f)) {
+            outMode = 0; outString1 = ""; outString2 = ""; outString3 = ""; outString4 = "";
+            hasAction = actionVal; currentOption = -1; isopenMenu = false;
         }
+    };
+
+    if (currentDS == 0) { // SLL
+        if (cur == 0) DrawInitModes();
+        else if (cur == 1) DrawInsertModes(2);
+        else if (cur == 2) DrawSingleInput(3);
+        else if (cur == 3) DrawSingleInput(4);
+        else if (cur == 4) { // Update
+            ImGui::SetCursorPosY(textY); ImGui::Text("From"); ImGui::SameLine();
+            DrawInput("##in_upd_from", inputBuf1, sizeof(inputBuf1), 80.0f, NumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("To"); ImGui::SameLine();
+            DrawInput("##in_upd_to", inputBuf2, sizeof(inputBuf2), 80.0f, NumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                hasAction = 5; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 5) DrawConfirm(6);
+    } else if (currentDS == 1 || currentDS == 2) { // HEAP
+        if (cur == 0) DrawInitModes();
+        else if (cur == 1) DrawInsertModes(2);
+        else if (cur == 2) DrawConfirm(3);
+        else if (cur == 3) DrawConfirm(4);
+    } else if (currentDS == 3) { // AVL
+        if (cur == 0) DrawInitModes();
+        else if (cur == 1) DrawInsertModes(2);
+        else if (cur == 2) DrawSingleInput(3);
+        else if (cur == 3) DrawSingleInput(4);
+        else if (cur == 4) DrawConfirm(5);
+    } else if (currentDS == 4) { // GRID
+        if (cur == 0) { // Init
+            if (DrawButton("Empty", insertSubMode == 0, 60.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("File", insertSubMode == 1, 60.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
+            }
+            ImGui::SameLine(0, 15.0f);
+            if (insertSubMode == 0) {
+                ImGui::SetCursorPosY(textY); ImGui::Text("N="); ImGui::SameLine();
+                DrawInput("##in_grid_n", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
+                ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+                ImGui::SetCursorPosY(textY); ImGui::Text("M="); ImGui::SameLine();
+                DrawInput("##in_grid_m", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
+                ImGui::SameLine();
+                if (DrawButton("OK", false, 60.0f)) {
+                    outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                    hasAction = 1; currentOption = -1; isopenMenu = false;
+                }
+            } else if (insertSubMode == 1) {
+                DrawInput("##in_file", inputBuf1, sizeof(inputBuf1), 150.0f, nullptr);
+                ImGui::SameLine();
+                if (DrawButton("Browse", false, 60.0f)) fileDialog.Open();
+                ImGui::SameLine();
+                if (DrawButton("OK", false, 60.0f)) {
+                    outMode = 1; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
+                    hasAction = 1; currentOption = -1; isopenMenu = false;
+                }
+            }
+        }
+        else if (cur == 1) { // Random
+            ImGui::SetCursorPosY(textY); ImGui::Text("N="); ImGui::SameLine();
+            DrawInput("##in_rand_n", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("M="); ImGui::SameLine();
+            DrawInput("##in_rand_m", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                hasAction = 2; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 2) { // Set obstacles
+            ImGui::SetCursorPosY(textY); ImGui::Text("i="); ImGui::SameLine();
+            DrawInput("##in_obs_i", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("j="); ImGui::SameLine();
+            DrawInput("##in_obs_j", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                hasAction = 3; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 3) { // BFS
+            ImGui::SetCursorPosY(textY); ImGui::Text("from x1="); ImGui::SameLine();
+            DrawInput("##in_bfs_x1", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("y1="); ImGui::SameLine();
+            DrawInput("##in_bfs_y1", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("to x2="); ImGui::SameLine();
+            DrawInput("##in_bfs_x2", inputBuf3, sizeof(inputBuf3), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("y2="); ImGui::SameLine();
+            DrawInput("##in_bfs_y2", inputBuf4, sizeof(inputBuf4), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = inputBuf3; outString4 = inputBuf4;
+                hasAction = 4; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 4) DrawConfirm(5);
+    } else if (currentDS == 5 || currentDS == 6) { // SHORTEST PATH ALGORITHM
+        if (cur == 0) { // Init from file
+            if (DrawButton("Adj Matrix", insertSubMode == 0, 100.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Adj List", insertSubMode == 1, 100.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; }
+            }
+            ImGui::SameLine(0, 15.0f);
+            DrawInput("##in_file", inputBuf1, sizeof(inputBuf1), 150.0f, nullptr);
+            ImGui::SameLine();
+            if (DrawButton("Browse", false, 60.0f)) fileDialog.Open();
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = insertSubMode; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
+                hasAction = 1; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 1) DrawSingleInput(2);
+        else if (cur == 2) { // Create Edge
+            ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
+            DrawInput("##in_edge_u", inputBuf1, sizeof(inputBuf1), 50.0f, NumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("v="); ImGui::SameLine();
+            DrawInput("##in_edge_v", inputBuf2, sizeof(inputBuf2), 50.0f, NumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("(u,v)="); ImGui::SameLine();
+            DrawInput("##in_edge_w", inputBuf3, sizeof(inputBuf3), 50.0f, NumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = inputBuf3; outString4 = "";
+                hasAction = 3; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 3) DrawSingleInput(4);
+        else if (cur == 4) { // OPSP
+            ImGui::SetCursorPosY(textY); ImGui::Text("From u="); ImGui::SameLine();
+            DrawInput("##in_opsp_u", inputBuf1, sizeof(inputBuf1), 50.0f, NumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("to v="); ImGui::SameLine();
+            DrawInput("##in_opsp_v", inputBuf2, sizeof(inputBuf2), 50.0f, NumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                hasAction = 5; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 5) DrawConfirm(6); // APSP
+        else if (cur == 6) DrawConfirm(7); // Clear
     }
 
     ImGui::PopStyleVar();   
