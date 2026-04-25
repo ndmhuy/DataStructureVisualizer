@@ -111,6 +111,7 @@ public:
 
     SPA: (5)- ADJ Matrix (6)- ADJ List
     1/Init from file:
+    8/Random:
     2/Create Node:
     3/Create Egde:
     4/Single Source Shortest Path:

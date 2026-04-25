@@ -27,7 +27,7 @@ std::vector<std::string> InputMenu::getCurrentMenu() const {
     if (currentDS == 1 || currentDS == 2) return {"Init", "Insert", "ExtractTop", "Peek", "Search", "Delete", "Update", "Clear"};
     if (currentDS == 3) return {"Init", "Insert", "Search", "Delete", "Update", "Clear"};
     if (currentDS == 4) return {"Init", "Random", "Set obstacles", "BFS", "Clear"};
-    if (currentDS == 5 || currentDS == 6) return {"Init", "Create Node", "Create Edge", "SSSP", "OPSP", "APSP", "Clear"};
+    if (currentDS == 5 || currentDS == 6) return {"Init", "Random", "Create Node", "Create Edge", "SSSP", "OPSP", "APSP", "Clear"};
     return {};
 }
 
@@ -434,8 +434,9 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 1; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 1) DrawSingleInput(2);
-        else if (cur == 2) { // Create Edge
+        else if (cur == 1) DrawConfirm(8); // Random
+        else if (cur == 2) DrawSingleInput(2); // Create Node
+        else if (cur == 3) { // Create Edge
             ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
             DrawInput("##in_edge_u", inputBuf1, sizeof(inputBuf1), 50.0f, NumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
@@ -450,8 +451,8 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 3; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 3) DrawSingleInput(4);
-        else if (cur == 4) { // OPSP
+        else if (cur == 4) DrawSingleInput(4); // SSSP
+        else if (cur == 5) { // OPSP
             if (DrawButton("DAG", insertSubMode == 0, 60.0f)) {
                 if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
             }
@@ -475,8 +476,8 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 5; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 5) DrawConfirm(6); // APSP
-        else if (cur == 6) DrawConfirm(7); // Clear
+        else if (cur == 6) DrawConfirm(6); // APSP
+        else if (cur == 7) DrawConfirm(7); // Clear
     }
 
     ImGui::PopStyleVar();   
