@@ -210,6 +210,27 @@ void clearUndoHistory() {
     undoHistory.clear();
     viewCenterHistory.clear();
 }
+
+void clampView(sf::View& view, const sf::Vector2u& winSize) {
+    sf::Vector2f viewCenter = view.getCenter();
+    sf::Vector2f viewSize = view.getSize();
+    float halfW = viewSize.x / 2.0f;
+    float halfH = viewSize.y / 2.0f;
+    
+    float winW = static_cast<float>(winSize.x);
+    float winH = static_cast<float>(winSize.y);
+    float limitMinX = -winW * 1.5f;
+    float limitMaxX = winW * 2.5f;
+    float limitMinY = -winH * 1.5f;
+    float limitMaxY = winH * 2.5f;
+    
+    if (viewCenter.x - halfW < limitMinX) viewCenter.x = limitMinX + halfW;
+    if (viewCenter.x + halfW > limitMaxX) viewCenter.x = limitMaxX - halfW;
+    if (viewCenter.y - halfH < limitMinY) viewCenter.y = limitMinY + halfH;
+    if (viewCenter.y + halfH > limitMaxY) viewCenter.y = limitMaxY - halfH;
+
+    view.setCenter(viewCenter);
+}
 } // namespace
             
 AppEngine::AppEngine()
@@ -616,24 +637,7 @@ void AppEngine::processInput(const sf::Event& event) {
                     view.move(worldPosBeforeZoom - worldPosAfterZoom);
                     
                     // Giữ View không bị trôi ra ngoài màn hình quá xa
-                    sf::Vector2f viewCenter = view.getCenter();
-                    sf::Vector2f viewSize = view.getSize();
-                    float halfW = viewSize.x / 2.0f;
-                    float halfH = viewSize.y / 2.0f;
-                    
-                    float winW = static_cast<float>(winSize.x);
-                    float winH = static_cast<float>(winSize.y);
-                    float limitMinX = -winW * 1.5f;
-                    float limitMaxX = winW * 2.5f;
-                    float limitMinY = -winH * 1.5f;
-                    float limitMaxY = winH * 2.5f;
-                    
-                    if (viewCenter.x - halfW < limitMinX) viewCenter.x = limitMinX + halfW;
-                    if (viewCenter.x + halfW > limitMaxX) viewCenter.x = limitMaxX - halfW;
-                    if (viewCenter.y - halfH < limitMinY) viewCenter.y = limitMinY + halfH;
-                    if (viewCenter.y + halfH > limitMaxY) viewCenter.y = limitMaxY - halfH;
-
-                    view.setCenter(viewCenter);
+                    clampView(view, winSize);
                     window.getWindow().setView(view);
                 }
         }
@@ -655,25 +659,7 @@ void AppEngine::processInput(const sf::Event& event) {
             sf::Vector2f newPos = window.getWindow().mapPixelToCoords(mouseMoved->position, view);
             view.move(oldPos - newPos);
             
-            sf::Vector2f viewCenter = view.getCenter();
-            sf::Vector2f viewSize = view.getSize();
-            sf::Vector2u winSize = window.getWindow().getSize();
-            float halfW = viewSize.x / 2.0f;
-            float halfH = viewSize.y / 2.0f;
-            
-            float winW = static_cast<float>(winSize.x);
-            float winH = static_cast<float>(winSize.y);
-            float limitMinX = -winW * 1.5f;
-            float limitMaxX = winW * 2.5f;
-            float limitMinY = -winH * 1.5f;
-            float limitMaxY = winH * 2.5f;
-            
-            if (viewCenter.x - halfW < limitMinX) viewCenter.x = limitMinX + halfW;
-            if (viewCenter.x + halfW > limitMaxX) viewCenter.x = limitMaxX - halfW;
-            if (viewCenter.y - halfH < limitMinY) viewCenter.y = limitMinY + halfH;
-            if (viewCenter.y + halfH > limitMaxY) viewCenter.y = limitMaxY - halfH;
-
-            view.setCenter(viewCenter);
+            clampView(view, window.getWindow().getSize());
             window.getWindow().setView(view);
             lastPanMousePos = mouseMoved->position;
         } else {

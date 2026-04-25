@@ -310,6 +310,9 @@ void Renderer::resetCustomPositions() {
     positionHistory.clear();
     draggedNodeIndex = -1;
     hasMovedDuringDrag = false;
+    defaultNodePositions.clear();
+    preDragPositions.clear();
+    currentChildren.clear();
 }
 
 void Renderer::undoLastDrag() {
@@ -412,6 +415,7 @@ void Renderer::visit(const LinkedListPayload& payload) {
 void Renderer::visit(const TreePayload& payload) {
     // Tree rendering logic (to be expanded with payload.positions)
     currentChildren.clear();
+    defaultNodePositions.clear();
 }
 
 void Renderer::visit(const HeapPayload& payload) {
