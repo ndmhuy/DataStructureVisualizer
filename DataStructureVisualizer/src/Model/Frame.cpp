@@ -21,6 +21,9 @@ Frame::Frame(const AStarPayload& p, int lineId, const std::string& msg)
 Frame::Frame(const AllPairsPayload& p, int lineId, const std::string& msg)
     : codeLineId(lineId), message(msg), payload(new AllPairsPayload(p)) {}
 
+Frame::Frame(const GridPayload& p, int lineId, const std::string& msg)
+    : codeLineId(lineId), message(msg), payload(new GridPayload(p)) {}
+
 Frame::~Frame() {
     delete payload;
 }

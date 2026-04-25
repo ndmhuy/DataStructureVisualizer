@@ -20,10 +20,11 @@ class AdjacencyList : public IGraphStructure {
 
     
     public:
-    AdjacencyList(bool directed = false);
+    AdjacencyList(const LayoutConfig& config, bool directed = false);
 
-    void addEdge(size_t from, size_t to, int weight = 1) override;
-    void deleteEdge(size_t from, size_t to) override;
+    void addVertex(Timeline* timeline = nullptr) override;
+    void addEdge(size_t from, size_t to, int weight = 1, Timeline* timeline = nullptr) override;
+    void deleteEdge(size_t from, size_t to, Timeline* timeline = nullptr) override;
     bool hasEdge(size_t from, size_t to) const override;
     
     std::vector<size_t> getVertices() const override;
@@ -36,13 +37,6 @@ class AdjacencyList : public IGraphStructure {
     virtual void clear(Timeline& timeline) override;
 
     StructureType getStructureType() const override;
-
-    void runDAGShortestPath(size_t startVertex, Timeline& timeline) override;
-    void runDijkstra(size_t startVertex, Timeline& timeline) override;
-    void runAStar(size_t startVertex, size_t targetVertex, Timeline& timeline) override;
-    void runBellmanFord(size_t startVertex, Timeline& timeline) override;
-    void runFloydWarshall(Timeline& timeline) override;
-    void runJohnson(Timeline& timeline) override;
 };
 
 #endif // ADJACENCYLIST_H

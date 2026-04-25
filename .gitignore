@@ -54,3 +54,5 @@ Icon
 
 # Ignore ImGui local layout state
 DataStructureVisualizer/imgui.ini
+
+.cache/
