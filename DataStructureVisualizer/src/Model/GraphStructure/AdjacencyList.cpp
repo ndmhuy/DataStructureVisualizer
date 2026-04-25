@@ -1,6 +1,9 @@
 #include "Model/GraphStructure/AdjacencyList.h"
 #include <limits>
 #include <queue>
+#include <cstddef>
+
+const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 AdjacencyList::AdjacencyList(bool directed) : isDirected(directed) { vertexCount = 0; }
 
@@ -101,7 +104,11 @@ void AdjacencyList::initialize(const std::vector<Edge>& startingEdges, Timeline&
     clear(timeline);
     timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initializing Adjacency List with given edges..."));
     for (const auto& edge : startingEdges) {
-        addEdge(edge.from, edge.to, edge.weight);
+        if (edge.to == INVALID_INDEX) {
+            adjacencyList[edge.from];
+        } else {
+            addEdge(edge.from, edge.to, edge.weight);
+        }
     }
     timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initialization complete."));
 }

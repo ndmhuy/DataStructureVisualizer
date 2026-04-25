@@ -1,5 +1,9 @@
 #include "Model/GraphStructure/AdjacencyMatrix.h"
 #include <algorithm>
+#include <limits>
+#include <cstddef>
+
+const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 AdjacencyMatrix::AdjacencyMatrix(bool directed) : isDirected(directed) { vertexCount = 0; }
 
@@ -90,8 +94,15 @@ void AdjacencyMatrix::initialize(const std::vector<Edge>& startingEdges, Timelin
     clear(timeline);
     timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initializing Adjacency Matrix with given edges..."));
     for (const auto& edge : startingEdges) {
+    if (edge.to == INVALID_INDEX) {
+        if (edge.from >= vertexCount) {
+            resizeMatrix(edge.from + 1);
+            vertexCount = matrix.size();
+        }
+    } else {
         addEdge(edge.from, edge.to, edge.weight);
     }
+}
     timeline.addFrame(Frame(GraphPayload(getVertices(), getEdges(), {}, {}), 0, "Initialization complete."));
 }
 
