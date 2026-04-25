@@ -24,6 +24,11 @@ bool Renderer::loadAssets() {
 }
 
 void Renderer::drawBackground() {
+    sf::Vector2u texSize = bgTexture.getSize();
+    sf::Vector2u winSize = window.getWindow().getSize();
+    if (texSize.x > 0 && texSize.y > 0) {
+        bgSprite.setScale({static_cast<float>(winSize.x) / texSize.x, static_cast<float>(winSize.y) / texSize.y});
+    }
     window.getWindow().draw(bgSprite);
 }
 
