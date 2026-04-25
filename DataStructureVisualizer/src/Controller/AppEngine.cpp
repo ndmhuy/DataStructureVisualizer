@@ -130,11 +130,14 @@ AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action)
             if (action == 1 || action == 5) {
                 return AlgorithmType::SinglyLinkedListInsert;
             }
-            if (action == 2 || action == 4) {
+            if (action == 2) {
                 return AlgorithmType::SinglyLinkedListDelete;
             }
             if (action == 3) {
                 return AlgorithmType::SinglyLinkedListSearch;
+            }
+            if (action == 4) {
+                return AlgorithmType::SinglyLinkedListUpdate;
             }
             break;
         default:
@@ -331,8 +334,7 @@ void AppEngine::handleDataActionRequest() {
                 int fromValue = 0;
                 int toValue = 0;
                 if (tryParseInt(input1, fromValue) && tryParseInt(input2, toValue)) {
-                    standard->remove(fromValue, timeline);
-                    standard->insert(toValue, timeline);
+                    standard->update(fromValue, toValue, timeline);
                     handled = true;
                 }
             }

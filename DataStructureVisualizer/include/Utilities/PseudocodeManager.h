@@ -10,6 +10,7 @@ enum class AlgorithmType {
     SinglyLinkedListInsert,
     SinglyLinkedListDelete,
     SinglyLinkedListSearch,
+    SinglyLinkedListUpdate,
 
     // Heap
 
@@ -30,6 +31,7 @@ class PseudocodeManager {
     static const std::vector<std::string> SinglyLinkedListInsertCode;
     static const std::vector<std::string> SinglyLinkedListDeleteCode;
     static const std::vector<std::string> SinglyLinkedListSearchCode;
+    static const std::vector<std::string> SinglyLinkedListUpdateCode;
     static const std::vector<std::string> GraphGridBFSShortestPathCode;
     static const std::vector<std::string> GraphDAGShortestPathCode;
     static const std::vector<std::string> GraphDijkstraCode;
