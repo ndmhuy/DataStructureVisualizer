@@ -13,6 +13,7 @@
 #include "Model/StandardStructure/AVLTree.h"
 #include "Model/StandardStructure/SinglyLinkedList.h"
 #include "Model/StandardStructure/IStandardStructure.h"
+#include "Utilities/LayoutConfig.h"
 #include "Utilities/PseudocodeManager.h"
 
 namespace {
@@ -191,9 +192,9 @@ IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
         case StructureType::AVLTree:
             return new AVLTree();
         case StructureType::AdjacencyList:
-            return new AdjacencyList();
+            return new AdjacencyList(LayoutConfig{});
         case StructureType::AdjacencyMatrix:
-            return new AdjacencyMatrix();
+            return new AdjacencyMatrix(LayoutConfig{});
         default:
             return nullptr;
     }

@@ -488,13 +488,17 @@ void Renderer::visit(const GraphPayload& payload) {
 }
 
 void Renderer::visit(const SingleSourcePayload& payload) {
-    // Similar to GraphPayload but might include distance labels
+    visit(payload.baseGraph);
 }
 
 void Renderer::visit(const AStarPayload& payload) {
-    // Similar to GraphPayload but might include heuristics
+    visit(payload.baseGraph);
 }
 
 void Renderer::visit(const AllPairsPayload& payload) {
-    // Similar to GraphPayload but for all-pairs (e.g. Floyd-Warshall)
+    visit(payload.baseGraph);
+}
+
+void Renderer::visit(const GridPayload& payload) {
+    // Empty implementation for GridPayload
 }
