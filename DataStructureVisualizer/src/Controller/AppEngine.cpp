@@ -197,7 +197,6 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
     
     playbackController.setTimeline(timeline);
     playbackController.pause();
-    uiManager.setPlaybackControlsEnabled(structureType != StructureType::None);
     uiManager.resetSpeed();
     uiManager.clearCodePanel();
     uiManager.resetInputAction();
@@ -754,6 +753,13 @@ void AppEngine::update(sf::Time deltaTime) {
     playbackController.update(deltaTime.asSeconds());
     
     syncCodePanelWithCurrentFrame(uiManager, playbackController.getTimeline());
+
+    uiManager.syncPlaybackUI(
+        playbackController.isPlayingState(),
+        playbackController.getTimeline().getCurrentFrameIndex() == 0,
+        playbackController.getTimeline().isAtEnd(),
+        playbackController.getTimeline().getFrameCount() == 0
+    );
 }
 
 void AppEngine::render() {
