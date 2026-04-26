@@ -432,12 +432,14 @@ void Renderer::visit(const TreePayload& payload) {
     // Coordinate mapping instead of array
     // We use map since node id is not filled completely from 0 to final id
     std::map<size_t, sf::Vector2f> positions;
+    sf::Vector2f nodeSize = getNodeSize();
 
     // Adapt with window.size()
     float startX = static_cast<float>(winSize.x) / 2.0f;
     float startY = static_cast<float>(winSize.y) * 0.15f;
-    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
-    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
+
+    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.022f, nodeSize.x + 2.0f);
+    float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.078f, nodeSize.y + 4.0f);
 
     for (const auto& node : nodes) {
         size_t id = node.id;
@@ -455,7 +457,6 @@ void Renderer::visit(const TreePayload& payload) {
     }
 
     // Draw edges (with arrow) then draw nodes
-    sf::Vector2f nodeSize = getNodeSize();
     for (const auto& node : nodes) {
         // Lambda function 
         // As my understanding, this is "small" function that is just used for specific part and dont need using anywhere else
@@ -494,12 +495,15 @@ void Renderer::visit(const HeapPayload& payload) {
     sf::Vector2u winSize = window.getWindow().getSize();
     // Coordinates temp buffer
     std::vector<sf::Vector2f> positions(heapArray.size());
+    sf::Vector2f nodeSize = getNodeSize();
 
     // Adapt with window.size()
     float startX = static_cast<float>(winSize.x) / 2.0f;
     float startY = static_cast<float>(winSize.y) * 0.15f; 
-    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
-    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
+
+    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.022f, nodeSize.x + 2.0f);
+    float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.078f, nodeSize.y + 4.0f);
+
     float height = std::ceil(log2(heapArray.size()+1));
 
     for (size_t idx = 0; idx < heapArray.size(); idx++) {
@@ -530,7 +534,6 @@ void Renderer::visit(const HeapPayload& payload) {
     }
 
     // Draw edges then draw nodes
-    sf::Vector2f nodeSize = getNodeSize();
     for (size_t idx = 1; idx < heapArray.size(); ++idx) {
         size_t parentIdx = (idx - 1) / 2;
 

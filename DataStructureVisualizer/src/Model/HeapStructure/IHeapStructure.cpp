@@ -11,11 +11,13 @@ size_t IHeapStructure::parent(size_t n, size_t i) {
 }
 
 size_t IHeapStructure::left(size_t n, size_t i) {
-    return (i >= 0 && i < n) ? (2 * i + 1) : INVALID_INDEX;
+    size_t res = 2 * i + 1;
+    return (res < n) ? res : INVALID_INDEX;
 }
 
 size_t IHeapStructure::right(size_t n, size_t i) {
-    return (i >= 0 && i < n) ? (2 * i + 2) : INVALID_INDEX;
+    size_t res = 2 * i + 2;
+    return (res < n) ? res : INVALID_INDEX;
 }
 
 // Helpers

@@ -449,13 +449,15 @@ void DataManager::randomDataPlanarGraph(int n, int minValue, int maxValue, float
 
     dataGraph.clear();
     nodePositions.clear();
+    nodePositions.resize(n);
+    float margin = 100.0f;
 
     // priority_queue cannot compare x and y in sf::Vector2f
     std::priority_queue<std::vector<int>> que;
     for (int i = 0; i < n; ++i) {
         // Range should be (padding, screen - padding)
-        int x = MathUtils::getRandomInRange(0, static_cast<int>(screenWidth));
-        int y = MathUtils::getRandomInRange(0, static_cast<int>(screenHeight));
+        int x = MathUtils::getRandomInRange(margin, static_cast<int>(screenWidth)-margin);
+        int y = MathUtils::getRandomInRange(margin, static_cast<int>(screenHeight)-margin);
         nodePositions[i] = Position(static_cast<float>(x), static_cast<float>(y));
         que.push({x, y, i});
     }
@@ -531,27 +533,46 @@ void DataManager::randomDataPlanarGraph(int n, int minValue, int maxValue, float
     }
 }
 
+void DataManager::randomDataDAG(int vertexCount, int edgeCount, int minWeight, int maxWeight) {
+    dataGraph.clear();
+    
+    if (vertexCount <= 0) return;
+
+    int maxPossibleEdges = vertexCount * (vertexCount - 1) / 2;
+    if (edgeCount > maxPossibleEdges) {
+        edgeCount = maxPossibleEdges; 
+    }
+
+    std::set<std::pair<int, int>> existingEdges;
+    
+    int attempts = 0;
+    int maxAttempts = edgeCount * 10; 
+
+    while (existingEdges.size() < (size_t)edgeCount && attempts < maxAttempts) {
+        int u = MathUtils::getRandomInRange(0, vertexCount - 1);
+        int v = MathUtils::getRandomInRange(0, vertexCount - 1);
+
+        if (u > v) {
+            std::swap(u, v);
+        }
+
+        if (u != v && existingEdges.find({u, v}) == existingEdges.end()) {
+            existingEdges.insert({u, v});
+            int weight = MathUtils::getRandomInRange(minWeight, maxWeight);
+            
+            dataGraph.push_back(Edge((size_t)u, (size_t)v, weight));
+        }
+        attempts++;
+    }
+}
+
 void DataManager::randomDataGridGraph(size_t rows, size_t cols, int wallPercentage) {
     if (rows <= 0 || cols <= 0) return;
 
     dataGridGraph.assign(rows, std::vector<int>(cols, 0));
 
-    size_t startR = MathUtils::getRandomInRange(0, rows - 1);
-    size_t startC = MathUtils::getRandomInRange(0, cols - 1);
-    dataGridGraph[startR][startC] = 2;
-
-    size_t targetR, targetC;
-    do {
-        targetR = MathUtils::getRandomInRange(0, rows - 1);
-        targetC = MathUtils::getRandomInRange(0, cols - 1);
-    } while (targetR == startR && targetC == startC);
-    
-    dataGridGraph[targetR][targetC] = 3;
-
     for (size_t r = 0; r < rows; ++r) {
         for (size_t c = 0; c < cols; ++c) {
-            if (dataGridGraph[r][c] != 0) continue;
-
             // Random wall depends on percent
             if (MathUtils::getRandomInRange(1, 100) <= wallPercentage) {
                 dataGridGraph[r][c] = 1;
@@ -574,6 +595,6 @@ const std::vector<std::vector<int>>& DataManager::getDataGridGraph() const {
     return dataGridGraph;
 }
 
-const std::unordered_map<int, Position>& DataManager::getNodePositions() const {
+const std::vector<Position>& DataManager::getNodePositions() const {
     return nodePositions;
 }
