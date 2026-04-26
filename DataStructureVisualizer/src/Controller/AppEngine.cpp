@@ -533,6 +533,7 @@ void AppEngine::handleDataActionRequest() {
     
     if (handled && timeline.getFrameCount() > 0) {
         playbackController.setTimeline(timeline);
+        playbackController.play();
     }
     
     uiManager.resetInputAction();

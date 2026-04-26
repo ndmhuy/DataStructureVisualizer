@@ -26,8 +26,8 @@ std::vector<std::string> InputMenu::getCurrentMenu() const {
     if (currentDS == 0) return {"Init", "Insert", "Search", "Delete", "Update", "Clear"};
     if (currentDS == 1 || currentDS == 2) return {"Init", "Insert", "ExtractTop", "Peek", "Search", "Delete", "Update", "Clear"};
     if (currentDS == 3) return {"Init", "Insert", "Search", "Delete", "Update", "Clear"};
-    if (currentDS == 4) return {"Init", "Random", "Set obstacles", "BFS", "Clear"};
-    if (currentDS == 5 || currentDS == 6) return {"Init", "Random", "Create Node", "Create Edge", "SSSP", "OPSP", "APSP", "Clear"};
+    if (currentDS == 4) return {"Init", "Random", "Set status", "BFS", "Clear"};
+    if (currentDS == 5 || currentDS == 6) return {"Init", "Random", "Create Node", "Create Edge", "OPSP", "SPSP", "APSP", "Clear"};
     return {};
 }
 
@@ -384,7 +384,15 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 2; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 2) { // Set obstacles
+        else if (cur == 2) { // Set status
+            if (DrawButton("Empty", insertSubMode == 0, 60.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Wall", insertSubMode == 1, 60.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
+            }
+            ImGui::SameLine(0, 15.0f);
             ImGui::SetCursorPosY(textY); ImGui::Text("i="); ImGui::SameLine();
             DrawInput("##in_obs_i", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
@@ -392,7 +400,7 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
             DrawInput("##in_obs_j", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine();
             if (DrawButton("OK", false, 60.0f)) {
-                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                outMode = insertSubMode; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
                 hasAction = 3; currentOption = -1; isopenMenu = false;
             }
         }
@@ -451,20 +459,7 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 3; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 4) DrawSingleInput(4); // SSSP
-        else if (cur == 5) { // OPSP
-            if (DrawButton("DAG", insertSubMode == 0, 60.0f)) {
-                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
-            }
-            ImGui::SameLine();
-            if (DrawButton("Dijkstra", insertSubMode == 1, 80.0f)) {
-                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
-            }
-            ImGui::SameLine();
-            if (DrawButton("Bellman", insertSubMode == 2, 80.0f)) {
-                if (insertSubMode != 2) { insertSubMode = 2; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
-            }
-            ImGui::SameLine(0, 15.0f);
+        else if (cur == 4) { // OPSP
             ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
             DrawInput("##in_opsp_u", inputBuf1, sizeof(inputBuf1), 40.0f, NumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
@@ -472,7 +467,28 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
             DrawInput("##in_opsp_v", inputBuf2, sizeof(inputBuf2), 40.0f, NumberOnlyFilter);
             ImGui::SameLine();
             if (DrawButton("OK", false, 60.0f)) {
-                outMode = insertSubMode; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                hasAction = 4; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 5) { // SPSP
+            if (DrawButton("DAG", insertSubMode == 0, 60.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Dijkstra", insertSubMode == 1, 80.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Bellman", insertSubMode == 2, 80.0f)) {
+                if (insertSubMode != 2) { insertSubMode = 2; inputBuf1[0] = '\0'; }
+            }
+            ImGui::SameLine(0, 15.0f);
+            ImGui::SetCursorPosY(textY); ImGui::Text("start="); ImGui::SameLine();
+            DrawInput("##in_spsp_u", inputBuf1, sizeof(inputBuf1), 40.0f, NumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = insertSubMode; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
                 hasAction = 5; currentOption = -1; isopenMenu = false;
             }
         }
