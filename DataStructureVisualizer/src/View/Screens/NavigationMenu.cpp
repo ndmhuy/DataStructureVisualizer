@@ -101,7 +101,8 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     // --- Vẽ Lưới Nút Bấm ---
     float btnWidth = 350.0f;
     float btnHeight = 80.0f;
-    float spacing = 30.0f;
+    float spacingX = 40.0f; 
+    float spacingY = 120.0f; // Tăng khoảng cách dọc để hình minh hoạ không bị nút che
     int cols = 2; 
     
     std::vector<std::string>* currentNames = &mainNames;
@@ -112,7 +113,7 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     int totalItems = currentNames->size();
     int rows = (totalItems + cols - 1) / cols;
     
-    float startY = winSize.y * 0.45f;
+    float startY = winSize.y * 0.48f; // Cân đối lại không gian
 
     for (int i = 0; i < totalItems; ++i) {
         int row = i / cols;
@@ -120,7 +121,7 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
         
         // Tính toán để luôn tự động căn giữa các phần tử chưa lấp đầy dòng
         int itemsInThisRow = (row == rows - 1 && totalItems % cols != 0) ? (totalItems % cols) : cols;
-        float startX = (winSize.x - (itemsInThisRow * btnWidth + (itemsInThisRow - 1) * spacing)) * 0.5f;
+        float startX = (winSize.x - (itemsInThisRow * btnWidth + (itemsInThisRow - 1) * spacingX)) * 0.5f;
         
         // Hiệu ứng trồi lên (Slide-up entrance) lần lượt từng dòng
         static std::unordered_map<int, float> entranceAnim;
@@ -130,7 +131,7 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
         float yOffset = (1.0f - entranceAnim[i]) * 100.0f;
         float alpha = entranceAnim[i];
 
-        ImGui::SetCursorPos(ImVec2(startX + col * (btnWidth + spacing), startY + row * (btnHeight + spacing) + yOffset));
+        ImGui::SetCursorPos(ImVec2(startX + col * (btnWidth + spacingX), startY + row * (btnHeight + spacingY) + yOffset));
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
         
         if (UIanimation::FloatButton((*currentNames)[i].c_str(), ImVec2(btnWidth, btnHeight), btnColor, btnHover, btnActive, &clickSound)) {

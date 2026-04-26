@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <SFML/System/Vector2.hpp>
 
 struct LinkedListPayload : public IPayload {
     std::vector<int> values;
@@ -149,6 +150,19 @@ struct GridPayload : public IPayload {
 
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new GridPayload(*this); }
+};
+
+struct MenuAnimPayload : public IPayload {
+    float time;
+    int menuState; // 0: Main, 1: Heap, 2: SPA, 3: Graph
+    sf::Vector2f winSize;
+
+    MenuAnimPayload() = default;
+    MenuAnimPayload(float time, int menuState, sf::Vector2f winSize)
+        : time(time), menuState(menuState), winSize(winSize) {}
+        
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new MenuAnimPayload(*this); }
 };
 
 #endif // PAYLOADS_H

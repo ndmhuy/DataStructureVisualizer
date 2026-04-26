@@ -703,3 +703,352 @@ void Renderer::visit(const GridPayload& payload) {
         }
     }
 }
+
+void Renderer::visit(const MenuAnimPayload& payload) {
+    float btnWidth = 350.0f;
+    float btnHeight = 80.0f;
+    float spacingX = 40.0f;
+    float spacingY = 120.0f;
+    int cols = 2;
+    
+    int totalItems = 0;
+    if (payload.menuState == 0) totalItems = 4;
+    else if (payload.menuState == 1) totalItems = 2;
+    else if (payload.menuState == 2) totalItems = 2;
+    else if (payload.menuState == 3) totalItems = 2;
+    
+    int rows = (totalItems + cols - 1) / cols;
+    float startY = payload.winSize.y * 0.48f;
+    
+    float time = payload.time;
+    
+    sf::View currentView = window.getWindow().getView();
+    window.getWindow().setView(window.getWindow().getDefaultView());
+
+    // Hàm helper tạo màu có độ trong suốt (Alpha)
+    auto fade = [](sf::Color c, std::uint8_t alpha) {
+        return sf::Color(c.r, c.g, c.b, alpha);
+    };
+
+    sf::Color primary = theme.inputMenuPrimaryColor;
+    sf::Color accent = theme.inputMenuAccentColor;
+    sf::Color highlight = theme.highlightColor;
+
+    for (int i = 0; i < totalItems; ++i) {
+        int row = i / cols;
+        int col = i % cols;
+        int itemsInThisRow = (row == rows - 1 && totalItems % cols != 0) ? (totalItems % cols) : cols;
+        float startX = (payload.winSize.x - (itemsInThisRow * btnWidth + (itemsInThisRow - 1) * spacingX)) * 0.5f;
+        
+        float cx = startX + col * (btnWidth + spacingX) + btnWidth / 2.0f;
+        float cy = startY + row * (btnHeight + spacingY) - 60.0f; // Vẽ lơ lửng trên hộp 60px
+        
+        if (payload.menuState == 0) { // Main Menu
+            if (i == 0) {
+                // Cyber-Pulse Linked List
+                int numNodes = 3;
+                float nodeSpacing = 70.0f;
+                float cycle = std::fmod(time * 1.5f, numNodes);
+                int activeIdx = static_cast<int>(cycle);
+                float progress = cycle - activeIdx;
+
+                std::vector<sf::Vector2f> listNodes(numNodes);
+                for (int j = 0; j < numNodes; ++j) {
+                    float offsetY = std::sin(time * 3.0f + j * 1.0f) * 10.0f;
+                    listNodes[j] = {cx + (j - 1) * nodeSpacing, cy + offsetY};
+                }
+
+                for (int j = 0; j < numNodes - 1; ++j) {
+                    sf::Vector2f start = listNodes[j] + sf::Vector2f(20.0f, 0.0f);
+                    sf::Vector2f end = listNodes[j+1] - sf::Vector2f(20.0f, 0.0f);
+
+                    sf::VertexArray link(sf::PrimitiveType::Lines, 2);
+                    link[0].position = start; link[0].color = fade(primary, 150);
+                    link[1].position = end;   link[1].color = fade(accent, 150);
+                    window.getWindow().draw(link);
+
+                    if (j == activeIdx) {
+                        sf::Vector2f packetPos = start + (end - start) * progress;
+                        sf::CircleShape glow(6.0f);
+                        glow.setOrigin({6.0f, 6.0f}); glow.setPosition(packetPos);
+                        glow.setFillColor(fade(highlight, 100));
+                        window.getWindow().draw(glow);
+
+                        sf::CircleShape packet(3.0f);
+                        packet.setOrigin({3.0f, 3.0f}); packet.setPosition(packetPos);
+                        packet.setFillColor(fade(highlight, 255));
+                        window.getWindow().draw(packet);
+                    }
+                }
+
+                for (int j = 0; j < numNodes; ++j) {
+                    bool isActive = (j == activeIdx);
+                    sf::RectangleShape block({40.0f, 20.0f});
+                    block.setOrigin({20.0f, 10.0f});
+                    block.setPosition(listNodes[j]);
+                    block.setFillColor(isActive ? fade(primary, 200) : fade(primary, 80));
+                    block.setOutlineThickness(1.5f);
+                    block.setOutlineColor(isActive ? fade(highlight, 220) : fade(accent, 150));
+                    window.getWindow().draw(block);
+
+                    sf::RectangleShape divider({1.5f, 20.0f});
+                    divider.setOrigin({0.75f, 10.0f});
+                    divider.setPosition({listNodes[j].x + 4.0f, listNodes[j].y});
+                    divider.setFillColor(fade(accent, 150));
+                    window.getWindow().draw(divider);
+                }
+            } else if (i == 1) {
+                // Diamond Tree (Heap)
+                std::vector<sf::Vector2f> treeNodes = {
+                    {cx, cy - 20.0f + std::sin(time)*8.f},
+                    {cx - 35.0f, cy + 20.0f + std::sin(time+1.f)*8.f},
+                    {cx + 35.0f, cy + 20.0f + std::sin(time+2.f)*8.f}
+                };
+                std::vector<std::pair<int, int>> edges = {{0,1}, {0,2}};
+
+                for (auto edge : edges) {
+                    sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+                    line[0].position = treeNodes[edge.first];  line[0].color = fade(highlight, 180);
+                    line[1].position = treeNodes[edge.second]; line[1].color = fade(primary, 80);
+                    window.getWindow().draw(line);
+                }
+
+                for (size_t j = 0; j < treeNodes.size(); ++j) {
+                    sf::CircleShape diamond(14.0f, 4);
+                    diamond.setOrigin({14.0f, 14.0f});
+                    diamond.setPosition(treeNodes[j]);
+                    float scale = (j == 0) ? 1.0f + std::sin(time * 5.0f) * 0.15f : 1.0f;
+                    diamond.setScale({scale, scale});
+                    diamond.setFillColor(fade(highlight, 100));
+                    diamond.setOutlineThickness(2.0f);
+                    diamond.setOutlineColor(fade(highlight, 220));
+                    window.getWindow().draw(diamond);
+                }
+            } else if (i == 2) {
+                // AVL Tree (Rotating / Balancing)
+                float rot = std::sin(time * 2.0f) * 0.3f; // Swaying motion
+                sf::Vector2f root = {cx, cy - 20.f};
+                sf::Vector2f l = {cx - 35.f * std::cos(rot) + 25.f * std::sin(rot), cy + 20.f * std::cos(rot) + 35.f * std::sin(rot)};
+                sf::Vector2f r = {cx + 35.f * std::cos(rot) - 25.f * std::sin(rot), cy + 20.f * std::cos(rot) - 35.f * std::sin(rot)};
+
+                sf::VertexArray lines(sf::PrimitiveType::Lines, 4);
+                lines[0].position = root; lines[0].color = fade(accent, 200);
+                lines[1].position = l;    lines[1].color = fade(primary, 100);
+                lines[2].position = root; lines[2].color = fade(accent, 200);
+                lines[3].position = r;    lines[3].color = fade(primary, 100);
+                window.getWindow().draw(lines);
+
+                sf::Vector2f pts[3] = {root, l, r};
+                for(int j=0; j<3; ++j) {
+                    sf::CircleShape circle(12.0f);
+                    circle.setOrigin({12.0f, 12.0f});
+                    circle.setPosition(pts[j]);
+                    circle.setFillColor(fade(primary, 150));
+                    circle.setOutlineThickness(2.0f);
+                    circle.setOutlineColor(fade(accent, 255));
+                    window.getWindow().draw(circle);
+                    
+                    // Orbital dot
+                    sf::CircleShape orb(3.0f);
+                    orb.setOrigin({3.0f, 3.0f});
+                    orb.setPosition({pts[j].x + 18.0f * std::cos(time * 4.0f + j), pts[j].y + 18.0f * std::sin(time * 4.0f + j)});
+                    orb.setFillColor(fade(highlight, 200));
+                    window.getWindow().draw(orb);
+                }
+            } else if (i == 3) {
+                // Shortest Path (Grid Wave)
+                int gRows = 3, gCols = 5;
+                float gSpace = 16.0f;
+                float ox = cx - (gCols - 1) * gSpace * 0.5f;
+                float oy = cy - (gRows - 1) * gSpace * 0.5f;
+
+                for (int r = 0; r < gRows; ++r) {
+                    for (int c = 0; c < gCols; ++c) {
+                        float px = ox + c * gSpace;
+                        float py = oy + r * gSpace;
+                        float dist = r + c;
+                        float wave = std::sin(time * 5.0f - dist * 0.8f);
+
+                        sf::RectangleShape cell({5.0f, 5.0f});
+                        cell.setOrigin({2.5f, 2.5f});
+                        cell.setPosition({px, py});
+
+                        if (wave > 0.6f) {
+                            cell.setFillColor(fade(accent, 200));
+                            cell.setScale({1.5f, 1.5f});
+                        } else {
+                            cell.setFillColor(fade(primary, 80));
+                        }
+                        window.getWindow().draw(cell);
+                    }
+                }
+                
+                // Simple path
+                std::vector<sf::Vector2f> path = {{ox, oy}, {ox + 2*gSpace, oy}, {ox + 2*gSpace, oy + 2*gSpace}, {ox + 4*gSpace, oy + 2*gSpace}};
+                for (size_t k = 0; k < path.size() - 1; ++k) {
+                    sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+                    std::uint8_t alpha = 100 + static_cast<std::uint8_t>(std::abs(std::sin(time * 4.0f)) * 155);
+                    line[0].position = path[k]; line[0].color = fade(highlight, alpha);
+                    line[1].position = path[k+1]; line[1].color = fade(highlight, alpha);
+                    window.getWindow().draw(line);
+                }
+            }
+        } else if (payload.menuState == 1) {
+            // 3D Array
+            for (int j = -1; j <= 1; ++j) {
+                float offset = std::sin(time * 3.0f + j * 0.5f) * 8.0f;
+                float dir = (i == 0) ? 1.0f : -1.0f; // Min heap goes up, Max heap goes down slightly
+
+                sf::RectangleShape cell({36.0f, 36.0f});
+                cell.setOrigin({18.0f, 18.0f});
+                cell.setPosition({cx + j * 40.0f, cy + offset * dir});
+                cell.setFillColor(fade(primary, 100));
+                cell.setOutlineThickness(2.0f);
+                cell.setOutlineColor(fade(accent, 180));
+                window.getWindow().draw(cell);
+
+                sf::RectangleShape inner({28.0f, 28.0f});
+                inner.setOrigin({14.0f, 14.0f});
+                inner.setPosition({cx + j * 40.0f, cy + offset * dir});
+                inner.setFillColor(fade(accent, 50));
+                window.getWindow().draw(inner);
+            }
+        } else if (payload.menuState == 2) {
+            if (i == 0) {
+                // Grid Wave
+                int gRows = 4, gCols = 4;
+                float gSpace = 18.0f;
+                float ox = cx - (gCols - 1) * gSpace * 0.5f;
+                float oy = cy - (gRows - 1) * gSpace * 0.5f;
+
+                for (int r = 0; r < gRows; ++r) {
+                    for (int c = 0; c < gCols; ++c) {
+                        float px = ox + c * gSpace;
+                        float py = oy + r * gSpace;
+                        float dist = r + c;
+                        float wave = std::sin(time * 5.0f - dist * 0.8f);
+
+                        sf::RectangleShape cell({8.0f, 8.0f});
+                        cell.setOrigin({4.0f, 4.0f});
+                        cell.setPosition({px, py});
+
+                        if (wave > 0.6f) {
+                            cell.setFillColor(fade(highlight, 200));
+                            cell.setScale({1.5f, 1.5f});
+                        } else {
+                            cell.setFillColor(fade(primary, 80));
+                        }
+                        window.getWindow().draw(cell);
+                    }
+                }
+            } else if (i == 1) {
+                // Hexagon Graph
+                std::vector<sf::Vector2f> hexNodes = {
+                    {cx, cy - 30.0f + std::sin(time)*5.f},
+                    {cx + 30.0f, cy - 10.0f + std::cos(time)*5.f},
+                    {cx + 20.0f, cy + 25.0f + std::sin(time*1.2f)*5.f},
+                    {cx - 20.0f, cy + 25.0f + std::cos(time*0.8f)*5.f},
+                    {cx - 30.0f, cy - 10.0f + std::sin(time*1.5f)*5.f}
+                };
+
+                for (size_t j = 0; j < hexNodes.size(); ++j) {
+                    size_t next = (j + 1) % hexNodes.size();
+                    size_t cross = (j + 2) % hexNodes.size();
+
+                    sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+                    line[0].position = hexNodes[j];  line[0].color = fade(accent, 150);
+                    line[1].position = hexNodes[next]; line[1].color = fade(primary, 50);
+                    window.getWindow().draw(line);
+
+                    sf::VertexArray crossLine(sf::PrimitiveType::Lines, 2);
+                    crossLine[0].position = hexNodes[j];  crossLine[0].color = fade(primary, 80);
+                    crossLine[1].position = hexNodes[cross]; crossLine[1].color = fade(highlight, 40);
+                    window.getWindow().draw(crossLine);
+                }
+
+                for (const auto& pos : hexNodes) {
+                    sf::CircleShape hex(12.0f, 6);
+                    hex.setOrigin({12.0f, 12.0f});
+                    hex.setPosition(pos);
+                    hex.setFillColor(fade(primary, 120));
+                    hex.setOutlineThickness(1.5f);
+                    hex.setOutlineColor(fade(accent, 220));
+                    hex.setRotation(sf::degrees(time * 40.0f));
+                    window.getWindow().draw(hex);
+                }
+            }
+        } else if (payload.menuState == 3) {
+            if (i == 0) {
+                // Adj Matrix (Glowing Data Grid)
+                int mSize = 4;
+                float mSpace = 16.0f;
+                float ox = cx - (mSize - 1) * mSpace * 0.5f;
+                float oy = cy - (mSize - 1) * mSpace * 0.5f;
+                
+                for(int r = 0; r < mSize; ++r) {
+                    for(int c = 0; c < mSize; ++c) {
+                        sf::RectangleShape cell({12.0f, 12.0f});
+                        cell.setOrigin({6.0f, 6.0f});
+                        cell.setPosition({ox + c * mSpace, oy + r * mSpace});
+                        
+                        float blink = std::sin(time * 6.0f + r * 2.0f + c * 3.0f);
+                        if (r == c) {
+                            cell.setFillColor(fade(highlight, 180));
+                        } else if (blink > 0.5f) {
+                            cell.setFillColor(fade(accent, 150));
+                        } else {
+                            cell.setFillColor(fade(primary, 60));
+                            cell.setOutlineThickness(1.0f);
+                            cell.setOutlineColor(fade(primary, 100));
+                        }
+                        window.getWindow().draw(cell);
+                    }
+                }
+            } else if (i == 1) {
+                // Adj List (Central radiating nodes)
+                sf::Vector2f root = {cx - 20.0f, cy};
+                std::vector<sf::Vector2f> children = {
+                    {cx + 20.0f, cy - 25.0f},
+                    {cx + 25.0f, cy},
+                    {cx + 20.0f, cy + 25.0f}
+                };
+
+                float cycle = std::fmod(time * 2.0f, 3.0f);
+                int activeIdx = static_cast<int>(cycle);
+                float progress = cycle - activeIdx;
+
+                for(int j = 0; j < 3; ++j) {
+                    sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+                    line[0].position = root; line[0].color = fade(primary, 150);
+                    line[1].position = children[j]; line[1].color = fade(accent, 150);
+                    window.getWindow().draw(line);
+                    
+                    if (j == activeIdx) {
+                        sf::Vector2f packetPos = root + (children[j] - root) * progress;
+                        sf::CircleShape glow(6.0f);
+                        glow.setOrigin({6.0f, 6.0f}); glow.setPosition(packetPos);
+                        glow.setFillColor(fade(highlight, 120));
+                        window.getWindow().draw(glow);
+                    }
+
+                    sf::CircleShape childNode(10.0f);
+                    childNode.setOrigin({10.0f, 10.0f});
+                    childNode.setPosition(children[j]);
+                    childNode.setFillColor(fade(primary, 120));
+                    childNode.setOutlineThickness(1.5f);
+                    childNode.setOutlineColor(fade(accent, 200));
+                    window.getWindow().draw(childNode);
+                }
+                
+                sf::RectangleShape rootNode({24.0f, 24.0f});
+                rootNode.setOrigin({12.0f, 12.0f});
+                rootNode.setPosition(root);
+                rootNode.setFillColor(fade(primary, 200));
+                rootNode.setOutlineThickness(2.0f);
+                rootNode.setOutlineColor(fade(highlight, 200));
+                window.getWindow().draw(rootNode);
+            }
+        }
+    }
+    window.getWindow().setView(currentView);
+}

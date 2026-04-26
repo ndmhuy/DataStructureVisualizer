@@ -707,6 +707,8 @@ void AppEngine::processInput(const sf::Event& event) {
 }
                 
 void AppEngine::update(sf::Time deltaTime) {
+    appTime += deltaTime.asSeconds();
+
     uiManager.update(window.getWindow(), deltaTime);
     handleStructureSwitchRequest();
     handleDataActionRequest();
@@ -772,6 +774,12 @@ void AppEngine::render() {
     if (currentFrame) {
         renderer.renderActiveState(currentFrame);
     }
+
+    if (uiManager.isShowingMainMenu()) {
+        MenuAnimPayload menuPayload(appTime, uiManager.getNavMenuState(), sf::Vector2f(window.getWindow().getSize()));
+        renderer.visit(menuPayload);
+    }
+
     sf::View currentView = window.getWindow().getView();
     window.getWindow().setView(window.getWindow().getDefaultView());
 

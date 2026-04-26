@@ -47,6 +47,7 @@ public:
     void render(const sf::RenderWindow& window);
     
     int getSelectedDS() const { return selectedDS; }
+    MenuState getCurrentState() const { return currentState; }
     void resetSelection() { selectedDS = -1; }
     void resetState() { currentState = MenuState::Main; }
 };

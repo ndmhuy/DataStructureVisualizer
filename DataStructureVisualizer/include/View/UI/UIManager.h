@@ -80,6 +80,8 @@ public:
     int getSelectedDS(); // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: ADJ Matrix, 6: ADJ List
     void resetDSSelection(); 
     void setShowMainMenu(bool show);
+    bool isShowingMainMenu() const { return isMainMenu; }
+    int getNavMenuState() const { return static_cast<int>(navMenu.getCurrentState()); }
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
     bool isMouseOverUI() const;
