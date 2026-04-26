@@ -3,17 +3,36 @@
 
 #include <SFML/Graphics.hpp>
 #include "imgui.h"
-#include "View/Core/Theme.h"
+#include "View/Theme.h"
 #include <string>
 #include <vector>
 
 class NavigationMenu {
+public:
+    enum class MenuState {
+        Main,
+        Heap,
+        ShortestPath,
+        Graph
+    };
+
 private:
     Theme theme = Theme::getDefaultTheme();
-    int selectedDS = -1; // -1: None, 0: Singly Linked List, 1: Heap, 2: AVL Tree, 3: Shortest Path
-    std::vector<std::string> dsNames = {
+    int selectedDS = -1; // -1: None, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
+    MenuState currentState = MenuState::Main;
+
+    std::vector<std::string> mainNames = {
         "Singly Linked List", "Heap", 
-        "AVL Tree", "Shortest Path Algorithm"
+        "AVL tree", "Shortest Path Algorithm"
+    };
+    std::vector<std::string> heapNames = {
+        "Min Heap", "Max Heap"
+    };
+    std::vector<std::string> spaNames = {
+        "Grid", "Graph"
+    };
+    std::vector<std::string> graphNames = {
+        "Adjacency Matrix", "Adjacency List"
     };
 
 public:
@@ -25,6 +44,7 @@ public:
     
     int getSelectedDS() const { return selectedDS; }
     void resetSelection() { selectedDS = -1; }
+    void resetState() { currentState = MenuState::Main; }
 };
 
 #endif // NAVIGATIONMENU_H
