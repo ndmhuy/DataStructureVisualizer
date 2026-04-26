@@ -70,7 +70,7 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     // --- add back button ---
     if (currentState != MenuState::Main) {
         ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
-        if (UIanimation::FloatButton("Back", ImVec2(80.0f, 35.0f), btnColor, btnHover, btnActive, &clickSound)) {
+        if (UIanimation::ParticleButton("Back", ImVec2(80.0f, 35.0f), btnColor, btnHover, btnActive, &clickSound)) {
             if (currentState == MenuState::Heap) currentState = MenuState::Main;
             else if (currentState == MenuState::ShortestPath) currentState = MenuState::Main;
             else if (currentState == MenuState::Graph) currentState = MenuState::ShortestPath;

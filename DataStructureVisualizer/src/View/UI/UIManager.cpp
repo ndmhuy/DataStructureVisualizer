@@ -215,7 +215,7 @@ void UIManager::render(sf::RenderWindow& window) {
                                  ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
         ImGui::Begin("ThemeMenu", nullptr, flags);
         
-        if (UIanimation::FloatButton(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(100.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
+        if (UIanimation::GlitchButton(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(100.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
         }
@@ -241,7 +241,7 @@ void UIManager::render(sf::RenderWindow& window) {
         ImGui::Begin("TopControlBar", nullptr, panelFlags);
         
         ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
-        if (UIanimation::FloatButton("Home", ImVec2(80.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
+        if (UIanimation::ParticleButton("Home", ImVec2(80.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
             backToMenuClicked = true;
             isMainMenu = true;
             navMenu.resetState();
@@ -255,7 +255,7 @@ void UIManager::render(sf::RenderWindow& window) {
         }
         
         ImGui::SameLine(0.0f, 20.0f);
-        if (UIanimation::FloatButton(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(100.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
+        if (UIanimation::GlitchButton(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(100.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
         }

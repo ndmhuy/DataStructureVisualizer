@@ -15,6 +15,15 @@ namespace UIanimation {
     // Nút bấm dạng Cyberpunk (Có vạch trượt Accent và 4 góc Tech Corners)
     // Dùng cho Input Panel
     bool CyberButton(const char* label, const ImVec2& size_arg, ImVec4 colorNormal, ImVec4 colorHover, ImVec4 colorActive, sf::Sound* sound = nullptr);
+
+    // Nút bấm Glitch (Nhiễu sóng kênh màu RGB) phong cách Hacker
+    bool GlitchButton(const char* label, const ImVec2& size_arg, ImVec4 colorNormal, ImVec4 colorHover, ImVec4 colorActive, sf::Sound* sound = nullptr);
+
+    // Nút bấm Particle (Bắn hạt ánh sáng nổ tung khi Click)
+    bool ParticleButton(const char* label, const ImVec2& size_arg, ImVec4 colorNormal, ImVec4 colorHover, ImVec4 colorActive, sf::Sound* sound = nullptr);
+
+    // Khung Nền Hologram Viễn Tưởng (Tia quét Radar & Lưới điện)
+    void DrawHoloBackground(const ImVec2& pMin, const ImVec2& pMax, ImVec4 baseColor);
 }
 
 #endif // UI_ANIMATION_H
