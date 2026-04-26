@@ -15,6 +15,7 @@
 #include "Utilities/LayoutConfig.h"
 #include "Utilities/PseudocodeManager.h"
 #include "Utilities/MathUtils.h"
+#include "Model/Payloads/Payloads.h"
 #include "Controller/AppEngine.h"
 
 namespace {
@@ -707,6 +708,8 @@ void AppEngine::processInput(const sf::Event& event) {
 }
                 
 void AppEngine::update(sf::Time deltaTime) {
+    totalTime += deltaTime.asSeconds(); // Update global animation time
+
     uiManager.update(window.getWindow(), deltaTime);
     handleStructureSwitchRequest();
     handleDataActionRequest();
@@ -766,6 +769,11 @@ void AppEngine::update(sf::Time deltaTime) {
 void AppEngine::render() {
     window.clear(theme.windowClearColor);
     renderer.drawBackground();
+
+    if (activeStructureType == StructureType::None) {
+        DecorationPayload payload(totalTime);
+        renderer.visit(payload);
+    }
     
     const Timeline& timeline = playbackController.getTimeline();
     const Frame* currentFrame = timeline.getCurrentFrame();

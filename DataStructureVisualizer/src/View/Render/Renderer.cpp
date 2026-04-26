@@ -3,6 +3,7 @@
 #include "Utilities/GlobalConstant.h"
 
 #include <algorithm>
+#include <cstdint>
 
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
@@ -29,6 +30,325 @@ void Renderer::drawBackground() {
     sf::View currentView = window.getWindow().getView();
     window.getWindow().setView(window.getWindow().getDefaultView());
     window.getWindow().draw(bgSprite);
+    window.getWindow().setView(currentView);
+}
+
+void Renderer::visit(const DecorationPayload& payload) {
+    float time = payload.time;
+    sf::Vector2u winSize = window.getWindow().getSize();
+    float w = static_cast<float>(winSize.x);
+    float h = static_cast<float>(winSize.y);
+
+    sf::View currentView = window.getWindow().getView();
+    window.getWindow().setView(sf::View(sf::FloatRect({0.f, 0.f}, {w, h})));
+
+    // Hàm helper tạo màu có độ trong suốt (Alpha)
+    auto fade = [](sf::Color c, std::uint8_t alpha) {
+        return sf::Color(c.r, c.g, c.b, alpha);
+    };
+
+    sf::Color primary = theme.inputMenuPrimaryColor;
+    sf::Color accent = theme.inputMenuAccentColor;
+    sf::Color highlight = theme.highlightColor;
+
+    // ==========================================
+    // 1. MẠNG LƯỚI CHÒM SAO BACKGROUND (Neural Constellation)
+    // ==========================================
+    const int numParticles = 35;
+    std::vector<sf::Vector2f> partPos(numParticles);
+    
+    for (int i = 0; i < numParticles; ++i) {
+        float px = std::fmod(w * 0.05f * i + time * 15.0f, w);
+        float py = std::fmod(h * 0.9f - time * 20.0f * (i % 3 + 1) + i * 40.0f, h);
+        if (py < 0) py += h;
+        partPos[i] = {px, py};
+        
+        sf::CircleShape particle(1.5f + (i % 3));
+        particle.setFillColor(fade(primary, 60));
+        particle.setPosition({px, py});
+        window.getWindow().draw(particle);
+    }
+
+    // Nối các hạt lại với nhau nếu khoảng cách đủ gần (Hiệu ứng mạng nhện)
+    for (int i = 0; i < numParticles; ++i) {
+        for (int j = i + 1; j < numParticles; ++j) {
+            float dist = std::sqrt(std::pow(partPos[i].x - partPos[j].x, 2) + std::pow(partPos[i].y - partPos[j].y, 2));
+            float maxDist = 130.0f;
+            if (dist < maxDist) {
+                std::uint8_t lineAlpha = static_cast<std::uint8_t>(80.0f * (1.0f - dist / maxDist));
+                sf::VertexArray netLine(sf::PrimitiveType::Lines, 2);
+                netLine[0].position = partPos[i]; netLine[0].color = fade(primary, lineAlpha);
+                netLine[1].position = partPos[j]; netLine[1].color = fade(accent, lineAlpha);
+                window.getWindow().draw(netLine);
+            }
+        }
+    }
+
+    // ==========================================
+    // 2. MẢNG 3D-STYLE Ở TRUNG TÂM (Center Array)
+    // ==========================================
+    float arrBaseX = w * 0.5f;
+    float arrBaseY = h * 0.2f;
+    for (int i = -2; i <= 2; ++i) {
+        float offset = std::sin(time * 2.0f + i * 0.5f) * 12.0f; // Nhấp nhô từng khối
+        
+        // Viền ngoài (Outer Box)
+        sf::RectangleShape cell({50.0f, 50.0f});
+        cell.setOrigin({25.0f, 25.0f});
+        cell.setPosition({arrBaseX + i * 55.0f, arrBaseY + offset});
+        cell.setFillColor(fade(primary, 90));
+        cell.setOutlineThickness(2.0f);
+        cell.setOutlineColor(fade(accent, 180));
+        window.getWindow().draw(cell);
+
+        // Viền trong tạo độ sâu (Inner Depth)
+        sf::RectangleShape inner({40.0f, 40.0f});
+        inner.setOrigin({20.0f, 20.0f});
+        inner.setPosition({arrBaseX + i * 55.0f, arrBaseY + offset});
+        inner.setFillColor(fade(accent, 40));
+        window.getWindow().draw(inner);
+    }
+
+    // ==========================================
+    // 3. ĐỒ THỊ LỤC GIÁC ĐANG XOAY (Hexagon Graph)
+    // ==========================================
+    float graphX = w * 0.85f;
+    float graphY = h * 0.5f;
+    std::vector<sf::Vector2f> hexNodes = {
+        {graphX, graphY - 80.0f + std::sin(time)*15.f},
+        {graphX + 80.0f, graphY - 30.0f + std::cos(time)*15.f},
+        {graphX + 60.0f, graphY + 60.0f + std::sin(time*1.2f)*15.f},
+        {graphX - 60.0f, graphY + 60.0f + std::cos(time*0.8f)*15.f},
+        {graphX - 80.0f, graphY - 30.0f + std::sin(time*1.5f)*15.f}
+    };
+    
+    // Vẽ kết nối Gradient (VertexArray)
+    for (size_t i = 0; i < hexNodes.size(); ++i) {
+        size_t next = (i + 1) % hexNodes.size();
+        size_t cross = (i + 2) % hexNodes.size();
+        
+        sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+        line[0].position = hexNodes[i];  line[0].color = fade(accent, 150);
+        line[1].position = hexNodes[next]; line[1].color = fade(primary, 50);
+        window.getWindow().draw(line);
+
+        sf::VertexArray crossLine(sf::PrimitiveType::Lines, 2);
+        crossLine[0].position = hexNodes[i];  crossLine[0].color = fade(primary, 80);
+        crossLine[1].position = hexNodes[cross]; crossLine[1].color = fade(accent, 20);
+        window.getWindow().draw(crossLine);
+    }
+
+    // Vẽ các đỉnh hình Lục giác (6 điểm)
+    for (const auto& pos : hexNodes) {
+        sf::CircleShape hex(25.0f, 6); // sf::CircleShape với 6 điểm sẽ tạo thành Lục giác
+        hex.setOrigin({25.0f, 25.0f});
+        hex.setPosition(pos);
+        hex.setFillColor(fade(primary, 100));
+        hex.setOutlineThickness(2.0f);
+        hex.setOutlineColor(fade(accent, 200));
+        hex.setRotation(sf::degrees(time * 30.0f)); // Tự động xoay quanh tâm
+        window.getWindow().draw(hex);
+    }
+
+    // ==========================================
+    // 4. CÂY HÌNH THOI (Diamond Tree)
+    // ==========================================
+    float treeX = w * 0.15f;
+    float treeY = h * 0.25f; // Đẩy cây lên cao một chút để nhường chỗ cho khối bên dưới
+    std::vector<sf::Vector2f> treeNodes = {
+        {treeX, treeY + std::sin(time)*10.f},
+        {treeX - 60.f, treeY + 70.f + std::sin(time+1.f)*10.f},
+        {treeX + 60.f, treeY + 70.f + std::sin(time+2.f)*10.f},
+        {treeX - 100.f, treeY + 140.f + std::sin(time+3.f)*10.f},
+        {treeX - 20.f, treeY + 140.f + std::sin(time+4.f)*10.f},
+        {treeX + 40.f, treeY + 140.f + std::sin(time+5.f)*10.f}
+    };
+    std::vector<std::pair<int, int>> treeEdges = {{0,1}, {0,2}, {1,3}, {1,4}, {2,5}};
+    
+    for (auto edge : treeEdges) {
+        sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+        line[0].position = treeNodes[edge.first];  line[0].color = fade(highlight, 180);
+        line[1].position = treeNodes[edge.second]; line[1].color = fade(primary, 30);
+        window.getWindow().draw(line);
+    }
+
+    // Vẽ các đỉnh hình Thoi (4 điểm)
+    for (size_t i = 0; i < treeNodes.size(); ++i) {
+        sf::CircleShape diamond(18.0f, 4); // CirlceShape 4 điểm tạo hình thoi
+        diamond.setOrigin({18.0f, 18.0f});
+        diamond.setPosition(treeNodes[i]);
+        
+        // Hiệu ứng "Pulse" (Đập nhịp tim) cho Root
+        float scale = (i == 0) ? 1.0f + std::sin(time * 5.0f) * 0.15f : 1.0f;
+        diamond.setScale({scale, scale});
+
+        diamond.setFillColor(fade(highlight, 80));
+        diamond.setOutlineThickness(2.0f);
+        diamond.setOutlineColor(fade(highlight, 220));
+        window.getWindow().draw(diamond);
+    }
+
+    // ==========================================
+    // 5. BIỂU ĐỒ THUẬT TOÁN SẮP XẾP (Sorting Histogram)
+    // ==========================================
+    float gridX = w * 0.45f;
+    float gridY = h * 0.8f;
+    int rows = 5;
+    int cols = 12;
+    float spacing = 22.0f;
+
+    // Vẽ lưới các điểm (Grid nodes) và hiệu ứng lan tỏa (BFS/A* wave)
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            float px = gridX + c * spacing;
+            float py = gridY + r * spacing;
+
+            // Khoảng cách Manhattan từ góc trên trái (0,0)
+            float dist = r + c;
+            
+            // Hiệu ứng sóng quét qua lưới
+            float wave = std::sin(time * 4.0f - dist * 0.8f);
+            
+            sf::RectangleShape cell({6.0f, 6.0f});
+            cell.setOrigin({3.0f, 3.0f});
+            cell.setPosition({px, py});
+
+            if (wave > 0.6f) {
+                // Đang được duyệt (Visited Front)
+                cell.setFillColor(fade(accent, 180));
+                cell.setScale({1.5f, 1.5f}); // Phóng to nhẹ
+            } else if (wave > 0.0f) {
+                // Đã duyệt qua (Visited Area)
+                cell.setFillColor(fade(primary, 120));
+            } else {
+                // Chưa duyệt (Unvisited)
+                cell.setFillColor(fade(primary, 40));
+            }
+            window.getWindow().draw(cell);
+        }
+    }
+
+    // Vẽ đường đi ngắn nhất (Shortest Path) - Một đường zigzag nối liền
+    std::vector<sf::Vector2f> path = {
+        {gridX, gridY},
+        {gridX + 2 * spacing, gridY},
+        {gridX + 2 * spacing, gridY + 3 * spacing},
+        {gridX + 7 * spacing, gridY + 3 * spacing},
+        {gridX + 7 * spacing, gridY + 1 * spacing},
+        {gridX + 11 * spacing, gridY + 1 * spacing},
+        {gridX + 11 * spacing, gridY + 4 * spacing}
+    };
+
+    for (size_t i = 0; i < path.size() - 1; ++i) {
+        sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+        line[0].position = path[i];
+        line[1].position = path[i+1];
+        
+        // Đường path nhấp nháy sáng chớp tắt
+        std::uint8_t pathAlpha = 80 + static_cast<std::uint8_t>(std::abs(std::sin(time * 3.0f)) * 175);
+        line[0].color = fade(highlight, pathAlpha);
+        line[1].color = fade(highlight, pathAlpha);
+        
+        window.getWindow().draw(line);
+    }
+
+    // ==========================================
+    // 6. DANH SÁCH LIÊN KẾT ĐỘNG (Cyber-Pulse Linked List)
+    // ==========================================
+    float ringX = w * 0.15f;
+    float ringY = h * 0.75f;
+    int numNodes = 5;
+    float nodeSpacing = 90.0f;
+
+    // Tính toán tọa độ lượn sóng cho các Node
+    std::vector<sf::Vector2f> listNodes(numNodes);
+    for (int i = 0; i < numNodes; ++i) {
+        float offsetY = std::sin(time * 2.5f + i * 1.0f) * 20.0f;
+        listNodes[i] = {ringX + i * nodeSpacing - 80.0f, ringY + offsetY};
+    }
+
+    // Tính toán vị trí "Gói dữ liệu" đang chạy
+    float cycle = std::fmod(time * 1.2f, numNodes);
+    int activeIdx = static_cast<int>(cycle);
+    float progress = cycle - activeIdx;
+
+    // Vẽ các đường nối (Edges) và mũi tên
+    for (int i = 0; i < numNodes - 1; ++i) {
+        sf::Vector2f start = listNodes[i] + sf::Vector2f(25.0f, 0.0f);
+        sf::Vector2f end = listNodes[i+1] - sf::Vector2f(25.0f, 0.0f);
+        
+        sf::VertexArray link(sf::PrimitiveType::Lines, 2);
+        link[0].position = start; link[0].color = fade(primary, 150);
+        link[1].position = end;   link[1].color = fade(accent, 150);
+        window.getWindow().draw(link);
+        
+        float angle = std::atan2(end.y - start.y, end.x - start.x);
+        sf::CircleShape arrow(5.0f, 3);
+        arrow.setOrigin({5.0f, 5.0f});
+        arrow.setPosition(end - sf::Vector2f(std::cos(angle)*5.f, std::sin(angle)*5.f));
+        arrow.setRotation(sf::degrees(angle * 180.0f / M_PI + 90.0f));
+        arrow.setFillColor(fade(accent, 200));
+        window.getWindow().draw(arrow);
+
+        // Vẽ hạt Data Packet lướt trên đường nối
+        if (i == activeIdx) {
+            sf::Vector2f packetPos = start + (end - start) * progress;
+            
+            sf::CircleShape glow(8.0f);
+            glow.setOrigin({8.0f, 8.0f});
+            glow.setPosition(packetPos);
+            glow.setFillColor(fade(highlight, 80));
+            window.getWindow().draw(glow);
+
+            sf::CircleShape packet(4.0f);
+            packet.setOrigin({4.0f, 4.0f});
+            packet.setPosition(packetPos);
+            packet.setFillColor(fade(highlight, 255));
+            window.getWindow().draw(packet);
+        }
+    }
+
+    // Vẽ các Node dưới dạng khối [Data | Next]
+    for (int i = 0; i < numNodes; ++i) {
+        bool isActive = (i == activeIdx);
+        
+        // Khối Outer Box bao quanh
+        sf::RectangleShape block({50.0f, 26.0f});
+        block.setOrigin({25.0f, 13.0f});
+        block.setPosition(listNodes[i]);
+        block.setFillColor(isActive ? fade(primary, 180) : fade(primary, 80));
+        block.setOutlineThickness(2.0f);
+        block.setOutlineColor(isActive ? fade(highlight, 200) : fade(accent, 150));
+        window.getWindow().draw(block);
+        
+        // Đường gạch chia ngăn [Data] và ngăn [Next]
+        sf::RectangleShape divider({2.0f, 26.0f});
+        divider.setOrigin({1.0f, 13.0f});
+        divider.setPosition({listNodes[i].x + 5.0f, listNodes[i].y});
+        divider.setFillColor(fade(accent, 150));
+        window.getWindow().draw(divider);
+        
+        // Các vạch ngang tượng trưng cho Data bên trong
+        sf::RectangleShape d1({10.0f, 3.0f});
+        d1.setOrigin({5.0f, 1.5f});
+        d1.setPosition({listNodes[i].x - 9.0f, listNodes[i].y - 4.0f});
+        d1.setFillColor(fade(theme.textColor, isActive ? 255 : 100));
+        window.getWindow().draw(d1);
+
+        sf::RectangleShape d2({6.0f, 3.0f});
+        d2.setOrigin({3.0f, 1.5f});
+        d2.setPosition({listNodes[i].x - 11.0f, listNodes[i].y + 4.0f});
+        d2.setFillColor(fade(theme.textColor, isActive ? 255 : 100));
+        window.getWindow().draw(d2);
+        
+        // Dấu chấm (pointer) ở ngăn Next
+        sf::CircleShape ptr(3.0f);
+        ptr.setOrigin({3.0f, 3.0f});
+        ptr.setPosition({listNodes[i].x + 15.0f, listNodes[i].y});
+        ptr.setFillColor(isActive ? fade(highlight, 255) : fade(accent, 200));
+        window.getWindow().draw(ptr);
+    }
+
     window.getWindow().setView(currentView);
 }
 

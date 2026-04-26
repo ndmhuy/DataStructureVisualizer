@@ -88,6 +88,7 @@ public:
     void visit(const AStarPayload& payload) override;
     void visit(const AllPairsPayload& payload) override;
     void visit(const GridPayload& payload) override;
+    void visit(const DecorationPayload& payload) override;
 
     // Texture-based size queries.
     sf::Vector2f getNodeSize() const;  // in main.cpp have to use to access nodeW

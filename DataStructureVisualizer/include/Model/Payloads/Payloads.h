@@ -151,4 +151,14 @@ struct GridPayload : public IPayload {
     IPayload* clone() const override { return new GridPayload(*this); }
 };
 
+struct DecorationPayload : public IPayload {
+    float time; // Lưu trữ trạng thái thời gian của hiệu ứng
+
+    DecorationPayload() : time(0.0f) {}
+    DecorationPayload(float time) : time(time) {}
+
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new DecorationPayload(*this); }
+};
+
 #endif // PAYLOADS_H

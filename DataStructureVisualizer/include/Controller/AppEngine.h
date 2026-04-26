@@ -19,6 +19,7 @@ private:
     bool shouldClose = false;
     bool isDarkMode = false;
     Theme theme;
+    float totalTime = 0.0f; // Track time for animations
     Renderer renderer;
     UIManager uiManager;
     DataManager dataManager;
