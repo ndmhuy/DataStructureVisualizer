@@ -3,13 +3,11 @@
 
 #include "IPayload.h"
 #include "Utilities/Position.h"
+#include "Utilities/GlobalConstant.h"
 #include "Model/GraphStructure/Edge.h"
 #include <string>
 #include <vector>
 #include <map>
-#include <limits>
-
-const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 struct LinkedListPayload : public IPayload {
     std::vector<int> values;

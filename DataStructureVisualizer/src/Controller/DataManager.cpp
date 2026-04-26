@@ -2,14 +2,11 @@
 #include <sstream>
 #include <algorithm>
 #include <queue>
-#include <limits>
-#include <cstddef>
 #include <set>
-
-const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 #include "Controller/DataManager.h"
 #include "Utilities/MathUtils.h"
+#include "Utilities/GlobalConstant.h"
 
 // File input
 void DataManager::inputFromFile(const std::string& filePath) {

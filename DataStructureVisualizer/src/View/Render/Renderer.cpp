@@ -1,9 +1,8 @@
 #include "View/Render/Renderer.h"
 #include "Model/Frame.h"
-#include <algorithm>
-#include <climits>
+#include "Utilities/GlobalConstant.h"
 
-const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();;
+#include <algorithm>
 
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
