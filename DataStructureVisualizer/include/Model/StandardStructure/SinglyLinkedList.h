@@ -19,7 +19,7 @@ class SinglyLinkedList : public IStandardStructure {
     void deleteNodes(Node*& head);
 
     public:
-    SinglyLinkedList();
+    SinglyLinkedList(const LayoutConfig& config = LayoutConfig());
     ~SinglyLinkedList() override;
 
     SinglyLinkedList(const SinglyLinkedList&) = delete;

@@ -1,11 +1,9 @@
 #include "Model/HeapStructure/IHeapStructure.h"
+#include "Utilities/GlobalConstant.h"
 
 #include <algorithm>
-#include <climits>
 #include <string>
 #include <utility>
-
-const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 // Index
 size_t IHeapStructure::parent(size_t n, size_t i) {
