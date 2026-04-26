@@ -589,6 +589,7 @@ void Renderer::visit(const GraphPayload& payload) {
         }
     }
 
+    std::vector<std::pair<std::pair<size_t, size_t>, int>> drawnTexts;
     for (const auto& edge : edges) {
         bool highlighted = false;
         for (const auto& he : hEdges) {
@@ -599,6 +600,29 @@ void Renderer::visit(const GraphPayload& payload) {
         }
         if (edge.from < vertices.size() && edge.to < vertices.size()) {
             drawLineWithArrow(positions[edge.from], nodeSize, ShapeType::Circle, positions[edge.to], nodeSize, ShapeType::Circle, 3.0f, 15.0f, highlighted);
+            
+            bool textAlreadyDrawn = false;
+            for (const auto& dt : drawnTexts) {
+                if ((dt.first.first == edge.from && dt.first.second == edge.to) ||
+                    (dt.first.first == edge.to && dt.first.second == edge.from && dt.second == edge.weight)) {
+                    textAlreadyDrawn = true;
+                    break;
+                }
+            }
+            
+            if (!textAlreadyDrawn) {
+                bool textHighlighted = highlighted;
+                if (!textHighlighted) {
+                    for (const auto& he : hEdges) {
+                        if (he.from == edge.to && he.to == edge.from) {
+                            textHighlighted = true;
+                            break;
+                        }
+                    }
+                }
+                drawTextOnLine(positions[edge.from], positions[edge.to], 12.0f, std::to_string(edge.weight), 16, textHighlighted ? theme.accentColor : theme.textColor);
+                drawnTexts.push_back({{edge.from, edge.to}, edge.weight});
+            }
         }
     }
 
@@ -614,8 +638,12 @@ void Renderer::visit(const SingleSourcePayload& payload) {
     sf::Vector2f nodeSize = getNodeSize();
     for (size_t i = 0; i < payload.distances.size(); ++i) {
         if (i < defaultNodePositions.size()) {
+            sf::Vector2f pos = defaultNodePositions[i];
+            if (customNodePositions.find(i) != customNodePositions.end()) {
+                pos = customNodePositions[i];
+            }
             std::string distStr = (payload.distances[i] >= 1e9) ? "INF" : std::to_string(payload.distances[i]);
-            drawTextPositioned(defaultNodePositions[i], "d: " + distStr, 14, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
+            drawTextPositioned(pos, "d: " + distStr, 14, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
         }
     }
 }
@@ -626,12 +654,16 @@ void Renderer::visit(const AStarPayload& payload) {
     sf::Vector2f nodeSize = getNodeSize();
     for (size_t i = 0; i < payload.fCosts.size(); ++i) {
         if (i < defaultNodePositions.size()) {
+            sf::Vector2f pos = defaultNodePositions[i];
+            if (customNodePositions.find(i) != customNodePositions.end()) {
+                pos = customNodePositions[i];
+            }
             std::string fStr = (payload.fCosts[i] >= 1e9) ? "INF" : std::to_string(payload.fCosts[i]);
             std::string gStr = (payload.gCosts[i] >= 1e9) ? "INF" : std::to_string(payload.gCosts[i]);
             std::string hStr = (payload.hCosts[i] >= 1e9) ? "INF" : std::to_string(payload.hCosts[i]);
             
             std::string text = "f:" + fStr + "\ng:" + gStr + "\nh:" + hStr;
-            drawTextPositioned(defaultNodePositions[i], text, 12, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
+            drawTextPositioned(pos, text, 12, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
         }
     }
 }
