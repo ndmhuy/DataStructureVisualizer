@@ -28,6 +28,16 @@ void GridGraph::initialize(size_t r, size_t c, Timeline& timeline) {
     timeline.addFrame(Frame(GridPayload(grid), 0, "Initialized grid with size " + std::to_string(rows) + "x" + std::to_string(cols)));
 }
 
+void GridGraph::initializeFromData(const std::vector<std::vector<int>>& startGrid, Timeline& timeline) {
+    if (startGrid.empty() || startGrid[0].empty()) return;
+    
+    rows = startGrid.size();
+    cols = startGrid[0].size();
+    grid = startGrid;
+
+    timeline.addFrame(Frame(GridPayload(grid), 0, "Initialized grid from imported data (" + std::to_string(rows) + "x" + std::to_string(cols) + ")"));
+}
+
 void GridGraph::setCellState(size_t r, size_t c, CellState state, Timeline& timeline) {
     if (r < rows && c < cols) {
         grid[r][c] = static_cast<int>(state);

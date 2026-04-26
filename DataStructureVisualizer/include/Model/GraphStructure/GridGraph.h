@@ -25,6 +25,7 @@ class GridGraph : public IVisualizable {
     StructureType getStructureType() const override;
 
     void initialize(size_t r, size_t c, Timeline& timeline);
+    void initializeFromData(const std::vector<std::vector<int>>& startGrid, Timeline& timeline);
     void setCellState(size_t r, size_t c, CellState state, Timeline& timeline);
     CellState getCellState(size_t r, size_t c) const;
 
