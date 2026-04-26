@@ -597,8 +597,20 @@ void Renderer::visit(const GraphPayload& payload) {
                 break;
             }
         }
-        if (edge.from < vertices.size() && edge.to < vertices.size()) {
-            drawLineWithArrow(positions[edge.from], nodeSize, ShapeType::Circle, positions[edge.to], nodeSize, ShapeType::Circle, 3.0f, 15.0f, highlighted);
+        if (!highlighted && edge.from < vertices.size() && edge.to < vertices.size()) {
+            drawLineWithArrow(positions[edge.from], nodeSize, ShapeType::Circle, positions[edge.to], nodeSize, ShapeType::Circle, 3.0f, 15.0f, false);
+        }
+    }
+    for (const auto& edge : edges) {
+        bool highlighted = false;
+        for (const auto& he : hEdges) {
+            if (he.from == edge.from && he.to == edge.to) {
+                highlighted = true;
+                break;
+            }
+        }
+        if (highlighted && edge.from < vertices.size() && edge.to < vertices.size()) {
+            drawLineWithArrow(positions[edge.from], nodeSize, ShapeType::Circle, positions[edge.to], nodeSize, ShapeType::Circle, 3.0f, 15.0f, true);
         }
     }
 
