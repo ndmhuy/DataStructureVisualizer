@@ -24,6 +24,13 @@ private:
     bool themeToggleRequested = false;
     bool themeScaleChanged = false;
     bool backToMenuClicked = false;
+
+    // playback memory states
+    bool lastIsPlaying = false;
+    bool lastIsAtBeginning = true;
+    bool lastIsAtEnd = true;
+    bool lastIsEmpty = true;
+
     Button play;
     Button pause;
     Button stepForward;

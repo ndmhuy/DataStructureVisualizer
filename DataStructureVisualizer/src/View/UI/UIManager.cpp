@@ -61,10 +61,7 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     // setup size and position for buttons
     resize(window);
 
-    play.setActive(false);
-    pause.setActive(false);
-    stepForward.setActive(false);
-    stepBackward.setActive(false);
+    syncPlaybackUI(false, true, true, true);
     initialized = true;
 
     return true;
@@ -100,8 +97,7 @@ bool UIManager::applyTheme(const Theme& selectedTheme) {
         ok = false;
     }
 
-    play.setActive(isshowingPlay);
-    pause.setActive(!isshowingPlay);
+    syncPlaybackUI(lastIsPlaying, lastIsAtBeginning, lastIsAtEnd, lastIsEmpty);
 
     return ok;
 }
@@ -384,6 +380,11 @@ bool UIManager::checkPauseClicked() {
 }
 
 void UIManager::syncPlaybackUI(bool currentIsPlaying, bool isAtBeginning, bool isAtEnd, bool isEmpty) {
+    lastIsPlaying = currentIsPlaying;
+    lastIsAtBeginning = isAtBeginning;
+    lastIsAtEnd = isAtEnd;
+    lastIsEmpty = isEmpty;
+
     if (isEmpty) {
         isshowingPlay = true;
         play.setActive(false);
