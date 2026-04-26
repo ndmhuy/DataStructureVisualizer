@@ -165,7 +165,7 @@ IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
         case StructureType::AdjacencyMatrix:
         return new AdjacencyMatrix(LayoutConfig{});
         case StructureType::GridGraph:
-        return new GridGraph(10, 10);
+        return new GridGraph(9, 9);
         default:
         return nullptr;
     }
@@ -403,7 +403,7 @@ void AppEngine::handleDataActionRequest() {
             case 1: { // 1. INIT
                 if (mode == 0) { // Empty (String 1 = N, String 2 = M)
                     dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
-                    if (!dataManager.getData().size() >= 2) {
+                    if (dataManager.getData().size() >= 2) {
                         gridGraph->initialize(dataManager.getData()[0], dataManager.getData()[1], timeline); 
                         handled = true;
                     }
@@ -424,15 +424,19 @@ void AppEngine::handleDataActionRequest() {
                     int percentage = MathUtils::getRandomInRange(30, 40);
 
                     dataManager.randomDataGridGraph((size_t)rows, (size_t)columns, percentage);
+                    gridGraph->initializeFromData(dataManager.getDataGridGraph(), timeline);
                     handled = true;
                 }
                 break;
             }
             case 3: { // 3. SET OBSTACLES (String 1 = i, String 2 = j)
                 dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
-                
                 if (dataManager.getData().size() >= 2) { // This should let user have more options about the CellState
-                    gridGraph->setCellState(dataManager.getData()[0], dataManager.getData()[1], CellState::Wall, timeline);
+                    if (mode == 0) {
+                        gridGraph->setCellState(dataManager.getData()[0], dataManager.getData()[1], CellState::Empty, timeline);
+                    } else if (mode == 1) {
+                        gridGraph->setCellState(dataManager.getData()[0], dataManager.getData()[1], CellState::Wall, timeline);
+                    }
                     handled = true; 
                 }
                 break;
@@ -443,7 +447,11 @@ void AppEngine::handleDataActionRequest() {
                 if (dataManager.getData().size() >= 4) {
                     std::pair<size_t, size_t> start = {dataManager.getData()[0], dataManager.getData()[1]};
                     std::pair<size_t, size_t> end = {dataManager.getData()[2], dataManager.getData()[3]};
-                    gridGraph->runBFSShortestPath(start, end, timeline);
+                    if (mode == 0) {
+                        gridGraph->runAStar(start, end, timeline);
+                    } else if (mode == 1) {
+                        gridGraph->runBFSShortestPath(start, end, timeline);
+                    }
                     handled = true;
                 }
                 break;

@@ -664,15 +664,15 @@ void Renderer::visit(const GridPayload& payload) {
     size_t cols = grid[0].size();
 
     sf::Vector2u winSize = window.getWindow().getSize();
-    float availableWidth = winSize.x * 0.8f;
-    float availableHeight = winSize.y * 0.8f;
+    float availableWidth = winSize.x * 0.7f;
+    float availableHeight = winSize.y * 0.7f;
 
     float cellSize = std::min(availableWidth / cols, availableHeight / rows);
     float gridWidth = cols * cellSize;
     float gridHeight = rows * cellSize;
 
     float startX = (winSize.x - gridWidth) / 2.0f;
-    float startY = (winSize.y - gridHeight) / 2.0f;
+    float startY = (winSize.y - gridHeight) / 2.0f - 50.0f;
 
     for (size_t r = 0; r < rows; ++r) {
         for (size_t c = 0; c < cols; ++c) {
