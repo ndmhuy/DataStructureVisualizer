@@ -42,7 +42,7 @@ class AVLTree : public IStandardStructure {
     AVLTree();
     ~AVLTree() override;
 
-    AVLTree(const AVLTree&) = delete;
+    AVLTree(const LayoutConfig& config = LayoutConfig());
     AVLTree& operator=(const AVLTree&) = delete;    
 
     void initialize(const std::vector<int>& data, Timeline& timeline) override;

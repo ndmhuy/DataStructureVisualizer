@@ -1,11 +1,12 @@
 #ifndef DATAMANAGER_HPP
 #define DATAMANAGER_HPP
 
+#include "Utilities/Position.h"
+
 #include <vector>
 #include <string>
 #include <fstream>
 #include <unordered_map>
-#include <SFML/System/Vector2.hpp>
 #include <Model/GraphStructure/Edge.h>
 
 class DataManager
@@ -16,13 +17,21 @@ public:
 
     void inputFromFileGraph(const std::string& filePath);
 
+    void inputFromFileGridGraph(const std::string& filePath);
+
     void inputFromStream(std::istream& in); // Input directly on terminal
 
     void inputFromStreamGraph(std::istream& in); // Input directly on terminal
 
+    void inputFromStreamGridGraph(std::istream& in);
+
     void inputFromConsole(const std::string& text); // Input by changing the given text
 
     void inputFromConsoleGraph(const std::string& text); // Input by changing the given text
+
+    void inputFromConsoleGridGraph(const std::string& text);
+
+    void inputFromConsoleNonNegative(const std::string& text);
 
     // Output
     void outputToFile(const std::string& filePath) const;
@@ -38,7 +47,9 @@ public:
 
     const std::vector<Edge>& getDataGraph() const;
 
-    const std::unordered_map<int, sf::Vector2f>& getNodePositions() const;
+    const std::vector<std::vector<int>>& getDataGridGraph() const;
+
+    const std::unordered_map<int, Position>& getNodePositions() const;
 
     // Data randomizer
     void randomData(int n, int minValue, int maxValue);
@@ -47,10 +58,13 @@ public:
 
     void randomDataPlanarGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight);
 
+    void randomDataGridGraph(size_t rows, size_t cols, int wallPercentage);
+
 private:
     std::vector<int> data;
     std::vector<Edge> dataGraph; // Edge vector: {u, v, w}
-    std::unordered_map<int, sf::Vector2f> nodePositions;
+    std::vector<std::vector<int>> dataGridGraph;
+    std::unordered_map<int, Position> nodePositions;
 };
 
 #endif

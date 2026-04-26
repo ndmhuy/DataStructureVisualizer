@@ -1,5 +1,3 @@
-#include "Controller/AppEngine.h"
-
 #include <fstream>
 #include <random>
 #include <sstream>
@@ -17,6 +15,7 @@
 #include "Utilities/LayoutConfig.h"
 #include "Utilities/PseudocodeManager.h"
 #include "Utilities/MathUtils.h"
+#include "Controller/AppEngine.h"
 
 namespace {
 
@@ -154,13 +153,13 @@ StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
 IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
     switch (structureType) {
         case StructureType::SinglyLinkedList:
-        return new SinglyLinkedList();
+        return new SinglyLinkedList(LayoutConfig{});
         case StructureType::MinHeap:
-        return new MinHeap();
+        return new MinHeap(LayoutConfig{});        
         case StructureType::MaxHeap:
-        return new MaxHeap();
+        return new MaxHeap(LayoutConfig{});          
         case StructureType::AVLTree:
-        return new AVLTree();
+        return new AVLTree(LayoutConfig{});
         case StructureType::AdjacencyList:
         return new AdjacencyList(LayoutConfig{});
         case StructureType::AdjacencyMatrix:
@@ -402,50 +401,54 @@ void AppEngine::handleDataActionRequest() {
         if (!gridGraph) return;
 
         switch (action) {
-            // ISSUE: data input accept all integer values!!!
-            // case 1: { // 1. INIT
-            //     if (mode == 0) { // Empty (String 1 = N, String 2 = M)
-            //         dataManager.inputFromConsole(input1 + " " + input2);
-            //         if (dataManager.getData().size() >= 2) {
-            //             gridGraph->initialize(dataManager.getData()[0], dataManager.getData()[1], timeline); 
-            //             handled = true;
-            //         }
-            //     } else if (mode == 1) { // File
-            //         dataManager.inputFromFile(input1);
-            //         if (!dataManager.getData().size() >= 2) {
-            //             gridGraph->initialize(dataManager.getData()[0], dataManager.getData()[1], timeline);
-            //             handled = true;
-            //         }
-            //     }
-            //     break;
-            // }
-            // // Issue: dataManager not implement random grid graph yet
-            // // case 2: { // 2. RANDOM (String 1 = N, String 2 = M)
-            // //     dataManager.inputFromConsole(input1 + " " + input2);
-            // //     if (dataManager.getData().size() >= 2) {
-            // //         // uhhhhhhhhhhhh
-                    
-            // //         handled = true;
-            // //     }
-            // //     break;
-            // // }
-            // case 3: { // 3. SET OBSTACLES (String 1 = i, String 2 = j)
-            //     dataManager.inputFromConsole(input1 + " " + input2);
-            //     if (dataManager.getData().size() >= 2) {
-            //         gridGraph->setCellState(dataManager.getData()[0], dataManager.getData()[0], CellState::Wall, timeline);
-            //     }
-            //     break;
-            // }
-            // case 4: { // 4. BFS (x1, y1, x2, y2)
-            //     dataManager.inputFromConsole(input1 + " " + input2 + " " + input3 + " " + input4);
-            //     if (dataManager.getData().size() >= 4) {
-            //         std::pair<size_t, size_t> start = {dataManager.getData()[0], dataManager.getData()[1]};
-            //         std::pair<size_t, size_t> end = {dataManager.getData()[2], dataManager.getData()[3]};
-            //         gridGraph->runBFSShortestPath(start, end, timeline);
-            //         handled = true;
-            //     }
-            //     break;
-            // }
+            case 1: { // 1. INIT
+                if (mode == 0) { // Empty (String 1 = N, String 2 = M)
+                    dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
+                    if (!dataManager.getData().size() >= 2) {
+                        gridGraph->initialize(dataManager.getData()[0], dataManager.getData()[1], timeline); 
+                        handled = true;
+                    }
+                } else if (mode == 1) { // File
+                    dataManager.inputFromFileGridGraph(input1);
+                    if (!dataManager.getDataGridGraph().empty()) {
+                        gridGraph->initializeFromData(dataManager.getDataGridGraph(), timeline);
+                        handled = true;
+                    }
+                }
+                break;
+            }
+            case 2: { // 2. RANDOM (String 1 = N, String 2 = M)
+                dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
+                if (dataManager.getData().size() >= 2) {
+                    int rows = MathUtils::getRandomInRange(4, 16);
+                    int columns = MathUtils::getRandomInRange(4, 16);
+                    int percentage = MathUtils::getRandomInRange(30, 40);
+
+                    dataManager.randomDataGridGraph((size_t)rows, (size_t)columns, percentage);
+                    handled = true;
+                }
+                break;
+            }
+            case 3: { // 3. SET OBSTACLES (String 1 = i, String 2 = j)
+                dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
+                
+                if (dataManager.getData().size() >= 2) { // This should let user have more options about the CellState
+                    gridGraph->setCellState(dataManager.getData()[0], dataManager.getData()[1], CellState::Wall, timeline);
+                    handled = true; 
+                }
+                break;
+            }
+            case 4: { // 4. BFS (x1, y1, x2, y2)
+                dataManager.inputFromConsoleNonNegative(input1 + " " + input2 + " " + input3 + " " + input4);
+    
+                if (dataManager.getData().size() >= 4) {
+                    std::pair<size_t, size_t> start = {dataManager.getData()[0], dataManager.getData()[1]};
+                    std::pair<size_t, size_t> end = {dataManager.getData()[2], dataManager.getData()[3]};
+                    gridGraph->runBFSShortestPath(start, end, timeline);
+                    handled = true;
+                }
+                break;
+            }
             case 5: { // 5. CLEAR
                 gridGraph->clear(timeline);
                 handled = true;
@@ -485,9 +488,10 @@ void AppEngine::handleDataActionRequest() {
             //     break;
             // }
             case 4: { // 4. SSSP
-                dataManager.inputFromConsoleGraph(input1 + " -1 1");
-                if (!dataManager.getDataGraph().empty()) {
-                    graph->runDijkstra(dataManager.getDataGraph()[0].from, timeline);
+                dataManager.inputFromConsoleNonNegative(input1);
+                
+                if (dataManager.getData().size() >= 1) {
+                    graph->runDijkstra(dataManager.getData()[0], timeline);
                     handled = true;
                 }
                 break;
@@ -518,7 +522,10 @@ void AppEngine::handleDataActionRequest() {
                 break;
             }
             case 8: { // 8. RANDOM
-                dataManager.randomDataGraph(8, 12, 1, 20);
+                int vCount = MathUtils::getRandomInRange(1, 20);
+                int eCount = MathUtils::getRandomInRange(0, 190);
+
+                dataManager.randomDataGraph(vCount, eCount, 1, 99);
                 graph->initialize(dataManager.getDataGraph(), timeline);
                 handled = true;
             }

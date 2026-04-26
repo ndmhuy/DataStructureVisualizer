@@ -2,14 +2,11 @@
 #include <sstream>
 #include <algorithm>
 #include <queue>
-#include <limits>
-#include <cstddef>
 #include <set>
-
-const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 #include "Controller/DataManager.h"
 #include "Utilities/MathUtils.h"
+#include "Utilities/GlobalConstant.h"
 
 // File input
 void DataManager::inputFromFile(const std::string& filePath) {
@@ -151,7 +148,81 @@ void DataManager::inputFromFileGraph(const std::string& filePath) {
     }
 }
 
+void DataManager::inputFromFileGridGraph(const std::string& filePath) {
+    std::ifstream fileIn(filePath);
+
+    if (!fileIn.is_open()) {
+        std::cerr << "Error: DataManager::inputFromFileGridGraph cannot open input file '"
+                  << filePath << "'." << std::endl;
+        return;
+    }
+
+    dataGridGraph.clear();
+    std::vector<int> buffer;
+    int value;
+
+    while (true) {
+        if (fileIn >> value) {
+            buffer.push_back(value);
+        } else if (fileIn.eof()) {
+            break;
+        } else {
+            fileIn.clear();
+            fileIn.ignore(1); 
+        }
+    }
+
+    fileIn.close();
+
+    if (buffer.size() < 2) {
+        std::cout << "Invalid Grid Data File: Not enough data for rows and cols." << std::endl;
+        return;
+    }
+
+    if (buffer[0] <= 0 || buffer[1] <= 0) {
+        std::cout << "Invalid Grid Data File: Dimensions must be positive integers (> 0)." << std::endl;
+        return;
+    }
+
+    size_t rows = static_cast<size_t>(buffer[0]);
+    size_t cols = static_cast<size_t>(buffer[1]);
+
+    dataGridGraph.assign(rows, std::vector<int>(cols, 0));
+
+    size_t bufferIdx = 2; 
+    for (size_t r = 0; r < rows; ++r) {
+        for (size_t c = 0; c < cols; ++c) {
+            if (bufferIdx < buffer.size()) {
+                int val = buffer[bufferIdx++];
+                
+                if (val >= 0 && val <= 3) {
+                    dataGridGraph[r][c] = val;
+                }
+            } else {
+                return; 
+            }
+        }
+    }
+}
+
 // Stream input
+void DataManager::inputFromStream(std::istream& in) {
+    data.clear();
+    int value;
+
+    while (true) {
+        if (in >> value) {
+            data.push_back(value);
+        } else if (in.eof()) {
+            break;
+        } else {
+            // Clear fail state, skip one char
+            in.clear();
+            in.ignore(1);
+        }
+    }
+}
+
 void DataManager::inputFromStreamGraph(std::istream& in) {
     dataGraph.clear();
 
@@ -192,6 +263,35 @@ void DataManager::inputFromStreamGraph(std::istream& in) {
     }
 }
 
+void DataManager::inputFromStreamGridGraph(std::istream& in) {
+    dataGridGraph.clear();
+
+    int r, c;
+
+    if (!(in >> r >> c) || r <= 0 || c <= 0) {
+        std::cout << "Invalid Grid Data: Dimensions must be positive integers." << std::endl;
+        return;
+    }
+
+    size_t rows = static_cast<size_t>(r);
+    size_t cols = static_cast<size_t>(c);
+
+    dataGridGraph.assign(rows, std::vector<int>(cols, 0));
+
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            int val;
+            if (in >> val) {
+                if (val >= 0 && val <= 3) {
+                    dataGridGraph[i][j] = val;
+                }
+            } else {
+                return;
+            }
+        }
+    }
+}
+
 // Manual input
 void DataManager::inputFromConsole(const std::string& text) {
     std::stringstream ss(text);
@@ -201,6 +301,23 @@ void DataManager::inputFromConsole(const std::string& text) {
 void DataManager::inputFromConsoleGraph(const std::string& text) {
     std::stringstream ss(text);
     inputFromStreamGraph(ss);
+}
+
+void DataManager::inputFromConsoleGridGraph(const std::string& text) {
+    std::stringstream ss(text);
+    inputFromStreamGridGraph(ss);
+}
+
+void DataManager::inputFromConsoleNonNegative(const std::string& text) {
+    inputFromConsole(text);
+
+    for (int val : data) {
+        if (val < 0) {
+            std::cout << "Invalid Input: Negative numbers are not allowed for this action!" << std::endl;
+            data.clear(); 
+            return;
+        }
+    }
 }
 
 // File output
@@ -333,30 +450,13 @@ void DataManager::randomDataPlanarGraph(int n, int minValue, int maxValue, float
     dataGraph.clear();
     nodePositions.clear();
 
-    // Growing tree
-    // std::vector<int> prim(n);
-    // for (int i = 0; i < n; ++i)
-    //     prim[i] = i;
-
-    // int ptr = 1;
-    // while (ptr < n) {
-    //     int currIdx = MathUtils::getRandomInRange(0, ptr-1);
-    //     int nextIdx = MathUtils::getRandomInRange(ptr, n-1);
-    //     int weight = MathUtils::getRandomInRange(minValue, maxValue);
-
-    //     dataGraph[prim[currIdx]].push_back({prim[nextIdx], weight});
-    //     std::swap(prim[currIdx], prim[nextIdx]);
-    //     ptr++;
-    // }
-
-    // New random
     // priority_queue cannot compare x and y in sf::Vector2f
     std::priority_queue<std::vector<int>> que;
     for (int i = 0; i < n; ++i) {
         // Range should be (padding, screen - padding)
         int x = MathUtils::getRandomInRange(0, static_cast<int>(screenWidth));
         int y = MathUtils::getRandomInRange(0, static_cast<int>(screenHeight));
-        nodePositions[i] = {x, y};
+        nodePositions[i] = Position(static_cast<float>(x), static_cast<float>(y));
         que.push({x, y, i});
     }
 
@@ -431,6 +531,35 @@ void DataManager::randomDataPlanarGraph(int n, int minValue, int maxValue, float
     }
 }
 
+void DataManager::randomDataGridGraph(size_t rows, size_t cols, int wallPercentage) {
+    if (rows <= 0 || cols <= 0) return;
+
+    dataGridGraph.assign(rows, std::vector<int>(cols, 0));
+
+    size_t startR = MathUtils::getRandomInRange(0, rows - 1);
+    size_t startC = MathUtils::getRandomInRange(0, cols - 1);
+    dataGridGraph[startR][startC] = 2;
+
+    size_t targetR, targetC;
+    do {
+        targetR = MathUtils::getRandomInRange(0, rows - 1);
+        targetC = MathUtils::getRandomInRange(0, cols - 1);
+    } while (targetR == startR && targetC == startC);
+    
+    dataGridGraph[targetR][targetC] = 3;
+
+    for (size_t r = 0; r < rows; ++r) {
+        for (size_t c = 0; c < cols; ++c) {
+            if (dataGridGraph[r][c] != 0) continue;
+
+            // Random wall depends on percent
+            if (MathUtils::getRandomInRange(1, 100) <= wallPercentage) {
+                dataGridGraph[r][c] = 1;
+            }
+        }
+    }
+}
+
 // Data getter
 const std::vector<int>& DataManager::getData() const {
     // Neither changing vector data nor changing class value
@@ -441,6 +570,10 @@ const std::vector<Edge>& DataManager::getDataGraph() const {
     return dataGraph;
 }
 
-const std::unordered_map<int, sf::Vector2f>& DataManager::getNodePositions() const {
+const std::vector<std::vector<int>>& DataManager::getDataGridGraph() const {
+    return dataGridGraph;
+}
+
+const std::unordered_map<int, Position>& DataManager::getNodePositions() const {
     return nodePositions;
 }

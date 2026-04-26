@@ -1,9 +1,6 @@
 #include "Model/GraphStructure/AdjacencyMatrix.h"
+#include "Utilities/GlobalConstant.h"
 #include <algorithm>
-#include <limits>
-#include <cstddef>
-
-const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 AdjacencyMatrix::AdjacencyMatrix(const LayoutConfig& config, bool directed) : IGraphStructure(config), isDirected(directed) {}
 

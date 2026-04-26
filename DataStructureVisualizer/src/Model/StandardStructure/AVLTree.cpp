@@ -1,11 +1,9 @@
 #include "Model/StandardStructure/AVLTree.h"
+#include "Utilities/GlobalConstant.h"
 
 #include <algorithm>
 #include <queue>
 #include <string>
-#include <climits>
-
-const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 int AVLTree::Node::heightOf(Node* root) {
     return root ? root->height : 0;
@@ -275,7 +273,9 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline& timeline, size_t i
     return isRemove;
 }
 
-AVLTree::AVLTree() : root(nullptr) {}
+AVLTree::AVLTree(const LayoutConfig& config) : IStandardStructure(config) {
+    root = nullptr;
+}
 
 AVLTree::~AVLTree() {
     deleteNodes(root);

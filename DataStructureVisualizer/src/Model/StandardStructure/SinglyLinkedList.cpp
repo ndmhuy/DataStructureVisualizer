@@ -19,7 +19,7 @@ void SinglyLinkedList::deleteNodes(Node*& head) {
     }
 }
 
-SinglyLinkedList::SinglyLinkedList() : head(nullptr) {}
+SinglyLinkedList::SinglyLinkedList(const LayoutConfig& config) : IStandardStructure(config), head(nullptr) {}
 
 SinglyLinkedList::~SinglyLinkedList() { deleteNodes(head); }
 

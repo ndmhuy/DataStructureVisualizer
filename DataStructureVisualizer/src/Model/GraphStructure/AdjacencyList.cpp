@@ -1,9 +1,6 @@
 #include "Model/GraphStructure/AdjacencyList.h"
-#include <limits>
+#include "Utilities/GlobalConstant.h"
 #include <queue>
-#include <cstddef>
-
-const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 AdjacencyList::AdjacencyList(const LayoutConfig& config, bool directed) : IGraphStructure(config), isDirected(directed) {}
 

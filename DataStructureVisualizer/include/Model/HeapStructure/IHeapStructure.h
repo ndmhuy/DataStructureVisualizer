@@ -2,11 +2,18 @@
 #define IHEAPSTRUCTURE_H
 
 #include "Model/IVisualizable.h"
+#include "Utilities/LayoutConfig.h"
+
 #include <vector>
 #include <cstddef>
 
 class IHeapStructure : public IVisualizable {
     protected:
+    LayoutConfig layoutConfig; 
+
+    IHeapStructure(const LayoutConfig& config = LayoutConfig()) 
+        : layoutConfig(config) {}
+
     std::vector<int> heapArray;
 
     size_t parent(size_t n, size_t idx);
@@ -20,6 +27,8 @@ class IHeapStructure : public IVisualizable {
     virtual bool compare(size_t idx1, size_t idx2) = 0;
 
     public:
+    virtual ~IHeapStructure() = default;
+    
     void initialize(const std::vector<int>& data, Timeline& timeline);
     void insert(int value, Timeline& timeline);
     void search(int value, Timeline& timeline);
