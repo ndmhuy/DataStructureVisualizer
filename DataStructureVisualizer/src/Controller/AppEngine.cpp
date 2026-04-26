@@ -19,6 +19,8 @@
 
 namespace {
 
+bool isInitialState = true;
+
 AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action) {
     switch (structureType) {
         case StructureType::SinglyLinkedList:
@@ -74,12 +76,14 @@ AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action)
 void syncCodePanelWithCurrentFrame(UIManager& uiManager,
 const Timeline& timeline) {
     const Frame* currentFrame = timeline.getCurrentFrame();
-    if (!currentFrame) {
+    if (!currentFrame || isInitialState) {
         uiManager.setCodePanelHighlightedLine(-1);
+        uiManager.setCodePanelMessage("");
         return;
     }
     
     uiManager.setCodePanelHighlightedLine(currentFrame->getCodeLineId());
+    uiManager.setCodePanelMessage(currentFrame->getMessage());
 }
     
 bool isGraphStructureType(StructureType structureType) {
@@ -188,9 +192,12 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
     renderer.resetCustomPositions();
     clearUndoHistory();
 
+    isInitialState = true;
+
     Timeline timeline;
     if (activeStructure) {
         activeStructure->clear(timeline);
+        timeline.goToLastFrame();
     } else {
         timeline.clear();
     }
@@ -532,6 +539,7 @@ void AppEngine::handleDataActionRequest() {
     }
     
     if (handled && timeline.getFrameCount() > 0) {
+        isInitialState = false;
         playbackController.setTimeline(timeline);
         playbackController.play();
     }
