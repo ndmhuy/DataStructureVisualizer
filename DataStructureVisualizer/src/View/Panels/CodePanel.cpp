@@ -1,4 +1,5 @@
 #include "View/Panels/CodePanel.h"
+#include "imgui_internal.h"
 #include <algorithm>
 
 void CodePanel::applyTheme(const Theme& selectedTheme){
@@ -119,10 +120,43 @@ void CodePanel::render(const sf::RenderWindow& window){
     
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, theme.codePanelLineSpacing));
 
+    // --- HIGH-END UI UX: Animated Highlight Glider ---
+    static float animHighlightY = 0.0f;
+    static float animHighlightAlpha = 0.0f;
+    float dt = ImGui::GetIO().DeltaTime;
+
+    if (highlightedline >= 0 && highlightedline < listofCodes.size()) {
+        float targetY = padding + highlightedline * (ImGui::GetTextLineHeight() + theme.codePanelLineSpacing);
+        // Snap tới vị trí mới nếu khoảng cách quá lớn, ngược lại thì di chuyển mượt (Lerp)
+        if (std::abs(animHighlightY - targetY) > 200.0f || animHighlightAlpha < 0.1f) {
+            animHighlightY = targetY;
+        } else {
+            animHighlightY = ImLerp(animHighlightY, targetY, dt * 15.0f);
+        }
+        animHighlightAlpha = ImLerp(animHighlightAlpha, 1.0f, dt * 10.0f);
+    } else {
+        animHighlightAlpha = ImLerp(animHighlightAlpha, 0.0f, dt * 10.0f);
+    }
+
+    // Vẽ hộp sáng bao quanh code (Highlight Glider)
+    if (animHighlightAlpha > 0.01f) {
+        ImVec2 cpos = ImGui::GetCursorScreenPos();
+        ImVec2 pMin = ImVec2(cpos.x - 5.0f, cpos.y + animHighlightY - 2.0f);
+        ImVec2 pMax = ImVec2(cpos.x + ImGui::GetContentRegionAvail().x + 5.0f, pMin.y + ImGui::GetTextLineHeight() + 4.0f);
+        
+        ImVec4 hlVec4 = ImGui::ColorConvertU32ToFloat4(highlightColor);
+        ImU32 glowColor = ImGui::GetColorU32(ImVec4(hlVec4.x, hlVec4.y, hlVec4.z, animHighlightAlpha * 0.3f));
+        ImU32 solidColor = ImGui::GetColorU32(ImVec4(hlVec4.x, hlVec4.y, hlVec4.z, animHighlightAlpha * 0.8f));
+
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        dl->AddRectFilled(pMin, pMax, glowColor, 4.0f);
+        dl->AddRect(pMin, pMax, solidColor, 4.0f, 0, 1.5f);
+    }
+
     for (size_t i = 0; i < listofCodes.size(); ++i) {
         if (static_cast<int>(i) == highlightedline) {
             ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
-            ImGui::Text("-> %s", listofCodes[i].c_str());
+            ImGui::Text("   %s", listofCodes[i].c_str()); // Bỏ dấu -> cứng nhắc đi
             ImGui::PopStyleColor();
         } else {
             ImGui::PushStyleColor(ImGuiCol_Text, textColor);

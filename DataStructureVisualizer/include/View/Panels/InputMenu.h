@@ -2,6 +2,7 @@
 #define INPUTMENU_H
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <SFML/System/Clock.hpp>
 #include <string>
 
@@ -38,6 +39,9 @@ private:
     char inputBuf4[256] = "";
     
     ImGui::FileBrowser fileDialog;
+
+    sf::SoundBuffer clickBuffer;
+    sf::Sound clickSound{clickBuffer};
 
 public:
     InputMenu() = default;

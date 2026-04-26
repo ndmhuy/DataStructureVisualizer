@@ -2,6 +2,7 @@
 #define NAVIGATIONMENU_H
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include "imgui.h"
 #include "View/Core/Theme.h"
 #include <string>
@@ -34,6 +35,9 @@ private:
     std::vector<std::string> graphNames = {
         "Adjacency Matrix", "Adjacency List"
     };
+
+    sf::SoundBuffer clickBuffer;
+    sf::Sound clickSound{clickBuffer};
 
 public:
     NavigationMenu() = default;

@@ -1,7 +1,83 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
 
 #include "View/UI/UIManager.h"
+#include "imgui_internal.h"
+
+namespace {
+    ImVec4 LerpColor(const ImVec4& a, const ImVec4& b, float t) {
+        return ImVec4(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t);
+    }
+
+    bool AnimatedUIButton(const char* label, const ImVec2& size_arg, ImVec4 colorNormal, ImVec4 colorHover, ImVec4 colorActive, sf::Sound* sound = nullptr) {
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        if (window->SkipItems) return false;
+
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
+        const ImGuiID id = window->GetID(label);
+        const ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
+
+        ImVec2 pos = window->DC.CursorPos;
+        ImVec2 size = ImGui::CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+
+        const ImRect bb(pos, pos + size);
+        ImGui::ItemSize(size, style.FramePadding.y);
+        if (!ImGui::ItemAdd(bb, id)) return false;
+
+        bool hovered, held;
+        bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held);
+
+        static std::unordered_map<ImGuiID, float> hoverAnim;
+        static std::unordered_map<ImGuiID, float> clickAnim;
+        
+        float dt = g.IO.DeltaTime;
+        hoverAnim[id] = ImClamp(hoverAnim[id] + (hovered ? dt * 8.0f : -dt * 5.0f), 0.0f, 1.0f);
+        clickAnim[id] = ImClamp(clickAnim[id] + (held ? dt * 15.0f : -dt * 10.0f), 0.0f, 1.0f);
+
+        float hEase = 1.0f - (1.0f - hoverAnim[id]) * (1.0f - hoverAnim[id]); // Ease out quad
+        float cEase = clickAnim[id];
+
+        ImVec4 current_color = LerpColor(colorNormal, colorHover, hEase);
+        if (held) current_color = colorActive;
+
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        
+        // Hiệu ứng co rút khi click
+        float scale = 1.0f - (cEase * 0.05f); 
+        ImVec2 center = bb.GetCenter();
+        ImVec2 half_size = ImVec2(size.x * scale * 0.5f, size.y * scale * 0.5f);
+        ImRect render_bb(center - half_size, center + half_size);
+
+        // Hiệu ứng đổ bóng phát sáng
+        if (hEase > 0.0f) {
+            float glow_size = 12.0f * hEase;
+            draw_list->AddRectFilled(render_bb.Min - ImVec2(glow_size, glow_size), 
+                                     render_bb.Max + ImVec2(glow_size, glow_size), 
+                                     ImGui::GetColorU32(ImVec4(colorHover.x, colorHover.y, colorHover.z, hEase * 0.4f)), 
+                                     style.FrameRounding + glow_size);
+        }
+
+        draw_list->AddRectFilled(render_bb.Min, render_bb.Max, ImGui::GetColorU32(current_color), style.FrameRounding);
+        draw_list->AddRect(render_bb.Min, render_bb.Max, ImGui::GetColorU32(ImVec4(1,1,1, hEase * 0.6f)), style.FrameRounding, 0, 2.0f);
+
+        // Shift text nhẹ lên trên để tạo pop effect
+        ImVec2 text_pos = center - ImVec2(label_size.x * 0.5f, label_size.y * 0.5f);
+        text_pos.y -= hEase * 3.0f;
+        
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1));
+        draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), label);
+        ImGui::PopStyleColor();
+
+        if (pressed && sound) {
+            sound->play();
+        }
+
+        return pressed;
+    }
+}
 
 bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     this->theme = theme;
@@ -27,6 +103,24 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
         ImGui::SFML::Shutdown();
         return false;
     }
+
+    // --- MASSIVE UI STYLE OVERHAUL (CINEMATIC UX) ---
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowPadding = ImVec2(16.0f, 16.0f);
+    style.WindowRounding = 12.0f;
+    style.FramePadding = ImVec2(20.0f, 10.0f);
+    style.FrameRounding = 8.0f;
+    style.ItemSpacing = ImVec2(15.0f, 12.0f);
+    style.ItemInnerSpacing = ImVec2(12.0f, 8.0f);
+    style.ScrollbarSize = 14.0f;
+    style.ScrollbarRounding = 14.0f;
+    style.GrabMinSize = 16.0f;
+    style.GrabRounding = 8.0f;
+    style.WindowBorderSize = 0.0f; // Bỏ viền cứng, dùng bóng mờ đổ xuống
+    style.PopupBorderSize = 1.0f;
+    style.TabRounding = 8.0f;
+    style.AntiAliasedLines = true;
+    style.AntiAliasedFill = true;
 
     if (!play.init(theme.playIconPath, theme)) {
         std::cerr << "Warning: UIManager::init failed to load play icon from '"
@@ -57,6 +151,11 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     codePanel.applyTheme(theme);
     slider.init(&speed,theme);
     navMenu.init(theme);
+
+    if (clickBuffer.loadFromFile(theme.clickSoundPath)) {
+        clickSound.setBuffer(clickBuffer);
+        clickSound.setVolume(60.0f);
+    }
 
     // setup size and position for buttons
     resize(window);
@@ -180,25 +279,17 @@ void UIManager::render(sf::RenderWindow& window) {
         navMenu.render(window);
 
         // Vẽ nút Theme đè lên góc phải của Main Menu
-        ImGui::SetNextWindowPos(ImVec2(winSize.x - 110.0f, 10.0f));
-        ImGui::SetNextWindowSize(ImVec2(100.0f, 50.0f));
+        ImGui::SetNextWindowPos(ImVec2(winSize.x - 120.0f, 10.0f));
+        ImGui::SetNextWindowSize(ImVec2(120.0f, 60.0f));
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
                                  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | 
                                  ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
         ImGui::Begin("ThemeMenu", nullptr, flags);
         
-        ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnHover);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnHover);
-        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-        
-        if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
+        if (AnimatedUIButton(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(100.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
         }
-        ImGui::PopStyleColor(4);
-        ImGui::PopStyleVar();
         ImGui::End();
 
     } else {
@@ -220,14 +311,8 @@ void UIManager::render(sf::RenderWindow& window) {
         
         ImGui::Begin("TopControlBar", nullptr, panelFlags);
         
-        ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnHover);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnHover);
-        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-        
         ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
-        if (ImGui::Button("Home", ImVec2(80.0f, 35.0f))) {
+        if (AnimatedUIButton("Home", ImVec2(80.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
             backToMenuClicked = true;
             isMainMenu = true;
             navMenu.resetState();
@@ -241,13 +326,11 @@ void UIManager::render(sf::RenderWindow& window) {
         }
         
         ImGui::SameLine(0.0f, 20.0f);
-        if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
+        if (AnimatedUIButton(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(100.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
         }
         
-        ImGui::PopStyleColor(4);
-        ImGui::PopStyleVar();
         ImGui::End();
 
         // Render Component

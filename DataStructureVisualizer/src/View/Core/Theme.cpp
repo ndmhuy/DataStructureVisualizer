@@ -50,7 +50,7 @@ Theme Theme::getDefaultTheme() {
     t.pauseIconPath = assetsRoot + "/pausebutton.png";
     t.stepForwardIconPath = assetsRoot + "/stepforward.png";
     t.stepBackwardIconPath = assetsRoot + "/stepbackward.png";
-
+    t.clickSoundPath = assetsRoot + "/click.wav"; 
     t.textColor = sf::Color({0, 71, 171});
     t.nodeTintColor = sf::Color::White; 
     t.arrayTintColor = sf::Color::White; 

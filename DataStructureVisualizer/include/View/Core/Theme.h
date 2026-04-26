@@ -19,6 +19,7 @@ class Theme {
     std::string pauseIconPath;
     std::string stepForwardIconPath;
     std::string stepBackwardIconPath;
+    std::string clickSoundPath;
 
     sf::Color textColor;
     sf::Color nodeTintColor; // Use to change the color of node

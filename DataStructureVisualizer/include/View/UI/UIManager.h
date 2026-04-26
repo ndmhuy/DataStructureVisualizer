@@ -2,6 +2,7 @@
 #define UIMANAGER_H
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <SFML/System/Clock.hpp>
 
 #include "imgui.h"
@@ -49,6 +50,9 @@ private:
 
     NavigationMenu navMenu;
     int currentDS=-1;
+
+    sf::SoundBuffer clickBuffer;
+    sf::Sound clickSound{clickBuffer};
 
 public:
     UIManager() = default;

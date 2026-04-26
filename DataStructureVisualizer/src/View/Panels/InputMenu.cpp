@@ -1,8 +1,68 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
 
 #include "View/Panels/InputMenu.h"
+#include "imgui_internal.h"
+#include <unordered_map>
+
+namespace {
+    std::unordered_map<int, float> formSlideAnimMap; // Quản lý hiệu ứng Slide out
+
+    ImVec4 LerpC(const ImVec4& a, const ImVec4& b, float t) {
+        return ImVec4(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t);
+    }
+
+    bool CyberButton(const char* label, const ImVec2& size_arg, ImVec4 cNormal, ImVec4 cHover, ImVec4 cActive, sf::Sound* sound = nullptr) {
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        if (window->SkipItems) return false;
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
+        const ImGuiID id = window->GetID(label);
+        const ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
+        ImVec2 pos = window->DC.CursorPos;
+        ImVec2 size = ImGui::CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+        const ImRect bb(pos, pos + size);
+        ImGui::ItemSize(size, style.FramePadding.y);
+        if (!ImGui::ItemAdd(bb, id)) return false;
+
+        bool hovered, held;
+        bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held);
+
+        static std::unordered_map<ImGuiID, float> hAnim, cAnim;
+        float dt = g.IO.DeltaTime;
+        hAnim[id] = ImClamp(hAnim[id] + (hovered ? dt * 10.0f : -dt * 5.0f), 0.0f, 1.0f);
+        cAnim[id] = ImClamp(cAnim[id] + (held ? dt * 15.0f : -dt * 10.0f), 0.0f, 1.0f);
+
+        float hEase = 1.0f - (1.0f - hAnim[id]) * (1.0f - hAnim[id]);
+        ImVec4 current_color = LerpC(cNormal, cHover, hEase);
+        if (held) current_color = cActive;
+
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        
+        float scale = 1.0f - (cAnim[id] * 0.05f); 
+        ImVec2 center = bb.GetCenter();
+        ImVec2 half_size = ImVec2(size.x * scale * 0.5f, size.y * scale * 0.5f);
+        ImRect render_bb(center - half_size, center + half_size);
+
+        // Cyberpunk left accent bar
+        draw_list->AddRectFilled(render_bb.Min, render_bb.Max, ImGui::GetColorU32(current_color), style.FrameRounding);
+        if (hEase > 0.01f) {
+            draw_list->AddRectFilled(render_bb.Min, ImVec2(render_bb.Min.x + 4.0f, render_bb.Max.y), ImGui::GetColorU32(cActive), style.FrameRounding);
+        }
+
+        ImVec2 text_pos = center - ImVec2(label_size.x * 0.5f, label_size.y * 0.5f);
+        text_pos.x += hEase * 5.0f; // Shift text slightly to the right
+        draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), label);
+
+        if (pressed && sound) {
+            sound->play();
+        }
+
+        return pressed;
+    }
+}
 
 namespace {
     int NumberSpaceFilter(ImGuiInputTextCallbackData* data) {
@@ -35,6 +95,11 @@ bool InputMenu::init(const Theme& theme){
     this->theme = theme;
     fileDialog.SetTitle("Select File");
     fileDialog.SetTypeFilters({ ".txt", ".*" }); // Giới hạn các file mở định dạng TXT (có thể thay đổi tuỳ thích)
+    
+    if (clickBuffer.loadFromFile(theme.clickSoundPath)) {
+        clickSound.setBuffer(clickBuffer);
+        clickSound.setVolume(60.0f); // Tuỳ chỉnh âm lượng (0 - 100)
+    }
     return true;
 }
 
@@ -99,7 +164,7 @@ void InputMenu::render(const sf::RenderWindow& window){
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, colorAccent);
 
     // Mở rộng nút Toggle để bằng với chiều cao của menu, tạo thành một khối liền mạch
-    if (ImGui::Button(isopenMenu ? "<" : ">", ImVec2(theme.inputMenuToggleWidth, isopenMenu ? totalMenuHeight : height))) {
+    if (CyberButton(isopenMenu ? "<" : ">", ImVec2(theme.inputMenuToggleWidth, isopenMenu ? totalMenuHeight : height), colorPrimary, colorAccent, colorAccent, &clickSound)) {
         isopenMenu = !isopenMenu;
         if (!isopenMenu) {
             currentOption = -1;
@@ -125,20 +190,16 @@ void InputMenu::render(const sf::RenderWindow& window){
         for (int i = 0; i < menuCount; ++i){
             bool isActive = (currentOption == i);
 
-            ImGui::PushStyleColor(ImGuiCol_Button, isActive ? colorAccent : colorPrimary);
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, colorAccent);
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, colorAccent);
-
-            if (ImGui::Button(currentMenu[i].c_str(), ImVec2(length, height))) {
+            if (CyberButton(currentMenu[i].c_str(), ImVec2(length, height), isActive ? colorAccent : colorPrimary, colorAccent, colorAccent, &clickSound)) {
                 if (currentOption != i) {
                     currentOption = i;
+                    formSlideAnimMap[i] = 0.0f; // Khởi động lại slide animation
                     inputBuf1[0] = '\0';
                     inputBuf2[0] = '\0';
                     inputBuf3[0] = '\0';
                     inputBuf4[0] = '\0';
                 }
             }
-            ImGui::PopStyleColor(3);
 
             // Remember the position, but DO NOT render the form inside this group
             if (isActive) {
@@ -187,8 +248,12 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
     float height = theme.inputMenuHeight;
     float length = theme.inputMenuButtonWidth;
 
-    // Snap the form to the right edge of the active menu button
-    ImGui::SetNextWindowPos(ImVec2(btnPos.x + length, btnPos.y)); 
+    // Hiệu ứng mượt Slide-out cho Input Form
+    float dt = ImGui::GetIO().DeltaTime;
+    formSlideAnimMap[cur] = ImLerp(formSlideAnimMap[cur], 1.0f, dt * 15.0f);
+    float slideOffset = (1.0f - formSlideAnimMap[cur]) * -30.0f;
+
+    ImGui::SetNextWindowPos(ImVec2(btnPos.x + length + slideOffset, btnPos.y)); 
     ImGui::SetNextWindowSizeConstraints(ImVec2(0, height), ImVec2(9999.0f, height));
     
     ImGuiWindowFlags formFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
@@ -205,11 +270,7 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
 
     auto DrawButton = [&](const char* label, bool active, float w) -> bool {
         ImGui::SetCursorPosY(okBtnY);
-        ImGui::PushStyleColor(ImGuiCol_Button, active ? colorAccent : colorPrimary);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, colorAccent);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, colorAccent);
-        bool clicked = ImGui::Button(label, ImVec2(w, okBtnH));
-        ImGui::PopStyleColor(3);
+        bool clicked = CyberButton(label, ImVec2(w, okBtnH), active ? colorAccent : colorPrimary, colorAccent, colorAccent, &clickSound);
         return clicked;
     };
 
