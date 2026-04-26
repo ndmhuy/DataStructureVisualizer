@@ -450,14 +450,40 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 1; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 1) DrawConfirm(8); // Random
-        else if (cur == 2) DrawSingleInput(2); // Create Node
+        else if (cur == 1) { // Random
+            if (DrawButton("DAG", insertSubMode == 0, 60.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Graph", insertSubMode == 1, 60.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
+            }
+            ImGui::SameLine(0, 15.0f);
+            ImGui::SetCursorPosY(textY); ImGui::Text("minW="); ImGui::SameLine();
+            DrawInput("##in_rand_minw", inputBuf1, sizeof(inputBuf1), 40.0f, NumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("maxW="); ImGui::SameLine();
+            DrawInput("##in_rand_maxw", inputBuf2, sizeof(inputBuf2), 40.0f, NumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = insertSubMode; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                hasAction = 8; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 2) { // Create Node
+            DrawInput("##in_create_node", inputBuf1, sizeof(inputBuf1), 100.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
+                hasAction = 2; currentOption = -1; isopenMenu = false;
+            }
+        }
         else if (cur == 3) { // Create Edge
             ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
-            DrawInput("##in_edge_u", inputBuf1, sizeof(inputBuf1), 50.0f, NumberOnlyFilter);
+            DrawInput("##in_edge_u", inputBuf1, sizeof(inputBuf1), 50.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
             ImGui::SetCursorPosY(textY); ImGui::Text("v="); ImGui::SameLine();
-            DrawInput("##in_edge_v", inputBuf2, sizeof(inputBuf2), 50.0f, NumberOnlyFilter);
+            DrawInput("##in_edge_v", inputBuf2, sizeof(inputBuf2), 50.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
             ImGui::SetCursorPosY(textY); ImGui::Text("(u,v)="); ImGui::SameLine();
             DrawInput("##in_edge_w", inputBuf3, sizeof(inputBuf3), 50.0f, NumberOnlyFilter);
@@ -469,10 +495,10 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
         }
         else if (cur == 4) { // OPSP
             ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
-            DrawInput("##in_opsp_u", inputBuf1, sizeof(inputBuf1), 40.0f, NumberOnlyFilter);
+            DrawInput("##in_opsp_u", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
             ImGui::SetCursorPosY(textY); ImGui::Text("v="); ImGui::SameLine();
-            DrawInput("##in_opsp_v", inputBuf2, sizeof(inputBuf2), 40.0f, NumberOnlyFilter);
+            DrawInput("##in_opsp_v", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine();
             if (DrawButton("OK", false, 60.0f)) {
                 outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
@@ -493,7 +519,7 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
             }
             ImGui::SameLine(0, 15.0f);
             ImGui::SetCursorPosY(textY); ImGui::Text("start="); ImGui::SameLine();
-            DrawInput("##in_spsp_u", inputBuf1, sizeof(inputBuf1), 40.0f, NumberOnlyFilter);
+            DrawInput("##in_spsp_u", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine();
             if (DrawButton("OK", false, 60.0f)) {
                 outMode = insertSubMode; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
