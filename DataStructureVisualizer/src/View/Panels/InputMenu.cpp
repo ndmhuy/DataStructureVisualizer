@@ -24,10 +24,10 @@ namespace {
 
 std::vector<std::string> InputMenu::getCurrentMenu() const {
     if (currentDS == 0) return {"Init", "Insert", "Search", "Delete", "Update", "Clear"};
-    if (currentDS == 1 || currentDS == 2) return {"Init", "Insert", "Pop", "Clear"};
-    if (currentDS == 3) return {"Init", "Insert", "Search", "Delete", "Clear"};
+    if (currentDS == 1 || currentDS == 2) return {"Init", "Insert", "ExtractTop", "Peek", "Search", "Delete", "Update", "Clear"};
+    if (currentDS == 3) return {"Init", "Insert", "Search", "Delete", "Update", "Clear"};
     if (currentDS == 4) return {"Init", "Random", "Set obstacles", "BFS", "Clear"};
-    if (currentDS == 5 || currentDS == 6) return {"Init", "Create Node", "Create Edge", "SSSP", "OPSP", "APSP", "Clear"};
+    if (currentDS == 5 || currentDS == 6) return {"Init", "Random", "Create Node", "Create Edge", "SSSP", "OPSP", "APSP", "Clear"};
     return {};
 }
 
@@ -304,35 +304,42 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
         }
     };
 
+    auto DrawUpdateInput = [&](int actionVal) {
+        ImGui::SetCursorPosY(textY); ImGui::Text("From"); ImGui::SameLine();
+        DrawInput("##in_upd_from", inputBuf1, sizeof(inputBuf1), 80.0f, NumberOnlyFilter);
+        ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+        ImGui::SetCursorPosY(textY); ImGui::Text("To"); ImGui::SameLine();
+        DrawInput("##in_upd_to", inputBuf2, sizeof(inputBuf2), 80.0f, NumberOnlyFilter);
+        ImGui::SameLine();
+        if (DrawButton("OK", false, 60.0f)) {
+            outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+            hasAction = actionVal; currentOption = -1; isopenMenu = false;
+        }
+    };
+
     if (currentDS == 0) { // SLL
         if (cur == 0) DrawInitModes();
         else if (cur == 1) DrawInsertModes(2);
         else if (cur == 2) DrawSingleInput(3);
         else if (cur == 3) DrawSingleInput(4);
-        else if (cur == 4) { // Update
-            ImGui::SetCursorPosY(textY); ImGui::Text("From"); ImGui::SameLine();
-            DrawInput("##in_upd_from", inputBuf1, sizeof(inputBuf1), 80.0f, NumberOnlyFilter);
-            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
-            ImGui::SetCursorPosY(textY); ImGui::Text("To"); ImGui::SameLine();
-            DrawInput("##in_upd_to", inputBuf2, sizeof(inputBuf2), 80.0f, NumberOnlyFilter);
-            ImGui::SameLine();
-            if (DrawButton("OK", false, 60.0f)) {
-                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
-                hasAction = 5; currentOption = -1; isopenMenu = false;
-            }
-        }
+        else if (cur == 4) DrawUpdateInput(5);
         else if (cur == 5) DrawConfirm(6);
     } else if (currentDS == 1 || currentDS == 2) { // HEAP
         if (cur == 0) DrawInitModes();
         else if (cur == 1) DrawInsertModes(2);
-        else if (cur == 2) DrawConfirm(3);
-        else if (cur == 3) DrawConfirm(4);
+        else if (cur == 2) DrawConfirm(3); // ExtractTop
+        else if (cur == 3) DrawConfirm(4); // Peek
+        else if (cur == 4) DrawSingleInput(5); // Search
+        else if (cur == 5) DrawSingleInput(6); // Delete
+        else if (cur == 6) DrawUpdateInput(7); // Update
+        else if (cur == 7) DrawConfirm(8); // Clear
     } else if (currentDS == 3) { // AVL
         if (cur == 0) DrawInitModes();
         else if (cur == 1) DrawInsertModes(2);
-        else if (cur == 2) DrawSingleInput(3);
-        else if (cur == 3) DrawSingleInput(4);
-        else if (cur == 4) DrawConfirm(5);
+        else if (cur == 2) DrawSingleInput(3); // Search
+        else if (cur == 3) DrawSingleInput(4); // Delete
+        else if (cur == 4) DrawUpdateInput(5); // Update
+        else if (cur == 5) DrawConfirm(6); // Clear
     } else if (currentDS == 4) { // GRID
         if (cur == 0) { // Init
             if (DrawButton("Empty", insertSubMode == 0, 60.0f)) {
@@ -427,8 +434,9 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 1; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 1) DrawSingleInput(2);
-        else if (cur == 2) { // Create Edge
+        else if (cur == 1) DrawConfirm(8); // Random
+        else if (cur == 2) DrawSingleInput(2); // Create Node
+        else if (cur == 3) { // Create Edge
             ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
             DrawInput("##in_edge_u", inputBuf1, sizeof(inputBuf1), 50.0f, NumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
@@ -443,21 +451,33 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 3; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 3) DrawSingleInput(4);
-        else if (cur == 4) { // OPSP
-            ImGui::SetCursorPosY(textY); ImGui::Text("From u="); ImGui::SameLine();
-            DrawInput("##in_opsp_u", inputBuf1, sizeof(inputBuf1), 50.0f, NumberOnlyFilter);
+        else if (cur == 4) DrawSingleInput(4); // SSSP
+        else if (cur == 5) { // OPSP
+            if (DrawButton("DAG", insertSubMode == 0, 60.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Dijkstra", insertSubMode == 1, 80.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Bellman", insertSubMode == 2, 80.0f)) {
+                if (insertSubMode != 2) { insertSubMode = 2; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; }
+            }
+            ImGui::SameLine(0, 15.0f);
+            ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
+            DrawInput("##in_opsp_u", inputBuf1, sizeof(inputBuf1), 40.0f, NumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
-            ImGui::SetCursorPosY(textY); ImGui::Text("to v="); ImGui::SameLine();
-            DrawInput("##in_opsp_v", inputBuf2, sizeof(inputBuf2), 50.0f, NumberOnlyFilter);
+            ImGui::SetCursorPosY(textY); ImGui::Text("v="); ImGui::SameLine();
+            DrawInput("##in_opsp_v", inputBuf2, sizeof(inputBuf2), 40.0f, NumberOnlyFilter);
             ImGui::SameLine();
             if (DrawButton("OK", false, 60.0f)) {
-                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                outMode = insertSubMode; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
                 hasAction = 5; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 5) DrawConfirm(6); // APSP
-        else if (cur == 6) DrawConfirm(7); // Clear
+        else if (cur == 6) DrawConfirm(6); // APSP
+        else if (cur == 7) DrawConfirm(7); // Clear
     }
 
     ImGui::PopStyleVar();   

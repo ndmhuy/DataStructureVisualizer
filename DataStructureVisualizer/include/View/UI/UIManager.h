@@ -64,14 +64,9 @@ public:
     void shutdown(); // shutdown ImGui
 
     // --- Interact Navigation Menu ---
-<<<<<<< HEAD:DataStructureVisualizer/include/View/UI/UIManager.h
-    int getSelectedDS() const; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
-    void resetDSSelection(); // Call after getSelectedDS()
-=======
     void reset(); // Khôi phục toàn bộ UI về trạng thái mặc định (Gọi khi Back to Menu)
     int getSelectedDS() const; // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: ADJ Matrix, 6: ADJ List
     void resetDSSelection(); 
->>>>>>> #12-CompleteGUI:DataStructureVisualizer/include/View/UIManager.h
     void setShowMainMenu(bool show);
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
@@ -92,15 +87,20 @@ public:
     HEAP:(1)- Min Heap (2)- Max Heap
     1/Init:
     2/Insert:
-    3/Pop:
-    4/Clear:
+    3/ExtractTop:
+    4/Peek:
+    5/Search:
+    6/Delete:
+    7/Update:
+    8/Clear:
 
     AVL TREE:(3)
     1/Init: 
     2/Insert:
     3/Search:
     4/Delete:
-    5/Clear
+    5/Update:
+    6/Clear
 
     SPA: (4)- Grid
     1/ Init: N=(ô nhập liệu 1), M=(ô nhập liệu 2)/ File browser
@@ -111,6 +111,7 @@ public:
 
     SPA: (5)- ADJ Matrix (6)- ADJ List
     1/Init from file:
+    8/Random:
     2/Create Node:
     3/Create Egde:
     4/Single Source Shortest Path:
@@ -137,13 +138,9 @@ public:
     bool checkPauseClicked();
     bool checkStepForwardClicked();
     bool checkStepBackwardClicked();
-<<<<<<< HEAD:DataStructureVisualizer/include/View/UI/UIManager.h
-    void setPlaybackControlsEnabled(bool enabled);
-=======
     
     void syncPlaybackUI(bool currentIsPlaying, bool isAtBeginning, bool isAtEnd, bool isEmpty);
 
->>>>>>> #12-CompleteGUI:DataStructureVisualizer/include/View/UIManager.h
 
     //-Interact with Slider
     float getSpeed() const;
