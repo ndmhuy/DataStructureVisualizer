@@ -8,12 +8,12 @@ namespace {
     int NumberSpaceFilter(ImGuiInputTextCallbackData* data) {
         if (data->EventChar >= '0' && data->EventChar <= '9') return 0;
         if (data->EventChar == ' ') return 0;
-        if (data->EventChar =='+'&&data->EventChar=='-') return 0;
+        if (data->EventChar == '+' || data->EventChar == '-') return 0;
         return 1;
     }
     int NumberOnlyFilter(ImGuiInputTextCallbackData* data) {
         if (data->EventChar >= '0' && data->EventChar <= '9') return 0;
-        if (data->EventChar =='+'&&data->EventChar=='-') return 0;
+        if (data->EventChar == '+' || data->EventChar == '-') return 0;
         return 1;
     }
     int UnsignedNumberOnlyFilter(ImGuiInputTextCallbackData* data) {

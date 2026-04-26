@@ -41,6 +41,7 @@ private:
     float speed=1.f; //init speed variable
 
     NavigationMenu navMenu;
+    int currentDS=-1;
 
 public:
     UIManager() = default;
@@ -65,7 +66,7 @@ public:
 
     // --- Interact Navigation Menu ---
     void reset(); // Khôi phục toàn bộ UI về trạng thái mặc định (Gọi khi Back to Menu)
-    int getSelectedDS() const; // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: ADJ Matrix, 6: ADJ List
+    int getSelectedDS(); // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: ADJ Matrix, 6: ADJ List
     void resetDSSelection(); 
     void setShowMainMenu(bool show);
     bool checkBackToMenuClicked(); // check if User back to Main menu
