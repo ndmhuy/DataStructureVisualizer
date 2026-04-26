@@ -526,7 +526,20 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 5; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 6) DrawConfirm(6); // APSP
+        else if (cur == 6) { // APSP
+            if (DrawButton("Floyd", insertSubMode == 0, 60.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Johnson", insertSubMode == 1, 80.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; }
+            }
+            ImGui::SameLine(0, 15.0f);
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = insertSubMode; outString1 = ""; outString2 = ""; outString3 = ""; outString4 = "";
+                hasAction = 6; currentOption = -1; isopenMenu = false;
+            }
+        }
         else if (cur == 7) DrawConfirm(7); // Clear
     }
 
