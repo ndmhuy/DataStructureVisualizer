@@ -480,11 +480,8 @@ void AppEngine::handleDataActionRequest() {
                 break;
             }
             case 2: { // 2. CREATE NODE
-                dataManager.inputFromConsoleNonNegative(input1);
-                if (!dataManager.getDataGraph().empty()) {
-                    graph->addVertex(dataManager.getDataGraph()[0].from, &timeline);
-                    handled = true;
-                }
+                graph->addVertex(&timeline);
+                handled = true;
                 break;
             }
             case 3: { // 3. CREATE EDGE
