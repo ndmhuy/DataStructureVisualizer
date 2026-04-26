@@ -360,6 +360,10 @@ void UIManager::setCodePanelHighlightedLine(int line) {
     codePanel.setHighlightedLine(line);
 }
 
+void UIManager::setCodePanelMessage(const std::string& msg) {
+    codePanel.setMessage(msg);
+}
+
 void UIManager::clearCodePanel() {
     codePanel.clearCode();
 }

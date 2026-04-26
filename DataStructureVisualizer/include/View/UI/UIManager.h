@@ -138,6 +138,7 @@ public:
     // --- Interact CodePanel ---
     void setCodePanelCode(std::vector<std::string>& code); //pass codes
     void setCodePanelHighlightedLine(int line); //pass 0-indexed to highlight
+    void setCodePanelMessage(const std::string& msg); //pass message text
     void clearCodePanel(); //Clean after done showing code
 
     // --- Interact Buttons ---
