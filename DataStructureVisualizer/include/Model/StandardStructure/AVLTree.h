@@ -6,6 +6,7 @@
 #include "Model/Payloads/Payloads.h"
 #include <vector>
 #include <unordered_map>
+#include <cstddef>
 
 class AVLTree : public IStandardStructure {
     private:
@@ -24,24 +25,24 @@ class AVLTree : public IStandardStructure {
     };
     
     Node* root;
-    std::unordered_map<int, size_t> getNodeIndex; // value -> node id for highlighting
+    // std::unordered_map<int, size_t> getNodeIndex; // value -> node id for highlighting
 
-    TreePayload makeTreePayload(const std::vector<size_t>& highlightedNodes = {});
+    TreePayload makeTreePayload(const std::vector<size_t>& highlightedNodes = {}, const std::map<std::string, size_t>& pointers = {});
     void deleteNodes(Node*& root);
 
-    Node* rotateRight(Node* root, Timeline& timeline);
-    Node* rotateLeft(Node* root, Timeline& timeline);
-    void balance(Node*& root, Timeline& timeline);
+    Node* rotateRight(Node* root, Timeline& timeline, size_t id);
+    Node* rotateLeft(Node* root, Timeline& timeline, size_t id);
+    void balance(Node*& root, Timeline& timeline, size_t id);
 
     // Beta
-    bool initialInsert(int value, Node*& root, Timeline& timeline);
-    bool initialRemove(int value, Node*& root, Timeline& timeline);
+    bool initialInsert(int value, Node*& root, Timeline& timeline, size_t id);
+    bool initialRemove(int value, Node*& root, Timeline& timeline, size_t id);
 
     public:
     AVLTree();
     ~AVLTree() override;
 
-    AVLTree(const AVLTree&) = delete;
+    AVLTree(const LayoutConfig& config = LayoutConfig());
     AVLTree& operator=(const AVLTree&) = delete;    
 
     void initialize(const std::vector<int>& data, Timeline& timeline) override;

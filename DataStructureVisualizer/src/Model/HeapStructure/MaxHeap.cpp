@@ -1,6 +1,8 @@
 #include "Model/HeapStructure/MaxHeap.h"
 
-bool MaxHeap::compare(int idx1, int idx2) {
+MaxHeap::MaxHeap(const LayoutConfig& config) : IHeapStructure(config) {}
+
+bool MaxHeap::compare(size_t idx1, size_t idx2) {
     return heapArray[idx1] > heapArray[idx2];
 }
 

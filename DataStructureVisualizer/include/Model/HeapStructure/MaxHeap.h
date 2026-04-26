@@ -5,9 +5,11 @@
 
 class MaxHeap : public IHeapStructure {
     protected:
-        bool compare(int idx1, int idx2) override;
+        bool compare(size_t idx1, size_t idx2) override;
 
     public:
+        MaxHeap(const LayoutConfig& config = LayoutConfig());
+        
         StructureType getStructureType() const override;
 };
 
