@@ -1,5 +1,3 @@
-#include "Controller/AppEngine.h"
-
 #include <fstream>
 #include <random>
 #include <sstream>
@@ -17,6 +15,7 @@
 #include "Utilities/LayoutConfig.h"
 #include "Utilities/PseudocodeManager.h"
 #include "Utilities/MathUtils.h"
+#include "Controller/AppEngine.h"
 
 namespace {
 
@@ -154,13 +153,13 @@ StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
 IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
     switch (structureType) {
         case StructureType::SinglyLinkedList:
-        return new SinglyLinkedList();
+        return new SinglyLinkedList(LayoutConfig{});
         case StructureType::MinHeap:
-        return new MinHeap();
+        return new MinHeap(LayoutConfig{});        
         case StructureType::MaxHeap:
-        return new MaxHeap();
+        return new MaxHeap(LayoutConfig{});          
         case StructureType::AVLTree:
-        return new AVLTree();
+        return new AVLTree(LayoutConfig{});
         case StructureType::AdjacencyList:
         return new AdjacencyList(LayoutConfig{});
         case StructureType::AdjacencyMatrix:
@@ -525,7 +524,7 @@ void AppEngine::handleDataActionRequest() {
             case 8: { // 8. RANDOM
                 int vCount = MathUtils::getRandomInRange(1, 20);
                 int eCount = MathUtils::getRandomInRange(0, 190);
-                
+
                 dataManager.randomDataGraph(vCount, eCount, 1, 99);
                 graph->initialize(dataManager.getDataGraph(), timeline);
                 handled = true;
