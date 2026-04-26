@@ -571,22 +571,8 @@ void DataManager::randomDataGridGraph(size_t rows, size_t cols, int wallPercenta
 
     dataGridGraph.assign(rows, std::vector<int>(cols, 0));
 
-    size_t startR = MathUtils::getRandomInRange(0, rows - 1);
-    size_t startC = MathUtils::getRandomInRange(0, cols - 1);
-    dataGridGraph[startR][startC] = 2;
-
-    size_t targetR, targetC;
-    do {
-        targetR = MathUtils::getRandomInRange(0, rows - 1);
-        targetC = MathUtils::getRandomInRange(0, cols - 1);
-    } while (targetR == startR && targetC == startC);
-    
-    dataGridGraph[targetR][targetC] = 3;
-
     for (size_t r = 0; r < rows; ++r) {
         for (size_t c = 0; c < cols; ++c) {
-            if (dataGridGraph[r][c] != 0) continue;
-
             // Random wall depends on percent
             if (MathUtils::getRandomInRange(1, 100) <= wallPercentage) {
                 dataGridGraph[r][c] = 1;
