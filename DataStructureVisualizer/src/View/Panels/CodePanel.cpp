@@ -1,4 +1,5 @@
 #include "View/Panels/CodePanel.h"
+#include <algorithm>
 
 void CodePanel::applyTheme(const Theme& selectedTheme){
     theme = selectedTheme;

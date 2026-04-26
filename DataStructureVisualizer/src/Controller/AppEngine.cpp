@@ -705,7 +705,7 @@ void AppEngine::update(sf::Time deltaTime) {
     handleDataActionRequest();
     
     if (uiManager.checkBackToMenuClicked()) {
-        uiManager.setShowMainMenu(true);
+        uiManager.reset();
         switchActiveStructure(StructureType::None);
     }
 

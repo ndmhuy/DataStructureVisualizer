@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 
 #include "View/UI/UIManager.h"
 
@@ -21,7 +22,11 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     if (!regularFont || !titleFont) {
         io.Fonts->AddFontDefault();
     }
-    ImGui::SFML::UpdateFontTexture();
+    if (!ImGui::SFML::UpdateFontTexture()){
+        std::cerr<<"Warning: UIManager::init failed to update font";
+        ImGui::SFML::Shutdown();
+        return false;
+    }
 
     if (!play.init(theme.playIconPath, theme)) {
         std::cerr << "Warning: UIManager::init failed to load play icon from '"
@@ -250,7 +255,7 @@ void UIManager::render(sf::RenderWindow& window) {
         ImGui::End();
 
         // Render Component
-        inputMenu.setDS(navMenu.getSelectedDS());
+        inputMenu.setDS(currentDS);
         inputMenu.render(window);
         codePanel.render(window);
         slider.render(window);
@@ -287,6 +292,7 @@ void UIManager::reset() {
     resetInputAction();         // Đặt lại action
     clearCodePanel();           // Xóa mảng mã giả
     resetSpeed();               // Trả Speed Slider về 1.0x
+    currentDS=-1;
 
     // Xóa cờ các nút điều khiển
     playClicked = false;
@@ -300,8 +306,9 @@ void UIManager::reset() {
     syncPlaybackUI(false, true, true, true); // Đặt nút Playback về trạng thái vô hiệu hóa (Rỗng)
 }
 
-int UIManager::getSelectedDS() const {
-    return navMenu.getSelectedDS();
+int UIManager::getSelectedDS() {
+    if (navMenu.getSelectedDS() != -1) currentDS = navMenu.getSelectedDS();
+    return currentDS;
 }
 
 void UIManager::resetDSSelection() {
@@ -335,7 +342,7 @@ std::string UIManager::getInputString2() const {
 }
 
 std::string UIManager::getInputString3() const {
-    return inputMenu.getString2();
+    return inputMenu.getString3();
 }
 
 std::string UIManager::getInputString4() const {
