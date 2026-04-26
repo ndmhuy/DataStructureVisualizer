@@ -26,7 +26,7 @@ std::vector<std::string> InputMenu::getCurrentMenu() const {
     if (currentDS == 0) return {"Init", "Insert", "Search", "Delete", "Update", "Clear"};
     if (currentDS == 1 || currentDS == 2) return {"Init", "Insert", "ExtractTop", "Peek", "Search", "Delete", "Update", "Clear"};
     if (currentDS == 3) return {"Init", "Insert", "Search", "Delete", "Update", "Clear"};
-    if (currentDS == 4) return {"Init", "Random", "Set status", "BFS", "Clear"};
+    if (currentDS == 4) return {"Init", "Random", "Set status", "Shortest Path", "Clear"};
     if (currentDS == 5 || currentDS == 6) return {"Init", "Random", "Create Node", "Create Edge", "OPSP", "SPSP", "APSP", "Clear"};
     return {};
 }
@@ -404,21 +404,29 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 3; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 3) { // BFS
+        else if (cur == 3) { // Shortest Path
+            if (DrawButton("A*", insertSubMode == 0, 40.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; inputBuf3[0] = '\0'; inputBuf4[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("BFS", insertSubMode == 1, 40.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; inputBuf2[0] = '\0'; inputBuf3[0] = '\0'; inputBuf4[0] = '\0'; }
+            }
+            ImGui::SameLine(0, 15.0f);
             ImGui::SetCursorPosY(textY); ImGui::Text("from x1="); ImGui::SameLine();
-            DrawInput("##in_bfs_x1", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
+            DrawInput("##in_sp_x1", inputBuf1, sizeof(inputBuf1), 35.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
             ImGui::SetCursorPosY(textY); ImGui::Text("y1="); ImGui::SameLine();
-            DrawInput("##in_bfs_y1", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
+            DrawInput("##in_sp_y1", inputBuf2, sizeof(inputBuf2), 35.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
             ImGui::SetCursorPosY(textY); ImGui::Text("to x2="); ImGui::SameLine();
-            DrawInput("##in_bfs_x2", inputBuf3, sizeof(inputBuf3), 40.0f, UnsignedNumberOnlyFilter);
+            DrawInput("##in_sp_x2", inputBuf3, sizeof(inputBuf3), 35.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
             ImGui::SetCursorPosY(textY); ImGui::Text("y2="); ImGui::SameLine();
-            DrawInput("##in_bfs_y2", inputBuf4, sizeof(inputBuf4), 40.0f, UnsignedNumberOnlyFilter);
+            DrawInput("##in_sp_y2", inputBuf4, sizeof(inputBuf4), 35.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine();
-            if (DrawButton("OK", false, 60.0f)) {
-                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = inputBuf3; outString4 = inputBuf4;
+            if (DrawButton("OK", false, 50.0f)) {
+                outMode = insertSubMode; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = inputBuf3; outString4 = inputBuf4;
                 hasAction = 4; currentOption = -1; isopenMenu = false;
             }
         }
