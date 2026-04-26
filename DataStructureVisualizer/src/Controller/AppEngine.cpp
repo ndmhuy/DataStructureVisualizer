@@ -303,8 +303,7 @@ void AppEngine::handleDataActionRequest() {
             case 5: { // 5. UPDATE
                 dataManager.inputFromConsole(input1 + " " + input2);
                 if (dataManager.getData().size() >= 2) {
-                    standard->remove(dataManager.getData()[0], timeline);
-                    standard->insert(dataManager.getData()[1], timeline);
+                    standard->update(dataManager.getData()[0], dataManager.getData()[1], timeline);
                     handled = true;
                 }
                 break;
@@ -389,8 +388,7 @@ void AppEngine::handleDataActionRequest() {
             case 7: { // 7. UPDATE
                 dataManager.inputFromConsole(input1 + " " + input2);
                 if (dataManager.getData().size() >= 2) {
-                    heap->remove(dataManager.getData()[0], timeline);
-                    heap->insert(dataManager.getData()[1], timeline);
+                    heap->update(dataManager.getData()[0], dataManager.getData()[1], timeline);
                     handled = true;
                 }
                 break;
@@ -536,12 +534,18 @@ void AppEngine::handleDataActionRequest() {
                 break;
             }
             case 8: { // 8. RANDOM
-                int vCount = MathUtils::getRandomInRange(1, 20);
-                int eCount = MathUtils::getRandomInRange(0, 190);
+                int vCount = MathUtils::getRandomInRange(3, 20);
+                // int eCount = MathUtils::getRandomInRange(0, 190);
 
-                dataManager.randomDataGraph(vCount, eCount, 1, 99);
-                graph->initialize(dataManager.getDataGraph(), timeline);
-                handled = true;
+                // dataManager.randomDataGraph(vCount, eCount, 1, 99);
+                sf::Vector2u winSize = window.getWindow().getSize();
+                dataManager.randomDataPlanarGraph(vCount, 1, 99, (float)winSize.x, (float)winSize.y);
+                if (!dataManager.getDataGraph().empty()) {
+                    graph->initialize(dataManager.getDataGraph(), timeline);
+                    
+                    handled = true;
+                }
+                break;
             }
         }
     }
