@@ -113,18 +113,18 @@ public:
     SPA: (4)- Grid
     1/ Init: N=(ô nhập liệu 1), M=(ô nhập liệu 2)/ File browser
     2/ Random: N=(ô nhập liệu 1), M=(ô nhập liệu 2)
-    3/ Set obstacles: i=(ô nhập liệu 1), j=(ô nhập liệu 2)
+    3/ Set status: i=(ô nhập liệu 1), j=(ô nhập liệu 2)
     4/ BFS: from x1=(ô nhập liệu 1), y1=(ô nhập liệu 2) to x2=(ô nhập liệu 3), y2=(ô nhập liệu 4)
     5/ Clear: nút Confirm 
 
     SPA: (5)- ADJ Matrix (6)- ADJ List
-    1/Init from file:
+    1/Init:
     8/Random:
     2/Create Node:
-    3/Create Egde:
-    4/Single Source Shortest Path:
-    5/One Pair Shortest Path:
-    6/All Pairs Shortest Path:
+    3/Create Edge:
+    4/OPSP:
+    5/SPSP:
+    6/APSP:
     7/Clear
 */
     int getInputAction() const;
