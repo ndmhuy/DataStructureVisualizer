@@ -1,7 +1,8 @@
 #ifndef MATH_UTILS_HPP
 #define MATH_UTILS_HPP
 
-#include <SFML/System/Vector2.hpp>
+#include "Utilities/Position.h"
+
 #include <random>
 #include <vector>
 
@@ -18,18 +19,18 @@ namespace MathUtils {
     }
 
     // Geometry
-    inline int orientation(sf::Vector2f p, sf::Vector2f q, sf::Vector2f r) {
+    inline int orientation(Position p, Position q, Position r) {
         long long val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
         if (val == 0) return 0; 
         return (val > 0) ? 1 : 2;
     }
 
-    inline bool onSegment(sf::Vector2f p, sf::Vector2f q, sf::Vector2f r) {
+    inline bool onSegment(Position p, Position q, Position r) {
         return q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
             q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y);
     }
 
-    inline bool doIntersect(sf::Vector2f p1, sf::Vector2f q1, sf::Vector2f p2, sf::Vector2f q2) {
+    inline bool doIntersect(Position p1, Position q1, Position p2, Position q2) {
         int o1 = orientation(p1, q1, p2);
         int o2 = orientation(p1, q1, q2);
         int o3 = orientation(p2, q2, p1);
