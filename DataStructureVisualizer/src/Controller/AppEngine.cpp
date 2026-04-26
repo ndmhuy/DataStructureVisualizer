@@ -424,11 +424,9 @@ void AppEngine::handleDataActionRequest() {
             case 2: { // 2. RANDOM (String 1 = N, String 2 = M)
                 dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
                 if (dataManager.getData().size() >= 2) {
-                    int rows = MathUtils::getRandomInRange(4, 16);
-                    int columns = MathUtils::getRandomInRange(4, 16);
                     int percentage = MathUtils::getRandomInRange(30, 40);
 
-                    dataManager.randomDataGridGraph((size_t)rows, (size_t)columns, percentage);
+                    dataManager.randomDataGridGraph(dataManager.getData()[0], dataManager.getData()[1], percentage);
                     gridGraph->initializeFromData(dataManager.getDataGridGraph(), timeline);
                     handled = true;
                 }
@@ -481,50 +479,50 @@ void AppEngine::handleDataActionRequest() {
                 }
                 break;
             }
-            // Issue: cannot put 'dataGraph.from/input1' into addVertex function
-            // case 2: { // 2. CREATE NODE
-            //     dataManager.inputFromConsoleGraph(input1 + " -1 1");
-            //     if (!dataManager.getDataGraph().empty()) {
-            //         graph->addVertex(dataManager.getDataGraph()[0].from, timeline);
-            //         handled = true;
-            //     }
-            //     break;
-            // }
-            // Issue: timeline being *
-            // case 3: { // 3. CREATE EDGE
-            //     dataManager.inputFromConsoleGraph(input1 + " " + input2 + " " + input3);
-            //     if (!dataManager.getDataGraph().empty()) {
-            //         graph->addEdge(dataManager.getDataGraph()[0].from, dataManager.getDataGraph()[0].to, dataManager.getDataGraph()[0].weight, timeline);
-            //         handled = true;
-            //     }
-            //     break;
-            // }
-            case 4: { // 4. SSSP
+            case 2: { // 2. CREATE NODE
                 dataManager.inputFromConsoleNonNegative(input1);
-                
-                if (dataManager.getData().size() >= 1) {
-                    graph->runDijkstra(dataManager.getData()[0], timeline);
+                if (!dataManager.getDataGraph().empty()) {
+                    graph->addVertex(dataManager.getDataGraph()[0].from, &timeline);
                     handled = true;
                 }
                 break;
             }
-            // Issue: cannot put 'dataGraph.to'/input2
-            // case 5: { // 5. OPSP
-            //     dataManager.inputFromConsoleGraph(input1 + input2 + " 1");
-            //     if (mode == 0) { // DAG
-            //         graph->runDAGShortestPath(dataManager.getDataGraph()[0].from, timeline);
-            //         handled = true;
-            //     } else if (mode == 1) { // Dijkstra
-            //         graph->runDijkstra(dataManager.getDataGraph()[0].from, timeline);
-            //         handled = true;
-            //     } else if (mode == 2) { // BellmanFord
-            //         graph->runBellmanFord(dataManager.getDataGraph()[0].from, timeline);
-            //         handled = true;
-            //     }
-            //     break;
-            // }
+            case 3: { // 3. CREATE EDGE
+                dataManager.inputFromConsoleGraph(input1 + " " + input2 + " " + input3);
+                if (!dataManager.getDataGraph().empty()) {
+                    Edge addEdge = dataManager.getDataGraph()[0];
+                    graph->addEdge(addEdge.from, addEdge.to, addEdge.weight, &timeline);
+                    handled = true;
+                }
+                break;
+            }
+            case 4: { // 4. OPSP
+                dataManager.inputFromConsoleNonNegative(input1);
+                
+                if (dataManager.getData().size() >= 1) {
+                    graph->runAStar(dataManager.getData()[0], dataManager.getData()[1], timeline);
+                    handled = true;
+                }
+                break;
+            }
+            case 5: { // 5. SPSP
+                dataManager.inputFromConsoleNonNegative(input1);
+                if (!dataManager.getData().empty()) {
+                    if (mode == 0) { // DAG
+                        graph->runDAGShortestPath(dataManager.getDataGraph()[0].from, timeline);
+                        handled = true;
+                    } else if (mode == 1) { // Dijkstra
+                        graph->runDijkstra(dataManager.getDataGraph()[0].from, timeline);
+                        handled = true;
+                    } else if (mode == 2) { // BellmanFord
+                        graph->runBellmanFord(dataManager.getDataGraph()[0].from, timeline);
+                        handled = true;
+                    }
+                }
+                break;
+            }
             case 6: { // 6. APSP
-                graph->runFloydWarshall(timeline);
+                mode ? graph->runJohnson(timeline) : graph->runFloydWarshall(timeline);
                 handled = true;
                 break;
             }
@@ -534,16 +532,27 @@ void AppEngine::handleDataActionRequest() {
                 break;
             }
             case 8: { // 8. RANDOM
-                int vCount = MathUtils::getRandomInRange(3, 20);
-                // int eCount = MathUtils::getRandomInRange(0, 190);
-
-                // dataManager.randomDataGraph(vCount, eCount, 1, 99);
-                sf::Vector2u winSize = window.getWindow().getSize();
-                dataManager.randomDataPlanarGraph(vCount, 1, 99, (float)winSize.x, (float)winSize.y);
-                if (!dataManager.getDataGraph().empty()) {
-                    graph->initialize(dataManager.getDataGraph(), timeline);
+                dataManager.inputFromConsole(input1 + " " + input2);
+                if (dataManager.getData().size() >= 2) {
+                    int vCount = MathUtils::getRandomInRange(3, 20);
                     
-                    handled = true;
+                    int minWeight = dataManager.getData()[0];
+                    int maxWeight = dataManager.getData()[1];
+
+                    if (!mode) {
+                        int eCount = MathUtils::getRandomInRange(0, 190);
+                        dataManager.randomDataDAG(vCount, eCount, minWeight, maxWeight);
+                    }
+                    else {
+                        sf::Vector2u winSize = window.getWindow().getSize();
+                        // dataManager.randomDataGraph(vCount, eCount, minWeight, maxWeight);
+                        dataManager.randomDataPlanarGraph(vCount, minWeight, maxWeight, (float)winSize.x, (float)winSize.y);
+                    }
+
+                    if (!dataManager.getDataGraph().empty()) {
+                        graph->initialize(dataManager.getDataGraph(), timeline);
+                        handled = true;
+                    }
                 }
                 break;
             }
