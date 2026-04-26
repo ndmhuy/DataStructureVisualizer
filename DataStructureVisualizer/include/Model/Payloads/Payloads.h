@@ -165,4 +165,16 @@ struct MenuAnimPayload : public IPayload {
     IPayload* clone() const override { return new MenuAnimPayload(*this); }
 };
 
+struct DecorationPayload : public IPayload {
+    float time;
+    sf::Vector2f winSize;
+
+    DecorationPayload() = default;
+    DecorationPayload(float time, sf::Vector2f winSize)
+        : time(time), winSize(winSize) {}
+        
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new DecorationPayload(*this); }
+};
+
 #endif // PAYLOADS_H

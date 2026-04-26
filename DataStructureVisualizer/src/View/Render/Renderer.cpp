@@ -723,7 +723,7 @@ void Renderer::visit(const MenuAnimPayload& payload) {
     float time = payload.time;
     
     sf::View currentView = window.getWindow().getView();
-    window.getWindow().setView(window.getWindow().getDefaultView());
+    window.getWindow().setView(sf::View(sf::FloatRect({0.f, 0.f}, {payload.winSize.x, payload.winSize.y})));
 
     // Hàm helper tạo màu có độ trong suốt (Alpha)
     auto fade = [](sf::Color c, std::uint8_t alpha) {
@@ -1050,5 +1050,170 @@ void Renderer::visit(const MenuAnimPayload& payload) {
             }
         }
     }
+    window.getWindow().setView(currentView);
+}
+
+void Renderer::visit(const DecorationPayload& payload) {
+    float time = payload.time;
+    float w = payload.winSize.x;
+    float h = payload.winSize.y;
+
+    sf::View currentView = window.getWindow().getView();
+    window.getWindow().setView(sf::View(sf::FloatRect({0.f, 0.f}, {w, h})));
+
+    auto fade = [](sf::Color c, std::uint8_t alpha) {
+        return sf::Color(c.r, c.g, c.b, alpha);
+    };
+
+    sf::Color pCol = theme.inputMenuPrimaryColor;
+    sf::Color aCol = theme.inputMenuAccentColor;
+    sf::Color hlCol = theme.highlightColor;
+
+    // Hàm Helper vẽ hình học nhanh
+    auto drawLineLocal = [&](float x1, float y1, float x2, float y2, sf::Color c, sf::RenderStates st) {
+        sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+        line[0].position = {x1, y1}; line[0].color = c;
+        line[1].position = {x2, y2}; line[1].color = c;
+        window.getWindow().draw(line, st);
+    };
+
+    auto drawCircleLocal = [&](float x, float y, float r, sf::Color cFill, sf::Color cOut, sf::RenderStates st) {
+        sf::CircleShape circle(r);
+        circle.setOrigin({r, r}); circle.setPosition({x, y});
+        circle.setFillColor(cFill); circle.setOutlineThickness(2.0f); circle.setOutlineColor(cOut);
+        window.getWindow().draw(circle, st);
+    };
+
+    auto drawRectLocal = [&](float x, float y, float rw, float rh, sf::Color cFill, sf::Color cOut, sf::RenderStates st) {
+        sf::RectangleShape rect({rw, rh});
+        rect.setOrigin({rw/2.0f, rh/2.0f}); rect.setPosition({x, y});
+        rect.setFillColor(cFill); rect.setOutlineThickness(2.0f); rect.setOutlineColor(cOut);
+        window.getWindow().draw(rect, st);
+    };
+
+    // 1. LƯỚI KỸ THUẬT BACKGROUND (Blueprint Grid)
+    float gridSize = 80.0f;
+    float offsetX = std::fmod(time * 15.0f, gridSize);
+    float offsetY = std::fmod(time * 15.0f, gridSize);
+    sf::Color gridCol = fade(pCol, 20); // Rất mờ
+    for(float x = offsetX; x < w; x += gridSize) drawLineLocal(x, 0, x, h, gridCol, sf::RenderStates::Default);
+    for(float y = offsetY; y < h; y += gridSize) drawLineLocal(0, y, w, y, gridCol, sf::RenderStates::Default);
+
+    // 2. GÓC TRÊN-TRÁI: CÂY NHỊ PHÂN LƠ LỬNG
+    {
+        sf::RenderStates st; sf::Transform t;
+        t.translate({w * 0.15f, h * 0.25f});
+        t.rotate(sf::degrees(std::sin(time * 0.5f) * 5.0f)); // Đung đưa nhẹ
+        st.transform = t;
+
+        std::vector<sf::Vector2f> tNodes = {{0, -90}, {-70, -20}, {70, -20}, {-110, 50}, {-30, 50}, {30, 50}, {110, 50}, {-130, 120}, {-90, 120}};
+        std::vector<std::pair<int, int>> tEdges = {{0,1}, {0,2}, {1,3}, {1,4}, {2,5}, {2,6}, {3,7}, {3,8}};
+        for (auto& edge : tEdges) drawLineLocal(tNodes[edge.first].x, tNodes[edge.first].y, tNodes[edge.second].x, tNodes[edge.second].y, fade(aCol, 100), st);
+        for (size_t i = 0; i < tNodes.size(); ++i) {
+            float pulse = (i == 0) ? std::abs(std::sin(time * 3.0f)) * 0.5f : 0.0f; // Gốc cây nhấp nháy
+            drawCircleLocal(tNodes[i].x, tNodes[i].y, 16.0f + pulse * 5.0f, fade(pCol, 40), fade(hlCol, 150), st);
+            drawCircleLocal(tNodes[i].x, tNodes[i].y, 4.0f, fade(hlCol, 200), sf::Color::Transparent, st); // Lõi phát sáng
+        }
+    }
+
+    // 3. GÓC DƯỚI-PHẢI: ĐỒ THỊ LIÊN KẾT ĐẦY ĐỦ (Complete Graph K5)
+    {
+        sf::RenderStates st; sf::Transform t;
+        t.translate({w * 0.85f, h * 0.75f});
+        t.rotate(sf::degrees(time * -15.0f)); // Xoay vòng liên tục
+        st.transform = t;
+
+        int n = 5; std::vector<sf::Vector2f> gNodes;
+        for(int i = 0; i < n; ++i) gNodes.push_back({100.0f * static_cast<float>(std::cos(i * 2.0f * M_PI / n)), 100.0f * static_cast<float>(std::sin(i * 2.0f * M_PI / n))});
+        for(int i = 0; i < n; ++i) for(int j = i + 1; j < n; ++j) drawLineLocal(gNodes[i].x, gNodes[i].y, gNodes[j].x, gNodes[j].y, fade(pCol, 120), st);
+        for(int i = 0; i < n; ++i) { drawCircleLocal(gNodes[i].x, gNodes[i].y, 18.0f, fade(aCol, 40), fade(aCol, 180), st); drawCircleLocal(gNodes[i].x, gNodes[i].y, 6.0f, fade(hlCol, 220), sf::Color::Transparent, st); }
+    }
+
+    // 4. GÓC DƯỚI-TRÁI: DANH SÁCH LIÊN KẾT UỐN LƯỢN (Wavy Linked List)
+    {
+        sf::RenderStates st; sf::Transform t;
+        t.translate({w * 0.2f, h * 0.8f});
+        t.rotate(sf::degrees(-10.0f + std::sin(time * 1.2f) * 5.0f));
+        st.transform = t;
+
+        int n = 4; std::vector<sf::Vector2f> lNodes;
+        for(int i = 0; i < n; ++i) lNodes.push_back({(i - 1.5f) * 110.0f, std::sin(time * 3.0f + i * 1.5f) * 20.0f});
+        for(int i = 0; i < n - 1; ++i) { drawLineLocal(lNodes[i].x + 30.0f, lNodes[i].y, lNodes[i+1].x - 30.0f, lNodes[i+1].y, fade(hlCol, 150), st); drawCircleLocal(lNodes[i+1].x - 35.0f, lNodes[i+1].y, 4.0f, fade(hlCol, 200), sf::Color::Transparent, st); }
+        for(int i = 0; i < n; ++i) { drawRectLocal(lNodes[i].x, lNodes[i].y, 60.0f, 35.0f, fade(pCol, 80), fade(aCol, 180), st); drawLineLocal(lNodes[i].x + 10.0f, lNodes[i].y - 17.5f, lNodes[i].x + 10.0f, lNodes[i].y + 17.5f, fade(aCol, 180), st); }
+    }
+
+    // 5. GÓC TRÊN-PHẢI: MA TRẬN 3D ISOMETRIC (Isometric Matrix / Array)
+    {
+        sf::RenderStates st; sf::Transform t;
+        t.translate({w * 0.8f, h * 0.25f});
+        t.rotate(sf::degrees(25.0f)); t.scale({1.0f, 0.6f}); t.rotate(sf::degrees(45.0f)); // Ép hình vuông thành không gian Isometric 3D
+        st.transform = t;
+
+        int n = 4; float offset = (n - 1) * 45.0f / 2.0f;
+        for(int i = 0; i < n; ++i) for(int j = 0; j < n; ++j) { float wave = std::sin(time * 4.0f + i * 0.5f + j * 0.5f); drawRectLocal(i * 45.0f - offset, j * 45.0f - offset + ((wave > 0.5f) ? -15.0f : 0.0f), 35.0f, 35.0f, (wave > 0.5f) ? fade(hlCol, 100) : fade(pCol, 40), (wave > 0.5f) ? fade(hlCol, 200) : fade(aCol, 120), st); }
+    }
+
+    // 6. GIỮA-DƯỚI: BIỂU ĐỒ SẮP XẾP (Sorting Histogram)
+    {
+        sf::RenderStates st; sf::Transform t;
+        t.translate({w * 0.5f, h * 0.85f});
+        st.transform = t;
+
+        int numBars = 16;
+        float barWidth = 12.0f;
+        float spacing = 6.0f;
+        float totalW = numBars * (barWidth + spacing);
+        float startX = -totalW / 2.0f;
+
+        for(int i = 0; i < numBars; ++i) {
+            // Hàm sin phức tạp tạo ra các cột nhấp nhô có vẻ ngẫu nhiên nhưng rất mượt
+            float barH = 20.0f + 60.0f * std::abs(std::sin(time * 1.5f + i * 0.8f) * std::cos(time * 0.5f + i * 0.3f));
+            float x = startX + i * (barWidth + spacing) + barWidth / 2.0f; 
+            float y = -barH / 2.0f;
+            
+            // Thanh quét sáng (Scanline effect)
+            bool isScanning = ((int)(time * 6.0f) % numBars == i) || ((int)(time * 6.0f) % numBars == i + 1);
+            sf::Color fillC = isScanning ? fade(hlCol, 150) : fade(pCol, 50);
+            sf::Color outC = isScanning ? fade(hlCol, 220) : fade(aCol, 90);
+            
+            drawRectLocal(x, y, barWidth, barH, fillC, outC, st);
+        }
+    }
+
+    // 7. GIỮA-TRÊN: MẠNG NƠ-RON NHÂN TẠO (Neural Network)
+    {
+        sf::RenderStates st; sf::Transform t;
+        t.translate({w * 0.5f, h * 0.16f});
+        st.transform = t;
+
+        std::vector<int> layers = {3, 5, 4, 2}; // Mạng gồm 4 layer (Input, Hidden x2, Output)
+        float layerSpacing = 70.0f;
+        float nodeSpacing = 25.0f;
+        
+        std::vector<std::vector<sf::Vector2f>> nnNodes;
+        float startX = -(layers.size() - 1) * layerSpacing / 2.0f;
+        
+        for(size_t l = 0; l < layers.size(); ++l) {
+            std::vector<sf::Vector2f> curLayer;
+            float startY = -(layers[l] - 1) * nodeSpacing / 2.0f;
+            for(int n = 0; n < layers[l]; ++n) curLayer.push_back({startX + l * layerSpacing, startY + n * nodeSpacing});
+            nnNodes.push_back(curLayer);
+        }
+        
+        for(size_t l = 0; l < layers.size() - 1; ++l) {
+            for(size_t n1 = 0; n1 < layers[l]; ++n1) {
+                for(size_t n2 = 0; n2 < layers[l+1]; ++n2) {
+                    float signal = std::sin(time * 6.0f - l * 1.5f + n1 * 0.5f + n2 * 0.5f);
+                    sf::Color edgeCol = (signal > 0.85f) ? fade(hlCol, 200) : fade(pCol, 25);
+                    drawLineLocal(nnNodes[l][n1].x, nnNodes[l][n1].y, nnNodes[l+1][n2].x, nnNodes[l+1][n2].y, edgeCol, st);
+                }
+            }
+        }
+        
+        for(size_t l = 0; l < layers.size(); ++l) {
+            for(size_t n = 0; n < layers[l]; ++n) drawCircleLocal(nnNodes[l][n].x, nnNodes[l][n].y, 6.0f, fade(pCol, 120), fade(aCol, 180), st);
+        }
+    }
+
     window.getWindow().setView(currentView);
 }

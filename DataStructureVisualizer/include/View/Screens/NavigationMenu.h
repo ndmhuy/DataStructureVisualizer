@@ -44,7 +44,7 @@ public:
     
     void init(const Theme& theme);
     void applyTheme(const Theme& selectedTheme) { theme = selectedTheme; }
-    void render(const sf::RenderWindow& window);
+    void render(const sf::RenderWindow& window, const sf::Vector2u& actualWindowSize);
     
     int getSelectedDS() const { return selectedDS; }
     MenuState getCurrentState() const { return currentState; }

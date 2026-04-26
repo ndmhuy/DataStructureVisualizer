@@ -333,4 +333,72 @@ namespace UIanimation {
         // Lớp 4: Border bao bọc ngoài cùng
         draw_list->AddRect(pMin, pMax, ImGui::GetColorU32(ImVec4(baseColor.x, baseColor.y, baseColor.z, 0.5f)), 8.0f, 0, 2.0f);
     }
+
+    void DrawCyberpunkBackground(const ImVec2& winSize, float time, const ImVec2& mousePos, ImVec4 baseColor, ImVec4 hoverColor) {
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        
+        // 1. MƯA DỮ LIỆU MA TRẬN (MATRIX DATA STREAMS)
+        for (int i = 0; i < 45; ++i) {
+            float speed = 150.0f + (i % 5) * 60.0f;
+            float px = std::fmod(winSize.x * 0.022f * i + (i % 7) * 45.0f, winSize.x);
+            float py = std::fmod(time * speed + i * 97.0f, winSize.y * 1.5f) - winSize.y * 0.2f;
+            
+            float tailLength = 80.0f + (i % 4) * 40.0f;
+            
+            ImU32 headCol = ImGui::GetColorU32(ImVec4(hoverColor.x, hoverColor.y, hoverColor.z, 0.8f));
+            ImU32 tailCol = ImGui::GetColorU32(ImVec4(hoverColor.x, hoverColor.y, hoverColor.z, 0.0f));
+            
+            if (py > 0 && py - tailLength < winSize.y) {
+                draw_list->AddRectFilledMultiColor(ImVec2(px, py - tailLength), ImVec2(px + 2.0f, py), tailCol, tailCol, headCol, headCol);
+                draw_list->AddCircleFilled(ImVec2(px + 1.0f, py), 2.5f, ImGui::GetColorU32(ImVec4(1, 1, 1, 0.9f))); // Hạt nhân sáng trắng ở đầu tia
+            }
+        }
+
+        // 2. MẠNG LƯỚI LỤC GIÁC TƯƠNG TÁC (INTERACTIVE HEXAGON WEB)
+        float hexRadius = 35.0f;
+        float hexWidth = 1.73205f * hexRadius; // sqrt(3) * R
+        float vertSpacing = 1.5f * hexRadius;
+        float horizSpacing = hexWidth;
+        
+        int cols = (int)(winSize.x / horizSpacing) + 2;
+        int rows = (int)(winSize.y / vertSpacing) + 2;
+        
+        float lightRadius = 350.0f; // Bán kính phát sáng của con trỏ chuột
+
+        for (int r = -1; r < rows; ++r) {
+            for (int c = -1; c < cols; ++c) {
+                float cx = c * horizSpacing + ((r % 2 != 0) ? (horizSpacing * 0.5f) : 0.0f);
+                float cy = r * vertSpacing;
+
+                float dx = cx - mousePos.x;
+                float dy = cy - mousePos.y;
+                float distSq = dx * dx + dy * dy;
+
+                // Lục giác nền nhấp nháy mờ + Bừng sáng khi chuột đến gần
+                float baseAlpha = 0.03f + 0.03f * std::sin(time * 2.0f + r * 0.5f + c * 0.5f);
+                float mouseAlpha = 0.0f;
+                
+                if (distSq < lightRadius * lightRadius) {
+                    float dist = std::sqrt(distSq);
+                    mouseAlpha = 1.0f - (dist / lightRadius);
+                }
+                
+                float finalAlpha = ImClamp(baseAlpha + mouseAlpha * 0.6f, 0.0f, 1.0f);
+
+                if (finalAlpha > 0.01f) {
+                    ImU32 hexCol = ImGui::GetColorU32(ImVec4(baseColor.x, baseColor.y, baseColor.z, finalAlpha * 0.15f));
+                    ImU32 outlineCol = ImGui::GetColorU32(ImVec4(hoverColor.x, hoverColor.y, hoverColor.z, finalAlpha * 0.6f));
+
+                    ImVec2 pts[6];
+                    for (int i = 0; i < 6; ++i) {
+                        float angle = i * 3.14159f / 3.0f + 3.14159f / 6.0f; // Xoay 30 độ
+                        pts[i] = ImVec2(cx + hexRadius * std::cos(angle), cy + hexRadius * std::sin(angle));
+                    }
+                    
+                    draw_list->AddConvexPolyFilled(pts, 6, hexCol);
+                    draw_list->AddPolyline(pts, 6, outlineCol, ImDrawFlags_Closed, 1.5f);
+                }
+            }
+        }
+    }
 }

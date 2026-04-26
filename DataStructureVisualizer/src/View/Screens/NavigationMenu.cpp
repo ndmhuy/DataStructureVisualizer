@@ -16,8 +16,9 @@ void NavigationMenu::init(const Theme& theme) {
     }
 }
 
-void NavigationMenu::render(const sf::RenderWindow& window) {
-    ImVec2 winSize = ImGui::GetIO().DisplaySize;
+void NavigationMenu::render(const sf::RenderWindow& window, const sf::Vector2u& actualWindowSize) {
+    // Sử dụng kích thước cửa sổ SFML thực tế để đảm bảo đồng bộ
+    ImVec2 winSize = ImVec2(static_cast<float>(actualWindowSize.x), static_cast<float>(actualWindowSize.y));
     
     // Thiết lập cửa sổ lấp đầy màn hình và ẩn thanh tiêu đề
     ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -28,7 +29,9 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
                              ImGuiWindowFlags_NoBackground | 
                              ImGuiWindowFlags_NoBringToFrontOnFocus; // Tránh che khuất các nút Global
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f)); // Loại bỏ đệm mặc định để đồng bộ toạ độ 1:1 với SFML
     ImGui::Begin("NavigationMenuScreen", nullptr, flags);
+    ImGui::PopStyleVar();
 
     // Áp dụng phong cách Flat Design và dùng màu của InputMenu cho tính đồng bộ
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
@@ -37,30 +40,8 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     ImVec4 btnHover = ImVec4(theme.inputMenuAccentColor.r/255.f, theme.inputMenuAccentColor.g/255.f, theme.inputMenuAccentColor.b/255.f, 1.0f);
     ImVec4 btnActive = ImVec4(theme.inputMenuAccentColor.r/255.f, theme.inputMenuAccentColor.g/255.f, theme.inputMenuAccentColor.b/255.f, 1.0f);
 
-    // --- ANIMATED PARALLAX BACKGROUND ---
-    ImDrawList* draw_list = ImGui::GetWindowDrawList();
-    float time = (float)ImGui::GetTime();
-    ImVec2 mousePos = ImGui::GetMousePos();
-    
-    for (int i = 0; i < 60; ++i) {
-        float px = std::fmod(winSize.x * 0.05f * i + time * 15.0f * (i % 3 + 1), winSize.x);
-        float py = std::fmod(winSize.y * 0.9f - time * 25.0f * (i % 4 + 1) + i * 45.0f, winSize.y);
-        if (py < 0) py += winSize.y;
-        
-        // Mouse repel physics
-        float dx = px - mousePos.x;
-        float dy = py - mousePos.y;
-        float dist = std::sqrt(dx*dx + dy*dy);
-        if (dist < 200.0f) {
-            float force = (200.0f - dist) / 200.0f;
-            px += (dx / dist) * force * 80.0f;
-            py += (dy / dist) * force * 80.0f;
-        }
-
-        float radius = 1.5f + (i % 3);
-        float alpha = 0.1f + 0.3f * std::sin(time * 3.0f + i);
-        draw_list->AddCircleFilled(ImVec2(px, py), radius, ImColor(theme.inputMenuAccentColor.r, theme.inputMenuAccentColor.g, theme.inputMenuAccentColor.b, static_cast<int>(alpha * 255)));
-    }
+    // --- ANIMATED CYBERPUNK BACKGROUND ---
+    UIanimation::DrawCyberpunkBackground(winSize, (float)ImGui::GetTime(), ImGui::GetMousePos(), btnColor, btnHover);
 
     bool hasTitleFont = ImGui::GetIO().Fonts->Fonts.Size > 1;
     if (hasTitleFont) {
@@ -89,6 +70,8 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     // Glowing Title Animation
     float titleX = (winSize.x - titleSize.x) * 0.5f;
     float titleY = winSize.y * 0.22f;
+    float time = (float)ImGui::GetTime();
+    ImDrawList* draw_list = ImGui::GetWindowDrawList();
     float glowAlpha = 0.6f + 0.4f * std::sin(time * 2.5f);
     ImU32 titleColor32 = ImGui::GetColorU32(ImVec4(theme.inputMenuTextColor.r/255.f, theme.inputMenuTextColor.g/255.f, theme.inputMenuTextColor.b/255.f, 1.0f));
     draw_list->AddText(ImVec2(titleX, titleY) + ImVec2(0, 3), ImGui::GetColorU32(ImVec4(btnHover.x, btnHover.y, btnHover.z, glowAlpha * 0.7f)), title);

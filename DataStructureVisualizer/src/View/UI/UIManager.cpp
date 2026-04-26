@@ -205,7 +205,7 @@ void UIManager::render(sf::RenderWindow& window) {
     ImVec4 textColor = ImVec4(theme.inputMenuTextColor.r/255.f, theme.inputMenuTextColor.g/255.f, theme.inputMenuTextColor.b/255.f, 1.0f);
 
     if (isMainMenu) {
-        navMenu.render(window);
+        navMenu.render(window, window.getSize());
 
         // Vẽ nút Theme đè lên góc phải của Main Menu
         ImGui::SetNextWindowPos(ImVec2(winSize.x - 120.0f, 10.0f));

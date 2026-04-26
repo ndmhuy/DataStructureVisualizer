@@ -24,6 +24,9 @@ namespace UIanimation {
 
     // Khung Nền Hologram Viễn Tưởng (Tia quét Radar & Lưới điện)
     void DrawHoloBackground(const ImVec2& pMin, const ImVec2& pMax, ImVec4 baseColor);
+
+    // Khung Nền Cyberpunk (Matrix Rain & 3D Grid) dùng cho Main Menu
+    void DrawCyberpunkBackground(const ImVec2& winSize, float time, const ImVec2& mousePos, ImVec4 baseColor, ImVec4 hoverColor);
 }
 
 #endif // UI_ANIMATION_H

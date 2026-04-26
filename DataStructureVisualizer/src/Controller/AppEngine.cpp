@@ -776,6 +776,10 @@ void AppEngine::render() {
     }
 
     if (uiManager.isShowingMainMenu()) {
+        // Vẽ Background trang trí 4 góc bằng các cấu trúc dữ liệu (Chỉ hiển thị ở Main Menu)
+        DecorationPayload decPayload(appTime, sf::Vector2f(window.getWindow().getSize()));
+        renderer.visit(decPayload);
+
         MenuAnimPayload menuPayload(appTime, uiManager.getNavMenuState(), sf::Vector2f(window.getWindow().getSize()));
         renderer.visit(menuPayload);
     }
