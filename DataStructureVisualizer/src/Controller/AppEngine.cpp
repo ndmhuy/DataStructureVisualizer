@@ -210,6 +210,7 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
     activeStructureType = structureType;
     activeStructure = resolveStructure(structureType);
     renderer.resetCustomPositions();
+    renderer.resetAnimations();
     clearUndoHistory();
 
     isInitialState = true;
@@ -1047,6 +1048,8 @@ void AppEngine::processInput(const sf::Event& event) {
                 
 void AppEngine::update(sf::Time deltaTime) {
     appTime += deltaTime.asSeconds();
+        renderer.updateAnimations(deltaTime.asSeconds());
+
 
     uiManager.update(window.getWindow(), deltaTime);
     handleStructureSwitchRequest();

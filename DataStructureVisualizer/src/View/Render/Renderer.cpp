@@ -4,6 +4,7 @@
 #include "Utilities/LayoutConfig.h"
 
 #include <algorithm>
+#include <set>
 
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
@@ -26,6 +27,15 @@ bool Renderer::loadAssets() {
     return true;
 }
 
+void Renderer::updateAnimations(float dt) {
+    currentDeltaTime = dt;
+    appTime += dt;
+}
+
+void Renderer::resetAnimations() {
+    nodeAnimStates.clear();
+}
+
 void Renderer::reloadBackground() {
     if (bgTexture.loadFromFile(theme.bgImagePath)) {
         bgTexture.setSmooth(true);
@@ -45,45 +55,70 @@ void Renderer::drawBackground() {
     window.getWindow().setView(currentView);
 }
 
-void Renderer::drawImageNode(sf::Vector2f pos, const std::string& text, bool isHighlighted) {
+void Renderer::drawImageNode(sf::Vector2f pos, const std::string& text, float scaleMultiplier, float highlightAlpha) {
     // node
     sf::Sprite sprite(nodeTexture);
-    sprite.setColor(isHighlighted ? theme.highlightColor : theme.nodeTintColor);
-    sprite.setScale({theme.nodeScale, theme.nodeScale});
+    sf::Color baseCol = theme.nodeTintColor;
+    sf::Color hlCol = theme.highlightColor;
+    sf::Color blendedCol(
+        baseCol.r + (hlCol.r - baseCol.r) * highlightAlpha,
+        baseCol.g + (hlCol.g - baseCol.g) * highlightAlpha,
+        baseCol.b + (hlCol.b - baseCol.b) * highlightAlpha,
+        255
+    );
+    sprite.setColor(blendedCol);
+    
+    float pulse = highlightAlpha > 0.5f ? std::sin(appTime * 10.0f) * 0.05f * highlightAlpha : 0.0f;
+    float finalScale = theme.nodeScale * scaleMultiplier + pulse;
+    if (finalScale < 0.01f) return;
+    
+    sprite.setScale({finalScale, finalScale});
     sf::FloatRect bounds = sprite.getLocalBounds();
     sprite.setOrigin({bounds.size.x / 2, bounds.size.y / 2});
     sprite.setPosition(pos);
     window.getWindow().draw(sprite);
 
     // text
-    unsigned int textSize = static_cast<unsigned int>(theme.nodeTextBaseSize * theme.nodeScale);
-    sf::Text a(mainFont, text, textSize);
-    a.setFillColor(theme.textColor);
-    sf::FloatRect textRect = a.getLocalBounds();
-    a.setOrigin({
-        textRect.position.x + textRect.size.x / 2,
-        textRect.position.y + textRect.size.y - theme.nodeTextVerticalOffset * theme.nodeScale
-    });
-    a.setPosition(pos);
-    window.getWindow().draw(a);
+    unsigned int textSize = static_cast<unsigned int>(theme.nodeTextBaseSize * finalScale);
+    if (textSize > 0) {
+        sf::Text a(mainFont, text, textSize);
+        a.setFillColor(theme.textColor);
+        sf::FloatRect textRect = a.getLocalBounds();
+        a.setOrigin({
+            textRect.position.x + textRect.size.x / 2,
+            textRect.position.y + textRect.size.y - theme.nodeTextVerticalOffset * finalScale
+        });
+        a.setPosition(pos);
+        window.getWindow().draw(a);
+    }
 }
 
-void Renderer::drawArrayCell(sf::Vector2f pos, const std::string& text, bool isHighlighted) {
+void Renderer::drawArrayCell(sf::Vector2f pos, const std::string& text, float scaleMultiplier, float highlightAlpha) {
     sf::Sprite sprite(arrayTexture);
-    sprite.setColor(isHighlighted ? theme.highlightColor : theme.arrayTintColor);
-    sprite.setScale({theme.arrayScale, theme.arrayScale});
+    sf::Color baseCol = theme.arrayTintColor;
+    sf::Color hlCol = theme.highlightColor;
+    sf::Color blendedCol(baseCol.r + (hlCol.r - baseCol.r) * highlightAlpha, baseCol.g + (hlCol.g - baseCol.g) * highlightAlpha, baseCol.b + (hlCol.b - baseCol.b) * highlightAlpha, 255);
+    sprite.setColor(blendedCol);
+    
+    float pulse = highlightAlpha > 0.5f ? std::sin(appTime * 10.0f) * 0.05f * highlightAlpha : 0.0f;
+    float finalScale = theme.arrayScale * scaleMultiplier + pulse;
+    if (finalScale < 0.01f) return;
+
+    sprite.setScale({finalScale, finalScale});
     sf::FloatRect bounds = sprite.getLocalBounds();
     sprite.setOrigin({bounds.size.x / 2, bounds.size.y / 2});
     sprite.setPosition(pos);
     window.getWindow().draw(sprite);
 
-    unsigned int textSize = static_cast<unsigned int>(theme.arrayTextBaseSize * theme.arrayScale);
-    sf::Text a(mainFont, text, textSize);
-    a.setFillColor(theme.textColor);
-    sf::FloatRect textRect = a.getLocalBounds();
-    a.setOrigin({textRect.position.x + textRect.size.x / 2, textRect.position.y + textRect.size.y / 2});
-    a.setPosition(pos);
-    window.getWindow().draw(a);
+    unsigned int textSize = static_cast<unsigned int>(theme.arrayTextBaseSize * finalScale);
+    if (textSize > 0) {
+        sf::Text a(mainFont, text, textSize);
+        a.setFillColor(theme.textColor);
+        sf::FloatRect textRect = a.getLocalBounds();
+        a.setOrigin({textRect.position.x + textRect.size.x / 2, textRect.position.y + textRect.size.y / 2});
+        a.setPosition(pos);
+        window.getWindow().draw(a);
+    }
 }
 
 void Renderer::drawLineWithArrow(
@@ -406,13 +441,27 @@ void Renderer::visit(const LinkedListPayload& payload) {
     for (size_t i = 0; i < payload.values.size(); ++i) {
         sf::Vector2f calcPos = {startX + i * (nodeSize.x + spacing), startY};
         defaultNodePositions[i] = calcPos;
-
         auto customPosIt = customNodePositions.find(i);
-        if (customPosIt != customNodePositions.end()) {
-            positions[i] = customPosIt->second;
-        } else {
-            positions[i] = calcPos;
+        sf::Vector2f targetPos = (customPosIt != customNodePositions.end()) ? customPosIt->second : calcPos;
+        
+        // Animations logic
+        if (nodeAnimStates.find(i) == nodeAnimStates.end()) {
+            nodeAnimStates[i].pos = targetPos - sf::Vector2f(60.0f, 0.0f); // Slide in from left
+            nodeAnimStates[i].scale = 0.0f;
+            nodeAnimStates[i].highlightAlpha = 0.0f;
         }
+        
+        NodeAnimState& anim = nodeAnimStates[i];
+        float lerpPos = 1.0f - std::exp(-15.0f * currentDeltaTime);
+        float lerpScale = 1.0f - std::exp(-12.0f * currentDeltaTime);
+        
+        anim.pos += (targetPos - anim.pos) * lerpPos;
+        
+        bool isHighlighted = std::find(payload.highlightedNodes.begin(), payload.highlightedNodes.end(), i) != payload.highlightedNodes.end();
+        anim.scale += ((isHighlighted ? 1.15f : 1.0f) - anim.scale) * lerpScale;
+        anim.highlightAlpha += ((isHighlighted ? 1.0f : 0.0f) - anim.highlightAlpha) * lerpScale;
+        
+        positions[i] = anim.pos;
     }
 
     // Draw edges
@@ -420,10 +469,34 @@ void Renderer::visit(const LinkedListPayload& payload) {
         drawLineWithArrow(positions[i], nodeSize, ShapeType::Circle, positions[i+1], nodeSize, ShapeType::Circle, 3.0f, 15.0f, false);
     }
 
-    // Draw nodes
+    // Draw active nodes
     for (size_t i = 0; i < payload.values.size(); ++i) {
-        bool highlighted = std::find(payload.highlightedNodes.begin(), payload.highlightedNodes.end(), i) != payload.highlightedNodes.end();
-        drawImageNode(positions[i], std::to_string(payload.values[i]), highlighted);
+        NodeAnimState& anim = nodeAnimStates[i];
+        drawImageNode(positions[i], std::to_string(payload.values[i]), anim.scale, anim.highlightAlpha);
+    }
+
+    // Draw Pointers (Head, Tail, Curr, etc)
+    std::map<size_t, std::string> pointerLabels;
+    for (const auto& [name, targetId] : payload.pointers) {
+        if (pointerLabels.find(targetId) == pointerLabels.end()) pointerLabels[targetId] = name;
+        else pointerLabels[targetId] += ", " + name;
+    }
+    for (const auto& [targetId, label] : pointerLabels) {
+        if (targetId < positions.size()) {
+            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Down, nodeSize.y, 0, 10.0f);
+        }
+    }
+
+    // Draw disappearing nodes smoothly
+    for (auto it = nodeAnimStates.begin(); it != nodeAnimStates.end(); ) {
+        if (it->first >= payload.values.size()) { // Not in current payload
+            float lerpScale = 1.0f - std::exp(-15.0f * currentDeltaTime);
+            it->second.scale += (0.0f - it->second.scale) * lerpScale;
+            if (it->second.scale < 0.05f) { it = nodeAnimStates.erase(it); }
+            else { drawImageNode(it->second.pos, "", it->second.scale, it->second.highlightAlpha); ++it; }
+        } else {
+            ++it;
+        }
     }
 }
 
@@ -454,6 +527,7 @@ void Renderer::visit(const TreePayload& payload) {
     float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.005f, nodeSize.x - 40.0f);
     float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.095f, nodeSize.y + 40.0f);
 
+    std::set<size_t> activeIds;
     for (const auto& node : nodes) {
         size_t id = node.id;
         int level = std::floor(std::log2(id + 1));
@@ -465,8 +539,34 @@ void Renderer::visit(const TreePayload& payload) {
 
         float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
         float currentY = startY + level * distanceVertical;
+        
+        sf::Vector2f targetPos = {currentX, currentY};
+        activeIds.insert(id);
 
-        positions[id] = {currentX, currentY};
+        if (nodeAnimStates.find(id) == nodeAnimStates.end()) {
+            nodeAnimStates[id].pos = targetPos - sf::Vector2f(0, 50.0f); // Fall down effect
+            nodeAnimStates[id].scale = 0.0f;
+            nodeAnimStates[id].highlightAlpha = 0.0f;
+        }
+        
+        NodeAnimState& anim = nodeAnimStates[id];
+        float lerpPos = 1.0f - std::exp(-15.0f * currentDeltaTime);
+        float lerpScale = 1.0f - std::exp(-12.0f * currentDeltaTime);
+        
+        sf::Vector2f diff = targetPos - anim.pos;
+        // Chỉ bẻ cong (Curve) nếu khoảng cách còn đủ xa để tránh rung lắc lúc hội tụ
+        if (std::abs(diff.x) > 1.0f || std::abs(diff.y) > 1.0f) {
+            sf::Vector2f perp(-diff.y, diff.x); // Lấy vector vuông góc
+            anim.pos += (diff + perp * 0.3f) * lerpPos; // Cộng thêm độ lệch để tạo đường cong (0.3f là độ cong)
+        } else {
+            anim.pos += diff * lerpPos;
+        }
+
+        bool isHighlighted = std::find(highlights.begin(), highlights.end(), id) != highlights.end();
+        anim.scale += ((isHighlighted ? 1.2f : 1.0f) - anim.scale) * lerpScale;
+        anim.highlightAlpha += ((isHighlighted ? 1.0f : 0.0f) - anim.highlightAlpha) * lerpScale;
+        
+        positions[id] = anim.pos;
     }
 
     // Draw edges (with arrow) then draw nodes
@@ -492,9 +592,34 @@ void Renderer::visit(const TreePayload& payload) {
             drawEdgeIfExist(node.rightId);
     } 
 
+    // Draw active nodes
     for (const auto& node : nodes) {
-        bool isHighlighted = std::find(highlights.begin(), highlights.end(), node.id) != highlights.end();
-        drawImageNode(positions[node.id], std::to_string(node.value), isHighlighted);
+        NodeAnimState& anim = nodeAnimStates[node.id];
+        drawImageNode(positions[node.id], std::to_string(node.value), anim.scale, anim.highlightAlpha);
+    }
+
+    // Draw Pointers
+    std::map<size_t, std::string> pointerLabels;
+    for (const auto& [name, targetId] : payload.pointers) {
+        if (pointerLabels.find(targetId) == pointerLabels.end()) pointerLabels[targetId] = name;
+        else pointerLabels[targetId] += ", " + name;
+    }
+    for (const auto& [targetId, label] : pointerLabels) {
+        if (positions.find(targetId) != positions.end()) {
+            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Up, nodeSize.y, 0, 10.0f);
+        }
+    }
+
+    // Draw disappearing nodes
+    for (auto it = nodeAnimStates.begin(); it != nodeAnimStates.end(); ) {
+        if (activeIds.find(it->first) == activeIds.end()) {
+            float lerpScale = 1.0f - std::exp(-15.0f * currentDeltaTime);
+            it->second.scale += (0.0f - it->second.scale) * lerpScale;
+            if (it->second.scale < 0.05f) { it = nodeAnimStates.erase(it); }
+            else { drawImageNode(it->second.pos, "", it->second.scale, it->second.highlightAlpha); ++it; }
+        } else {
+            ++it;
+        }
     }
 }
 
@@ -518,6 +643,7 @@ void Renderer::visit(const HeapPayload& payload) {
     float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.095f, nodeSize.y + 40.0f);
 
     float height = std::ceil(log2(heapArray.size()+1));
+    std::set<size_t> activeIds;
 
     for (size_t idx = 0; idx < heapArray.size(); idx++) {
         // Coordinates calculation
@@ -539,11 +665,33 @@ void Renderer::visit(const HeapPayload& payload) {
         defaultNodePositions[idx] = calcPos;
 
         auto customPosIt = customNodePositions.find(idx);
-        if (customPosIt != customNodePositions.end()) {
-            positions[idx] = customPosIt->second;
-        } else {
-            positions[idx] = calcPos;
-        }
+            sf::Vector2f targetPos = (customPosIt != customNodePositions.end()) ? customPosIt->second : calcPos;
+            
+            activeIds.insert(idx);
+            if (nodeAnimStates.find(idx) == nodeAnimStates.end()) {
+                nodeAnimStates[idx].pos = targetPos - sf::Vector2f(0, 40.0f);
+                nodeAnimStates[idx].scale = 0.0f;
+                nodeAnimStates[idx].highlightAlpha = 0.0f;
+            }
+            
+            NodeAnimState& anim = nodeAnimStates[idx];
+            float lerpPos = 1.0f - std::exp(-15.0f * currentDeltaTime);
+            float lerpScale = 1.0f - std::exp(-12.0f * currentDeltaTime);
+            
+            sf::Vector2f diff = targetPos - anim.pos;
+            // Kỹ thuật tương tự áp dụng cho Heapify để né đè Node
+            if (std::abs(diff.x) > 1.0f || std::abs(diff.y) > 1.0f) {
+                sf::Vector2f perp(-diff.y, diff.x);
+                anim.pos += (diff + perp * 0.3f) * lerpPos;
+            } else {
+                anim.pos += diff * lerpPos;
+            }
+
+            bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
+            anim.scale += ((isHighlighted ? 1.2f : 1.0f) - anim.scale) * lerpScale;
+            anim.highlightAlpha += ((isHighlighted ? 1.0f : 0.0f) - anim.highlightAlpha) * lerpScale;
+            
+            positions[idx] = anim.pos;
     }
 
     // Draw edges then draw nodes
@@ -562,8 +710,20 @@ void Renderer::visit(const HeapPayload& payload) {
     } 
 
     for (size_t idx = 0; idx < heapArray.size(); ++idx) {
-        bool isHighlighted = std::find(highlights.begin(), highlights.end(), idx) != highlights.end();
-        drawImageNode(positions[idx], std::to_string(heapArray[idx]), isHighlighted);
+            NodeAnimState& anim = nodeAnimStates[idx];
+            drawImageNode(positions[idx], std::to_string(heapArray[idx]), anim.scale, anim.highlightAlpha);
+        }
+
+        // Draw disappearing nodes
+        for (auto it = nodeAnimStates.begin(); it != nodeAnimStates.end(); ) {
+            if (activeIds.find(it->first) == activeIds.end()) {
+                float lerpScale = 1.0f - std::exp(-15.0f * currentDeltaTime);
+                it->second.scale += (0.0f - it->second.scale) * lerpScale;
+                if (it->second.scale < 0.05f) { it = nodeAnimStates.erase(it); }
+                else { drawImageNode(it->second.pos, "", it->second.scale, it->second.highlightAlpha); ++it; }
+            } else {
+                ++it;
+            }
     }
 }
 
@@ -638,11 +798,29 @@ void Renderer::visit(const GraphPayload& payload) {
 
     defaultNodePositions = autoPositionsByVertexId;
     std::map<size_t, sf::Vector2f> positionsByVertexId = autoPositionsByVertexId;
-    for (const auto& [vertexId, customPos] : customNodePositions) {
-        auto it = positionsByVertexId.find(vertexId);
-        if (it != positionsByVertexId.end()) {
-            it->second = customPos;
+    
+    std::set<size_t> activeIds;
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        size_t vertexId = vertices[i];
+        activeIds.insert(vertexId);
+        sf::Vector2f targetPos = positionsByVertexId[vertexId];
+        if (customNodePositions.find(vertexId) != customNodePositions.end()) targetPos = customNodePositions[vertexId];
+
+        if (nodeAnimStates.find(vertexId) == nodeAnimStates.end()) {
+            nodeAnimStates[vertexId].pos = targetPos;
+            nodeAnimStates[vertexId].scale = 0.0f;
+            nodeAnimStates[vertexId].highlightAlpha = 0.0f;
         }
+        
+        NodeAnimState& anim = nodeAnimStates[vertexId];
+        float lerpPos = 1.0f - std::exp(-15.0f * currentDeltaTime);
+        float lerpScale = 1.0f - std::exp(-12.0f * currentDeltaTime);
+        anim.pos += (targetPos - anim.pos) * lerpPos;
+        
+        bool highlighted = std::find(hIndices.begin(), hIndices.end(), vertexId) != hIndices.end();
+        anim.scale += ((highlighted ? 1.2f : 1.0f) - anim.scale) * lerpScale;
+        anim.highlightAlpha += ((highlighted ? 1.0f : 0.0f) - anim.highlightAlpha) * lerpScale;
+        positionsByVertexId[vertexId] = anim.pos;
     }
 
     std::vector<std::pair<std::pair<size_t, size_t>, int>> drawnTexts;
@@ -686,8 +864,20 @@ void Renderer::visit(const GraphPayload& payload) {
 
     for (size_t i = 0; i < vertices.size(); ++i) {
         size_t vertexId = vertices[i];
-        bool highlighted = std::find(hIndices.begin(), hIndices.end(), vertexId) != hIndices.end();
-        drawImageNode(positionsByVertexId[vertexId], std::to_string(vertexId), highlighted);
+        NodeAnimState& anim = nodeAnimStates[vertexId];
+        drawImageNode(positionsByVertexId[vertexId], std::to_string(vertexId), anim.scale, anim.highlightAlpha);
+    }
+
+    // Draw disappearing nodes
+    for (auto it = nodeAnimStates.begin(); it != nodeAnimStates.end(); ) {
+        if (activeIds.find(it->first) == activeIds.end()) {
+            float lerpScale = 1.0f - std::exp(-15.0f * currentDeltaTime);
+            it->second.scale += (0.0f - it->second.scale) * lerpScale;
+            if (it->second.scale < 0.05f) { it = nodeAnimStates.erase(it); }
+            else { drawImageNode(it->second.pos, "", it->second.scale, it->second.highlightAlpha); ++it; }
+        } else {
+            ++it;
+        }
     }
 }
 
@@ -702,10 +892,12 @@ void Renderer::visit(const SingleSourcePayload& payload) {
             continue;
         }
 
-        sf::Vector2f pos = posIt->second;
-        auto customPosIt = customNodePositions.find(vertexId);
-        if (customPosIt != customNodePositions.end()) {
-            pos = customPosIt->second;
+        sf::Vector2f pos;
+        if (nodeAnimStates.find(vertexId) != nodeAnimStates.end()) {
+            pos = nodeAnimStates[vertexId].pos;
+        } else {
+            pos = posIt->second;
+            if (customNodePositions.find(vertexId) != customNodePositions.end()) pos = customNodePositions[vertexId];
         }
 
         if (vertexId < payload.distances.size()) {
@@ -726,10 +918,12 @@ void Renderer::visit(const AStarPayload& payload) {
             continue;
         }
 
-        sf::Vector2f pos = posIt->second;
-        auto customPosIt = customNodePositions.find(vertexId);
-        if (customPosIt != customNodePositions.end()) {
-            pos = customPosIt->second;
+        sf::Vector2f pos;
+        if (nodeAnimStates.find(vertexId) != nodeAnimStates.end()) {
+            pos = nodeAnimStates[vertexId].pos;
+        } else {
+            pos = posIt->second;
+            if (customNodePositions.find(vertexId) != customNodePositions.end()) pos = customNodePositions[vertexId];
         }
 
         if (vertexId < payload.fCosts.size()) {
@@ -815,7 +1009,8 @@ void Renderer::visit(const GridPayload& payload) {
             }
 
             if (payload.currentCell.first == r && payload.currentCell.second == c) {
-                cell.setOutlineThickness(3.0f);
+                float pulse = std::sin(appTime * 15.0f) * 2.0f;
+                cell.setOutlineThickness(3.0f + pulse);
                 cell.setOutlineColor(theme.highlightColor); // Dùng màu highlight của Theme cho đồng bộ
             }
 
