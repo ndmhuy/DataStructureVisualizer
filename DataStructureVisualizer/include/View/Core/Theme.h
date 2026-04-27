@@ -26,6 +26,7 @@ class Theme {
     sf::Color arrayTintColor;
     sf::Color arrowColor;
     sf::Color windowClearColor;
+    sf::Color bgTintColor;
     unsigned int nodeTextBaseSize = 30;
     unsigned int arrayTextBaseSize = 30;
     float nodeTextVerticalOffset = 10.0f;

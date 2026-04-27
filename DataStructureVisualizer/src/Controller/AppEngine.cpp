@@ -736,6 +736,7 @@ void AppEngine::update(sf::Time deltaTime) {
             << std::endl;
         }
         uiManager.resize(window.getWindow());
+        renderer.reloadBackground();
     }
     
     playbackController.setSpeed(uiManager.getSpeed());

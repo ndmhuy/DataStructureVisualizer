@@ -25,9 +25,21 @@ bool Renderer::loadAssets() {
     return true;
 }
 
+void Renderer::reloadBackground() {
+    if (bgTexture.loadFromFile(theme.bgImagePath)) {
+        bgTexture.setSmooth(true);
+        bgSprite.setTexture(bgTexture, true);
+        sf::Vector2u texSize = bgTexture.getSize();
+        sf::Vector2u winSize = window.getWindow().getSize();
+        bgSprite.setScale({static_cast<float>(winSize.x) / texSize.x, static_cast<float>(winSize.y) / texSize.y});
+    }
+}
+
 void Renderer::drawBackground() {
     sf::View currentView = window.getWindow().getView();
     window.getWindow().setView(window.getWindow().getDefaultView());
+    
+    bgSprite.setColor(theme.bgTintColor);
     window.getWindow().draw(bgSprite);
     window.getWindow().setView(currentView);
 }
@@ -1212,6 +1224,70 @@ void Renderer::visit(const DecorationPayload& payload) {
         
         for(size_t l = 0; l < layers.size(); ++l) {
             for(size_t n = 0; n < layers[l]; ++n) drawCircleLocal(nnNodes[l][n].x, nnNodes[l][n].y, 6.0f, fade(pCol, 120), fade(aCol, 180), st);
+        }
+    }
+
+    {
+        sf::RenderStates st; sf::Transform t;
+        t.translate({w * 0.5f, h * 0.12f}); // Đẩy xuống một chút cho không gian lớn hơn
+        t.translate({0.0f, std::sin(time * 2.0f) * 8.0f}); // Hiệu ứng lơ lửng (Floating)
+        st.transform = t;
+
+        // Vòng năng lượng tỏa ra (Aura)
+        float auraScale = 1.0f + 0.15f * std::sin(time * 4.0f);
+        drawCircleLocal(0, 0, 75.0f * auraScale, fade(pCol, 15), fade(pCol, 40), st);
+
+        // Các vòng quỹ đạo Elip cắt nhau 3D (Atomic Orbits)
+        int numRings = 5;
+        for (int i = 0; i < numRings; ++i) {
+            sf::Transform tRing = t;
+            // Mỗi vòng xoay một góc ban đầu và quay với tốc độ khác nhau
+            tRing.rotate(sf::degrees(time * (15.0f + i * 8.0f) * (i % 2 == 0 ? 1 : -1) + i * (180.0f / numRings)));
+            tRing.scale({1.0f, 0.15f + i * 0.08f}); // Ép trục Y để tạo phối cảnh 3D nghiêng
+            
+            sf::RenderStates stRing; stRing.transform = tRing;
+            float radius = 55.0f + i * 12.0f;
+            drawCircleLocal(0, 0, radius, sf::Color::Transparent, fade(aCol, 100 + i * 20), stRing);
+
+            // Hạt dữ liệu (Data Particle) chạy dọc theo quỹ đạo 3D
+            sf::Transform tDot = tRing;
+            tDot.rotate(sf::degrees(time * (45.0f + i * 20.0f)));
+            sf::RenderStates stDot; stDot.transform = tDot;
+            drawCircleLocal(radius, 0, 4.0f, fade(hlCol, 255), sf::Color::Transparent, stDot);
+            drawCircleLocal(radius - 3.0f, 0, 2.0f, fade(hlCol, 120), sf::Color::Transparent, stDot); // Vệt đuôi
+        }
+
+        // Lục giác không gian xoay ngược chiều ở giữa
+        sf::Transform tPoly = t;
+        tPoly.rotate(sf::degrees(time * -25.0f));
+        sf::RenderStates stPoly; stPoly.transform = tPoly;
+        int nPoly = 6;
+        float pRadius = 38.0f;
+        std::vector<sf::Vector2f> polyPts(nPoly);
+        for(int i = 0; i < nPoly; ++i) polyPts[i] = {pRadius * std::cos(i * 2.0f * M_PI / nPoly), pRadius * std::sin(i * 2.0f * M_PI / nPoly)};
+        for(int i = 0; i < nPoly; ++i) {
+            drawLineLocal(polyPts[i].x, polyPts[i].y, polyPts[(i+1)%nPoly].x, polyPts[(i+1)%nPoly].y, fade(hlCol, 150), stPoly); // Viền lục giác
+            drawLineLocal(polyPts[i].x, polyPts[i].y, 0, 0, fade(pCol, 80), stPoly); // Trục nối tâm
+            drawCircleLocal(polyPts[i].x, polyPts[i].y, 3.0f, fade(aCol, 200), sf::Color::Transparent, stPoly); // Đỉnh lục giác
+        }
+
+        // Lõi lượng tử trung tâm nhấp nháy mạnh
+        float corePulse = std::abs(std::sin(time * 8.0f));
+        drawCircleLocal(0, 0, 14.0f, fade(pCol, 150), fade(aCol, 200), st);
+        drawCircleLocal(0, 0, 6.0f + corePulse * 4.0f, fade(hlCol, 200), sf::Color::Transparent, st);
+
+        // Hai bên: Khung giá đỡ Holo-HUD & Mã vạch (Barcode Data Streams)
+        for (int i = -1; i <= 1; i += 2) {
+            float hx = i * 115.0f; // Tọa độ dạt ra 2 bên
+            drawLineLocal(hx, -35.0f, hx, 35.0f, fade(aCol, 180), st);
+            drawLineLocal(hx, -35.0f, hx - i * 18.0f, -35.0f, fade(aCol, 180), st);
+            drawLineLocal(hx, 35.0f, hx - i * 18.0f, 35.0f, fade(aCol, 180), st);
+            
+            // Barcode quét nhấp nhô
+            for(int b = 0; b < 6; ++b) {
+                float bHeight = 10.0f + 25.0f * std::abs(std::sin(time * 12.0f + b * 1.7f + i));
+                drawLineLocal(hx + i * (12.0f + b * 6.0f), -bHeight/2.0f, hx + i * (12.0f + b * 6.0f), bHeight/2.0f, fade(pCol, 220), st);
+            }
         }
     }
 

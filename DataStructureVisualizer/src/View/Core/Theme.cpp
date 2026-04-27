@@ -58,6 +58,7 @@ Theme Theme::getDefaultTheme() {
     t.highlightColor = sf::Color(255, 215, 0, 255); // Màu vàng cho Node/Array được highlight
     t.accentColor = sf::Color(230, 50, 80, 255);    // Màu đỏ cho Edge được highlight
     t.windowClearColor = sf::Color(40, 44, 52, 255);
+    t.bgTintColor = sf::Color(255, 255, 255, 255);  // Ở giao diện sáng thì giữ nguyên màu gốc
     t.nodeTextBaseSize = 30;
     t.arrayTextBaseSize = 30;
     t.nodeTextVerticalOffset = 10.0f;
@@ -114,6 +115,17 @@ Theme Theme::getDarkTheme() {
     t.textColor = sf::Color(220, 220, 255);
     t.arrowColor = sf::Color(200, 200, 255);
     t.windowClearColor = sf::Color(20, 22, 28, 255); // Nền xám đen
+
+    // Tự động tìm ảnh nền tối nếu có, nếu không thì tự động làm tối ảnh hiện tại
+    if (std::filesystem::exists(getAssetsRoot() + "/background_dark.png")) {
+        t.bgImagePath = getAssetsRoot() + "/background_dark.png";
+        t.bgTintColor = sf::Color(255, 255, 255, 255);
+    } else if (std::filesystem::exists(getAssetsRoot() + "/background_dark.jpg")) {
+        t.bgImagePath = getAssetsRoot() + "/background_dark.jpg";
+        t.bgTintColor = sf::Color(255, 255, 255, 255);
+    } else {
+        t.bgTintColor = sf::Color(60, 60, 70, 255); // Phủ lớp màu tối lên ảnh gốc để chống chói
+    }
 
     t.codePanelBackgroundColor = sf::Color(30, 30, 35, 255);
     t.codePanelBorderColor = sf::Color(80, 80, 90, 255);

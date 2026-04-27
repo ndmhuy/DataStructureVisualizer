@@ -58,6 +58,7 @@ public:
 
     // Asset lifecycle and scene background.
     bool loadAssets();
+    void reloadBackground();
     void drawBackground();
 
     // Node and array element rendering.
