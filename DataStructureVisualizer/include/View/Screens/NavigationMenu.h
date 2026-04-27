@@ -13,12 +13,13 @@ public:
         Main,
         Heap,
         ShortestPath,
-        Graph
+        GraphType,
+        GraphRepr
     };
 
 private:
     Theme theme = Theme::getDefaultTheme();
-    int selectedDS = -1; // -1: None, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
+    int selectedDS = -1; // -1: None, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPADirected, 6: SPAUndirected
     MenuState currentState = MenuState::Main;
 
     std::vector<std::string> mainNames = {
@@ -31,9 +32,13 @@ private:
     std::vector<std::string> spaNames = {
         "Grid", "Graph"
     };
-    std::vector<std::string> graphNames = {
+    std::vector<std::string> graphTypeNames = {
+        "Directed Graph", "Undirected Graph"
+    };
+    std::vector<std::string> graphReprNames = {
         "Adjacency Matrix", "Adjacency List"
     };
+    bool isDirectedGraph = true;
 
 public:
     NavigationMenu() = default;
