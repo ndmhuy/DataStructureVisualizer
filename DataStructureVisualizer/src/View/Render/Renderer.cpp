@@ -439,8 +439,8 @@ void Renderer::visit(const TreePayload& payload) {
     float startX = static_cast<float>(winSize.x) / 2.0f;
     float startY = static_cast<float>(winSize.y) * 0.15f;
 
-    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.022f, nodeSize.x + 2.0f);
-    float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.078f, nodeSize.y + 4.0f);
+    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.005f, nodeSize.x - 40.0f);
+    float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.095f, nodeSize.y + 40.0f);
 
     for (const auto& node : nodes) {
         size_t id = node.id;
@@ -502,8 +502,8 @@ void Renderer::visit(const HeapPayload& payload) {
     float startX = static_cast<float>(winSize.x) / 2.0f;
     float startY = static_cast<float>(winSize.y) * 0.15f; 
 
-    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.022f, nodeSize.x + 2.0f);
-    float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.078f, nodeSize.y + 4.0f);
+    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.005f, nodeSize.x - 40.0f);
+    float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.095f, nodeSize.y + 40.0f);
 
     float height = std::ceil(log2(heapArray.size()+1));
 
