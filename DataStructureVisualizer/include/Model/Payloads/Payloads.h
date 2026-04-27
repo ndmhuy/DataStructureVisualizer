@@ -170,9 +170,10 @@ struct MenuAnimPayload : public IPayload {
 
 struct TopBarPayload : public IPayload {
     bool isDarkMode;
+    bool isShowingCode;
     sf::Vector2f winSize;
     TopBarPayload() = default;
-    TopBarPayload(bool dark, sf::Vector2f ws) : isDarkMode(dark), winSize(ws) {}
+    TopBarPayload(bool dark, bool showingCode, sf::Vector2f ws) : isDarkMode(dark), isShowingCode(showingCode), winSize(ws) {}
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new TopBarPayload(*this); }
 };

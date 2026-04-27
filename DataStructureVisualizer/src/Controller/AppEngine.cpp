@@ -1133,7 +1133,7 @@ void AppEngine::render() {
         );
         renderer.visit(menuPayload);
     } else {
-        TopBarPayload tbPayload(isDarkMode, sf::Vector2f(window.getWindow().getSize()));
+        TopBarPayload tbPayload(isDarkMode, uiManager.isShowingCode(), sf::Vector2f(window.getWindow().getSize()));
         renderer.visit(tbPayload);
     }
 

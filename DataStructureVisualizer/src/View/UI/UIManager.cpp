@@ -258,15 +258,15 @@ void UIManager::render(sf::RenderWindow& window) {
             themeScaleChanged = true;
         }
         
-        ImGui::SetCursorScreenPos(ImVec2(winSize.x - 120.0f, 10.0f));
+        ImGui::SetCursorScreenPos(ImVec2(270.0f, 10.0f));
         if (ImGui::InvisibleButton("ThemeBtnTop", ImVec2(100.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
             clickSound.play();
         }
         
-        ImGui::SetCursorScreenPos(ImVec2(winSize.x - 230.0f, 10.0f));
-        if (ImGui::Button(codePanel.isShowingCode() ? "Hide Code" : "Show Code", ImVec2(90.0f, 35.0f))) {
+        ImGui::SetCursorScreenPos(ImVec2(390.0f, 10.0f));
+        if (ImGui::InvisibleButton("CodeBtnTop", ImVec2(90.0f, 35.0f))) {
             codePanel.toggleShowCode();
             clickSound.play();
         }

@@ -148,6 +148,7 @@ public:
     void setCodePanelHighlightedLine(int line); //pass 0-indexed to highlight
     void setCodePanelMessage(const std::string& msg); //pass message text
     void clearCodePanel(); //Clean after done showing code
+    bool isShowingCode() const { return codePanel.isShowingCode(); }
 
     // --- Interact Buttons ---
     
