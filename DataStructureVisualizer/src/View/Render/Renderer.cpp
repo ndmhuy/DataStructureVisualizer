@@ -56,20 +56,12 @@ void Renderer::drawBackground() {
     window.getWindow().setView(currentView);
 }
 
-void Renderer::drawImageNode(sf::Vector2f pos, const std::string& text, float scaleMultiplier, float highlightAlpha) {
+void Renderer::drawImageNode(sf::Vector2f pos, const std::string& text, float scaleMultiplier, sf::Color nodeColor, float pulseAlpha) {
     // node
     sf::Sprite sprite(nodeTexture);
-    sf::Color baseCol = theme.nodeTintColor;
-    sf::Color hlCol = theme.highlightColor;
-    sf::Color blendedCol(
-        baseCol.r + (hlCol.r - baseCol.r) * highlightAlpha,
-        baseCol.g + (hlCol.g - baseCol.g) * highlightAlpha,
-        baseCol.b + (hlCol.b - baseCol.b) * highlightAlpha,
-        255
-    );
-    sprite.setColor(blendedCol);
+    sprite.setColor(nodeColor);
     
-    float pulse = highlightAlpha > 0.5f ? std::sin(appTime * 10.0f) * 0.05f * highlightAlpha : 0.0f;
+    float pulse = pulseAlpha > 0.5f ? std::sin(appTime * 10.0f) * 0.05f * pulseAlpha : 0.0f;
     float finalScale = theme.nodeScale * scaleMultiplier + pulse;
     if (finalScale < 0.01f) return;
     
@@ -94,14 +86,11 @@ void Renderer::drawImageNode(sf::Vector2f pos, const std::string& text, float sc
     }
 }
 
-void Renderer::drawArrayCell(sf::Vector2f pos, const std::string& text, float scaleMultiplier, float highlightAlpha) {
+void Renderer::drawArrayCell(sf::Vector2f pos, const std::string& text, float scaleMultiplier, sf::Color cellColor, float pulseAlpha) {
     sf::Sprite sprite(arrayTexture);
-    sf::Color baseCol = theme.arrayTintColor;
-    sf::Color hlCol = theme.highlightColor;
-    sf::Color blendedCol(baseCol.r + (hlCol.r - baseCol.r) * highlightAlpha, baseCol.g + (hlCol.g - baseCol.g) * highlightAlpha, baseCol.b + (hlCol.b - baseCol.b) * highlightAlpha, 255);
-    sprite.setColor(blendedCol);
+    sprite.setColor(cellColor);
     
-    float pulse = highlightAlpha > 0.5f ? std::sin(appTime * 10.0f) * 0.05f * highlightAlpha : 0.0f;
+    float pulse = pulseAlpha > 0.5f ? std::sin(appTime * 10.0f) * 0.05f * pulseAlpha : 0.0f;
     float finalScale = theme.arrayScale * scaleMultiplier + pulse;
     if (finalScale < 0.01f) return;
 
@@ -462,6 +451,16 @@ void Renderer::visit(const LinkedListPayload& payload) {
         anim.scale += ((isHighlighted ? 1.15f : 1.0f) - anim.scale) * lerpScale;
         anim.highlightAlpha += ((isHighlighted ? 1.0f : 0.0f) - anim.highlightAlpha) * lerpScale;
         
+        bool isSuccess = std::find(payload.successNodes.begin(), payload.successNodes.end(), i) != payload.successNodes.end();
+        sf::Color targetColor = theme.nodeTintColor;
+        if (isSuccess) targetColor = theme.successColor;
+        else if (isHighlighted) targetColor = theme.highlightColor;
+        if (anim.colorR < 0.0f) { anim.colorR = targetColor.r; anim.colorG = targetColor.g; anim.colorB = targetColor.b; }
+        float lerpCol = 1.0f - std::exp(-10.0f * currentDeltaTime);
+        anim.colorR += (targetColor.r - anim.colorR) * lerpCol;
+        anim.colorG += (targetColor.g - anim.colorG) * lerpCol;
+        anim.colorB += (targetColor.b - anim.colorB) * lerpCol;
+
         positions[i] = anim.pos;
     }
 
@@ -473,7 +472,8 @@ void Renderer::visit(const LinkedListPayload& payload) {
     // Draw active nodes
     for (size_t i = 0; i < payload.values.size(); ++i) {
         NodeAnimState& anim = nodeAnimStates[i];
-        drawImageNode(positions[i], std::to_string(payload.values[i]), anim.scale, anim.highlightAlpha);
+        sf::Color c(static_cast<std::uint8_t>(anim.colorR), static_cast<std::uint8_t>(anim.colorG), static_cast<std::uint8_t>(anim.colorB), 255);
+        drawImageNode(positions[i], std::to_string(payload.values[i]), anim.scale, c, anim.highlightAlpha);
     }
 
     // Draw Pointers (Head, Tail, Curr, etc)
@@ -494,7 +494,10 @@ void Renderer::visit(const LinkedListPayload& payload) {
             float lerpScale = 1.0f - std::exp(-15.0f * currentDeltaTime);
             it->second.scale += (0.0f - it->second.scale) * lerpScale;
             if (it->second.scale < 0.05f) { it = nodeAnimStates.erase(it); }
-            else { drawImageNode(it->second.pos, "", it->second.scale, it->second.highlightAlpha); ++it; }
+            else { 
+                sf::Color fc(static_cast<std::uint8_t>(it->second.colorR), static_cast<std::uint8_t>(it->second.colorG), static_cast<std::uint8_t>(it->second.colorB), 255);
+                drawImageNode(it->second.pos, "", it->second.scale, fc, it->second.highlightAlpha); ++it; 
+            }
         } else {
             ++it;
         }
@@ -596,7 +599,8 @@ void Renderer::visit(const TreePayload& payload) {
     // Draw active nodes
     for (const auto& node : nodes) {
         NodeAnimState& anim = nodeAnimStates[node.id];
-        drawImageNode(positions[node.id], std::to_string(node.value), anim.scale, anim.highlightAlpha);
+        sf::Color c(static_cast<std::uint8_t>(anim.colorR), static_cast<std::uint8_t>(anim.colorG), static_cast<std::uint8_t>(anim.colorB), 255);
+        drawImageNode(positions[node.id], std::to_string(node.value), anim.scale, c, anim.highlightAlpha);
     }
 
     // Draw Pointers
@@ -617,7 +621,8 @@ void Renderer::visit(const TreePayload& payload) {
             float lerpScale = 1.0f - std::exp(-15.0f * currentDeltaTime);
             it->second.scale += (0.0f - it->second.scale) * lerpScale;
             if (it->second.scale < 0.05f) { it = nodeAnimStates.erase(it); }
-            else { drawImageNode(it->second.pos, "", it->second.scale, it->second.highlightAlpha); ++it; }
+            else { sf::Color fc(static_cast<std::uint8_t>(it->second.colorR), static_cast<std::uint8_t>(it->second.colorG), static_cast<std::uint8_t>(it->second.colorB), 255);
+            drawImageNode(it->second.pos, "", it->second.scale, fc, it->second.highlightAlpha); ++it; }
         } else {
             ++it;
         }
@@ -712,7 +717,8 @@ void Renderer::visit(const HeapPayload& payload) {
 
     for (size_t idx = 0; idx < heapArray.size(); ++idx) {
             NodeAnimState& anim = nodeAnimStates[idx];
-            drawImageNode(positions[idx], std::to_string(heapArray[idx]), anim.scale, anim.highlightAlpha);
+            sf::Color c(static_cast<std::uint8_t>(anim.colorR), static_cast<std::uint8_t>(anim.colorG), static_cast<std::uint8_t>(anim.colorB), 255);
+            drawImageNode(positions[idx], std::to_string(heapArray[idx]), anim.scale, c, anim.highlightAlpha);
         }
 
         // Draw disappearing nodes
@@ -721,7 +727,8 @@ void Renderer::visit(const HeapPayload& payload) {
                 float lerpScale = 1.0f - std::exp(-15.0f * currentDeltaTime);
                 it->second.scale += (0.0f - it->second.scale) * lerpScale;
                 if (it->second.scale < 0.05f) { it = nodeAnimStates.erase(it); }
-                else { drawImageNode(it->second.pos, "", it->second.scale, it->second.highlightAlpha); ++it; }
+                else { sf::Color fc(static_cast<std::uint8_t>(it->second.colorR), static_cast<std::uint8_t>(it->second.colorG), static_cast<std::uint8_t>(it->second.colorB), 255);
+                drawImageNode(it->second.pos, "", it->second.scale, fc, it->second.highlightAlpha); ++it; }
             } else {
                 ++it;
             }
@@ -814,13 +821,31 @@ void Renderer::visit(const GraphPayload& payload) {
         }
         
         NodeAnimState& anim = nodeAnimStates[vertexId];
-        float lerpPos = 1.0f - std::exp(-15.0f * currentDeltaTime);
-        float lerpScale = 1.0f - std::exp(-12.0f * currentDeltaTime);
-        anim.pos += (targetPos - anim.pos) * lerpPos;
-        
         bool highlighted = std::find(hIndices.begin(), hIndices.end(), vertexId) != hIndices.end();
-        anim.scale += ((highlighted ? 1.2f : 1.0f) - anim.scale) * lerpScale;
-        anim.highlightAlpha += ((highlighted ? 1.0f : 0.0f) - anim.highlightAlpha) * lerpScale;
+        float targetScale = highlighted ? 1.2f : 1.0f;
+
+        float tension = 200.0f; float damp = 12.0f;
+        anim.velPos += (targetPos - anim.pos) * tension * currentDeltaTime;
+        anim.velPos *= std::exp(-damp * currentDeltaTime);
+        anim.pos += anim.velPos * currentDeltaTime;
+
+        anim.velScale += (targetScale - anim.scale) * tension * currentDeltaTime;
+        anim.velScale *= std::exp(-damp * currentDeltaTime);
+        anim.scale += anim.velScale * currentDeltaTime;
+        
+        float lerpAlpha = 1.0f - std::exp(-12.0f * currentDeltaTime);
+        anim.highlightAlpha += ((highlighted ? 1.0f : 0.0f) - anim.highlightAlpha) * lerpAlpha;
+
+        bool isVisited = std::find(payload.visitedVertices.begin(), payload.visitedVertices.end(), vertexId) != payload.visitedVertices.end();
+        bool isSuccess = std::find(payload.successVertices.begin(), payload.successVertices.end(), vertexId) != payload.successVertices.end();
+        sf::Color targetColor = theme.nodeTintColor;
+        if (isSuccess) targetColor = theme.successColor; else if (highlighted) targetColor = theme.highlightColor; else if (isVisited) targetColor = theme.visitedColor;
+        if (anim.colorR < 0.0f) { anim.colorR = targetColor.r; anim.colorG = targetColor.g; anim.colorB = targetColor.b; }
+        float lerpCol = 1.0f - std::exp(-10.0f * currentDeltaTime);
+        anim.colorR += (targetColor.r - anim.colorR) * lerpCol;
+        anim.colorG += (targetColor.g - anim.colorG) * lerpCol;
+        anim.colorB += (targetColor.b - anim.colorB) * lerpCol;
+
         positionsByVertexId[vertexId] = anim.pos;
     }
 
@@ -866,7 +891,8 @@ void Renderer::visit(const GraphPayload& payload) {
     for (size_t i = 0; i < vertices.size(); ++i) {
         size_t vertexId = vertices[i];
         NodeAnimState& anim = nodeAnimStates[vertexId];
-        drawImageNode(positionsByVertexId[vertexId], std::to_string(vertexId), anim.scale, anim.highlightAlpha);
+        sf::Color c(static_cast<std::uint8_t>(anim.colorR), static_cast<std::uint8_t>(anim.colorG), static_cast<std::uint8_t>(anim.colorB), 255);
+        drawImageNode(positionsByVertexId[vertexId], std::to_string(vertexId), anim.scale, c, anim.highlightAlpha);
     }
 
     // Draw disappearing nodes
@@ -875,7 +901,8 @@ void Renderer::visit(const GraphPayload& payload) {
             float lerpScale = 1.0f - std::exp(-15.0f * currentDeltaTime);
             it->second.scale += (0.0f - it->second.scale) * lerpScale;
             if (it->second.scale < 0.05f) { it = nodeAnimStates.erase(it); }
-            else { drawImageNode(it->second.pos, "", it->second.scale, it->second.highlightAlpha); ++it; }
+            else { sf::Color fc(static_cast<std::uint8_t>(it->second.colorR), static_cast<std::uint8_t>(it->second.colorG), static_cast<std::uint8_t>(it->second.colorB), 255);
+            drawImageNode(it->second.pos, "", it->second.scale, fc, it->second.highlightAlpha); ++it; }
         } else {
             ++it;
         }
@@ -909,7 +936,31 @@ void Renderer::visit(const SingleSourcePayload& payload) {
 }
 
 void Renderer::visit(const AStarPayload& payload) {
-    visit(payload.baseGraph);
+    // Tự động phân tích Mảng kết quả A* để gán Đích đến (Xanh lá) và Đã duyệt (Xám)
+    GraphPayload enrichedGraph = payload.baseGraph;
+    for (size_t i = 0; i < payload.gCosts.size(); ++i) {
+        if (payload.gCosts[i] < 1e9) {
+            bool inQueue = false;
+            for (const auto& item : payload.priorityQueueSnapShot) {
+                if (item.second == i) {
+                    inQueue = true;
+                    break;
+                }
+            }
+            if (!inQueue) enrichedGraph.visitedVertices.push_back(i);
+        }
+    }
+    enrichedGraph.successVertices.push_back(payload.targetVertex);
+    if (payload.targetVertex < payload.gCosts.size() && payload.gCosts[payload.targetVertex] < 1e9) {
+        size_t curr = payload.targetVertex;
+        while(curr != INVALID_INDEX && curr < payload.previousVertices.size() && payload.previousVertices[curr] != INVALID_INDEX) {
+            enrichedGraph.successVertices.push_back(curr);
+            enrichedGraph.highlightedEdges.push_back({payload.previousVertices[curr], curr, 0});
+            curr = payload.previousVertices[curr];
+        }
+        if (curr != INVALID_INDEX) enrichedGraph.successVertices.push_back(curr);
+    }
+    visit(enrichedGraph);
     
     sf::Vector2f nodeSize = getNodeSize();
     for (size_t i = 0; i < payload.baseGraph.vertices.size(); ++i) {
@@ -1000,13 +1051,13 @@ void Renderer::visit(const GridPayload& payload) {
             } else if (state == 1) { // Wall
                 cell.setFillColor(isDark ? sf::Color(200, 210, 220) : sf::Color(50, 50, 50));
             } else if (state == 2) { // Start
-                cell.setFillColor(sf::Color(50, 200, 100)); // Xanh lá dịu
+                cell.setFillColor(theme.successColor); 
             } else if (state == 3) { // Target
-                cell.setFillColor(sf::Color(230, 80, 80)); // Đỏ dịu
+                cell.setFillColor(theme.highlightColor); 
             } else if (state == 4) { // Visited
-                cell.setFillColor(isDark ? sf::Color(50, 120, 180, 200) : sf::Color(100, 200, 255, 200));
+                cell.setFillColor(theme.visitedColor);
             } else if (state == 5) { // Path
-                cell.setFillColor(sf::Color(255, 200, 50)); // Vàng cam
+                cell.setFillColor(theme.successColor);
             }
 
             if (payload.currentCell.first == r && payload.currentCell.second == c) {
@@ -1030,6 +1081,7 @@ void Renderer::visit(const MenuAnimPayload& payload) {
         sf::Color primary = theme.inputMenuPrimaryColor;
         sf::Color accent = theme.inputMenuAccentColor;
         sf::Color highlight = theme.highlightColor;
+        sf::Color cornerCol = isDark ? highlight : primary;
 
         sf::Color fillCol = isDark ? sf::Color(45, 40, 85, 240) : sf::Color(primary.r, primary.g, primary.b, 240);
         if (isHovered) fillCol = isDark ? sf::Color(70, 60, 120, 255) : sf::Color(accent.r, accent.g, accent.b, 255);
@@ -1063,25 +1115,25 @@ void Renderer::visit(const MenuAnimPayload& payload) {
             float corner = 14.0f;
             sf::VertexArray lines(sf::PrimitiveType::Lines, 16);
             
-            lines[0].position = bPos + sf::Vector2f(-offset, corner - offset); lines[0].color = highlight;
-            lines[1].position = bPos + sf::Vector2f(-offset, -offset); lines[1].color = highlight;
-            lines[2].position = bPos + sf::Vector2f(-offset, -offset); lines[2].color = highlight;
-            lines[3].position = bPos + sf::Vector2f(corner - offset, -offset); lines[3].color = highlight;
+            lines[0].position = bPos + sf::Vector2f(-offset, corner - offset); lines[0].color = cornerCol;
+            lines[1].position = bPos + sf::Vector2f(-offset, -offset); lines[1].color = cornerCol;
+            lines[2].position = bPos + sf::Vector2f(-offset, -offset); lines[2].color = cornerCol;
+            lines[3].position = bPos + sf::Vector2f(corner - offset, -offset); lines[3].color = cornerCol;
 
-            lines[4].position = bPos + sf::Vector2f(bSize.x + offset, corner - offset); lines[4].color = highlight;
-            lines[5].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[5].color = highlight;
-            lines[6].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[6].color = highlight;
-            lines[7].position = bPos + sf::Vector2f(bSize.x - corner + offset, -offset); lines[7].color = highlight;
+            lines[4].position = bPos + sf::Vector2f(bSize.x + offset, corner - offset); lines[4].color = cornerCol;
+            lines[5].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[5].color = cornerCol;
+            lines[6].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[6].color = cornerCol;
+            lines[7].position = bPos + sf::Vector2f(bSize.x - corner + offset, -offset); lines[7].color = cornerCol;
 
-            lines[8].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y - corner + offset); lines[8].color = highlight;
-            lines[9].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[9].color = highlight;
-            lines[10].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[10].color = highlight;
-            lines[11].position = bPos + sf::Vector2f(bSize.x - corner + offset, bSize.y + offset); lines[11].color = highlight;
+            lines[8].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y - corner + offset); lines[8].color = cornerCol;
+            lines[9].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[9].color = cornerCol;
+            lines[10].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[10].color = cornerCol;
+            lines[11].position = bPos + sf::Vector2f(bSize.x - corner + offset, bSize.y + offset); lines[11].color = cornerCol;
 
-            lines[12].position = bPos + sf::Vector2f(-offset, bSize.y - corner + offset); lines[12].color = highlight;
-            lines[13].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[13].color = highlight;
-            lines[14].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[14].color = highlight;
-            lines[15].position = bPos + sf::Vector2f(corner - offset, bSize.y + offset); lines[15].color = highlight;
+            lines[12].position = bPos + sf::Vector2f(-offset, bSize.y - corner + offset); lines[12].color = cornerCol;
+            lines[13].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[13].color = cornerCol;
+            lines[14].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[14].color = cornerCol;
+            lines[15].position = bPos + sf::Vector2f(corner - offset, bSize.y + offset); lines[15].color = cornerCol;
             
             window.getWindow().draw(lines);
         }
@@ -1475,6 +1527,7 @@ void Renderer::visit(const TopBarPayload& payload) {
         sf::Color primary = theme.inputMenuPrimaryColor;
         sf::Color accent = theme.inputMenuAccentColor;
         sf::Color highlight = theme.highlightColor;
+        sf::Color cornerCol = isDark ? highlight : primary;
 
         sf::Color fillCol = isDark ? sf::Color(45, 40, 85, 240) : sf::Color(primary.r, primary.g, primary.b, 240);
         if (isHovered) fillCol = isDark ? sf::Color(70, 60, 120, 255) : sf::Color(accent.r, accent.g, accent.b, 255);
@@ -1508,25 +1561,25 @@ void Renderer::visit(const TopBarPayload& payload) {
             float corner = 14.0f;
             sf::VertexArray lines(sf::PrimitiveType::Lines, 16);
             
-            lines[0].position = bPos + sf::Vector2f(-offset, corner - offset); lines[0].color = highlight;
-            lines[1].position = bPos + sf::Vector2f(-offset, -offset); lines[1].color = highlight;
-            lines[2].position = bPos + sf::Vector2f(-offset, -offset); lines[2].color = highlight;
-            lines[3].position = bPos + sf::Vector2f(corner - offset, -offset); lines[3].color = highlight;
+            lines[0].position = bPos + sf::Vector2f(-offset, corner - offset); lines[0].color = cornerCol;
+            lines[1].position = bPos + sf::Vector2f(-offset, -offset); lines[1].color = cornerCol;
+            lines[2].position = bPos + sf::Vector2f(-offset, -offset); lines[2].color = cornerCol;
+            lines[3].position = bPos + sf::Vector2f(corner - offset, -offset); lines[3].color = cornerCol;
 
-            lines[4].position = bPos + sf::Vector2f(bSize.x + offset, corner - offset); lines[4].color = highlight;
-            lines[5].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[5].color = highlight;
-            lines[6].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[6].color = highlight;
-            lines[7].position = bPos + sf::Vector2f(bSize.x - corner + offset, -offset); lines[7].color = highlight;
+            lines[4].position = bPos + sf::Vector2f(bSize.x + offset, corner - offset); lines[4].color = cornerCol;
+            lines[5].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[5].color = cornerCol;
+            lines[6].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[6].color = cornerCol;
+            lines[7].position = bPos + sf::Vector2f(bSize.x - corner + offset, -offset); lines[7].color = cornerCol;
 
-            lines[8].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y - corner + offset); lines[8].color = highlight;
-            lines[9].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[9].color = highlight;
-            lines[10].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[10].color = highlight;
-            lines[11].position = bPos + sf::Vector2f(bSize.x - corner + offset, bSize.y + offset); lines[11].color = highlight;
+            lines[8].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y - corner + offset); lines[8].color = cornerCol;
+            lines[9].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[9].color = cornerCol;
+            lines[10].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[10].color = cornerCol;
+            lines[11].position = bPos + sf::Vector2f(bSize.x - corner + offset, bSize.y + offset); lines[11].color = cornerCol;
 
-            lines[12].position = bPos + sf::Vector2f(-offset, bSize.y - corner + offset); lines[12].color = highlight;
-            lines[13].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[13].color = highlight;
-            lines[14].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[14].color = highlight;
-            lines[15].position = bPos + sf::Vector2f(corner - offset, bSize.y + offset); lines[15].color = highlight;
+            lines[12].position = bPos + sf::Vector2f(-offset, bSize.y - corner + offset); lines[12].color = cornerCol;
+            lines[13].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[13].color = cornerCol;
+            lines[14].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[14].color = cornerCol;
+            lines[15].position = bPos + sf::Vector2f(corner - offset, bSize.y + offset); lines[15].color = cornerCol;
             
             window.getWindow().draw(lines);
         }

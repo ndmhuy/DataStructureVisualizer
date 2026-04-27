@@ -32,6 +32,8 @@ class Theme {
     float nodeTextVerticalOffset = 10.0f;
     sf::Color highlightColor;
     sf::Color accentColor;
+    sf::Color visitedColor;
+    sf::Color successColor;
 
     // CodePanel theme values
     sf::Color codePanelBackgroundColor;

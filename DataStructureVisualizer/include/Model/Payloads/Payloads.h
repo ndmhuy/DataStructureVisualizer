@@ -14,10 +14,11 @@ struct LinkedListPayload : public IPayload {
     std::vector<int> values;
     std::vector<size_t> highlightedNodes;
     std::map<std::string, size_t> pointers; // e.g., {"head": 0, "tail": 4, "current": 2}
+    std::vector<size_t> successNodes;
 
     LinkedListPayload() = default;
-    LinkedListPayload(std::vector<int> values, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {})
-        : values(std::move(values)), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)) {}
+    LinkedListPayload(std::vector<int> values, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<size_t> successNodes = {})
+        : values(std::move(values)), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)), successNodes(std::move(successNodes)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new LinkedListPayload(*this); }
@@ -64,6 +65,8 @@ struct GraphPayload : public IPayload {
     std::vector<Edge> edges;
     std::vector<size_t> highlightedVertices;
     std::vector<Edge> highlightedEdges;
+    std::vector<size_t> visitedVertices;
+    std::vector<size_t> successVertices;
 
     GraphPayload() = default;
     GraphPayload(
@@ -71,8 +74,10 @@ struct GraphPayload : public IPayload {
         std::vector<Edge> edges = {},
         std::vector<size_t> highlightedVertices = {},
         std::vector<Edge> highlightedEdges = {},
-        std::vector<Position> positions = {})
-        : vertices(std::move(vertices)), positions(std::move(positions)), edges(std::move(edges)), highlightedVertices(std::move(highlightedVertices)), highlightedEdges(std::move(highlightedEdges)) {}
+        std::vector<Position> positions = {},
+        std::vector<size_t> visitedVertices = {},
+        std::vector<size_t> successVertices = {})
+        : vertices(std::move(vertices)), positions(std::move(positions)), edges(std::move(edges)), highlightedVertices(std::move(highlightedVertices)), highlightedEdges(std::move(highlightedEdges)), visitedVertices(std::move(visitedVertices)), successVertices(std::move(successVertices)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new GraphPayload(*this); }

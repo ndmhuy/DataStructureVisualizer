@@ -37,6 +37,11 @@ struct NodeAnimState {
     sf::Vector2f pos;
     float scale = 0.0f;
     float highlightAlpha = 0.0f;
+    sf::Vector2f velPos = {0.0f, 0.0f};
+    float velScale = 0.0f;
+    float colorR = -1.0f; // -1 signifies uninitialized
+    float colorG = 0.0f;
+    float colorB = 0.0f;
 };
 enum class ShapeType { Circle, Rectangle };
 
@@ -75,8 +80,8 @@ public:
     void drawBackground();
 
     // Node and array element rendering.
-    void drawImageNode(sf::Vector2f pos, const std::string& text, float scaleMultiplier = 1.0f, float highlightAlpha = 0.0f);
-    void drawArrayCell(sf::Vector2f pos, const std::string& text, float scaleMultiplier = 1.0f, float highlightAlpha = 0.0f);
+    void drawImageNode(sf::Vector2f pos, const std::string& text, float scaleMultiplier, sf::Color nodeColor, float pulseAlpha = 0.0f);
+    void drawArrayCell(sf::Vector2f pos, const std::string& text, float scaleMultiplier, sf::Color cellColor, float pulseAlpha = 0.0f);
 
     // Edge/connector rendering helpers.
     sf::Vector2f getBoundaryPoint(sf::Vector2f center, sf::Vector2f size,

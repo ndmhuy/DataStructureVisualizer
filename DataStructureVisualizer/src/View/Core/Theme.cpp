@@ -57,6 +57,8 @@ Theme Theme::getDefaultTheme() {
     t.arrowColor = sf::Color({0, 71, 171});
     t.highlightColor = sf::Color(255, 215, 0, 255); // Màu vàng cho Node/Array được highlight
     t.accentColor = sf::Color(230, 50, 80, 255);    // Màu đỏ cho Edge được highlight
+    t.visitedColor = sf::Color(180, 180, 180, 255); // Màu xám cho Node đã duyệt xong
+    t.successColor = sf::Color(50, 205, 50, 255);   // Màu xanh lá cho Node đích / tìm thấy
     t.windowClearColor = sf::Color(40, 44, 52, 255);
     t.bgTintColor = sf::Color(255, 255, 255, 255);  // Ở giao diện sáng thì giữ nguyên màu gốc
     t.nodeTextBaseSize = 30;
@@ -144,6 +146,8 @@ Theme Theme::getDarkTheme() {
     t.buttonNormalColor = sf::Color(180, 180, 180, 255);
     t.buttonHoveredColor = sf::Color(220, 220, 220, 255);
     t.buttonPressedColor = sf::Color(100, 100, 100, 255);
+    t.visitedColor = sf::Color(100, 100, 110, 255); // Xám đậm cho nền tối
+    t.successColor = sf::Color(0, 255, 100, 255);   // Xanh neon rực rỡ
 
     return t;
 }
