@@ -692,23 +692,25 @@ void Renderer::visit(const GridPayload& payload) {
             cell.setPosition({startX + c * cellSize + 1.0f, startY + r * cellSize + 1.0f});
 
             int state = grid[r][c];
+            bool isDark = theme.codePanelBackgroundColor.r < 100; // Nhận diện Dark Mode dựa vào màu theme
+            
             if (state == 0) { // Empty
-                cell.setFillColor(sf::Color(200, 200, 200));
+                cell.setFillColor(isDark ? sf::Color(60, 65, 75, 180) : sf::Color(220, 220, 230, 180));
             } else if (state == 1) { // Wall
-                cell.setFillColor(sf::Color(50, 50, 50));
+                cell.setFillColor(isDark ? sf::Color(200, 210, 220) : sf::Color(50, 50, 50));
             } else if (state == 2) { // Start
-                cell.setFillColor(sf::Color::Green);
+                cell.setFillColor(sf::Color(50, 200, 100)); // Xanh lá dịu
             } else if (state == 3) { // Target
-                cell.setFillColor(sf::Color::Red);
+                cell.setFillColor(sf::Color(230, 80, 80)); // Đỏ dịu
             } else if (state == 4) { // Visited
-                cell.setFillColor(sf::Color::Cyan);
+                cell.setFillColor(isDark ? sf::Color(50, 120, 180, 200) : sf::Color(100, 200, 255, 200));
             } else if (state == 5) { // Path
-                cell.setFillColor(sf::Color::Yellow);
+                cell.setFillColor(sf::Color(255, 200, 50)); // Vàng cam
             }
 
             if (payload.currentCell.first == r && payload.currentCell.second == c) {
                 cell.setOutlineThickness(3.0f);
-                cell.setOutlineColor(sf::Color::Magenta);
+                cell.setOutlineColor(theme.highlightColor); // Dùng màu highlight của Theme cho đồng bộ
             }
 
             window.getWindow().draw(cell);
@@ -745,6 +747,8 @@ void Renderer::visit(const MenuAnimPayload& payload) {
     sf::Color primary = theme.inputMenuPrimaryColor;
     sf::Color accent = theme.inputMenuAccentColor;
     sf::Color highlight = theme.highlightColor;
+    bool isDark = theme.codePanelBackgroundColor.r < 100;
+    sf::Color silverCol = sf::Color(200, 210, 220);
 
     for (int i = 0; i < totalItems; ++i) {
         int row = i / cols;
@@ -889,7 +893,7 @@ void Renderer::visit(const MenuAnimPayload& payload) {
                             cell.setFillColor(fade(accent, 200));
                             cell.setScale({1.5f, 1.5f});
                         } else {
-                            cell.setFillColor(fade(primary, 80));
+                        cell.setFillColor(isDark ? fade(silverCol, 150) : fade(primary, 80));
                         }
                         window.getWindow().draw(cell);
                     }
@@ -948,7 +952,7 @@ void Renderer::visit(const MenuAnimPayload& payload) {
                             cell.setFillColor(fade(highlight, 200));
                             cell.setScale({1.5f, 1.5f});
                         } else {
-                            cell.setFillColor(fade(primary, 80));
+                        cell.setFillColor(isDark ? fade(silverCol, 150) : fade(primary, 80));
                         }
                         window.getWindow().draw(cell);
                     }
@@ -969,11 +973,11 @@ void Renderer::visit(const MenuAnimPayload& payload) {
 
                     sf::VertexArray line(sf::PrimitiveType::Lines, 2);
                     line[0].position = hexNodes[j];  line[0].color = fade(accent, 150);
-                    line[1].position = hexNodes[next]; line[1].color = fade(primary, 50);
+                    line[1].position = hexNodes[next]; line[1].color = isDark ? fade(silverCol, 80) : fade(primary, 50);
                     window.getWindow().draw(line);
 
                     sf::VertexArray crossLine(sf::PrimitiveType::Lines, 2);
-                    crossLine[0].position = hexNodes[j];  crossLine[0].color = fade(primary, 80);
+                    crossLine[0].position = hexNodes[j];  crossLine[0].color = isDark ? fade(silverCol, 80) : fade(primary, 80);
                     crossLine[1].position = hexNodes[cross]; crossLine[1].color = fade(highlight, 40);
                     window.getWindow().draw(crossLine);
                 }
@@ -982,7 +986,7 @@ void Renderer::visit(const MenuAnimPayload& payload) {
                     sf::CircleShape hex(12.0f, 6);
                     hex.setOrigin({12.0f, 12.0f});
                     hex.setPosition(pos);
-                    hex.setFillColor(fade(primary, 120));
+                    hex.setFillColor(isDark ? fade(silverCol, 60) : fade(primary, 120));
                     hex.setOutlineThickness(1.5f);
                     hex.setOutlineColor(fade(accent, 220));
                     hex.setRotation(sf::degrees(time * 40.0f));
@@ -1009,9 +1013,9 @@ void Renderer::visit(const MenuAnimPayload& payload) {
                         } else if (blink > 0.5f) {
                             cell.setFillColor(fade(accent, 150));
                         } else {
-                            cell.setFillColor(fade(primary, 60));
-                            cell.setOutlineThickness(1.0f);
-                            cell.setOutlineColor(fade(primary, 100));
+                        cell.setFillColor(isDark ? fade(silverCol, 50) : fade(primary, 60));
+                        cell.setOutlineThickness(1.0f);
+                        cell.setOutlineColor(isDark ? fade(silverCol, 120) : fade(primary, 100));
                         }
                         window.getWindow().draw(cell);
                     }
@@ -1046,7 +1050,7 @@ void Renderer::visit(const MenuAnimPayload& payload) {
                     sf::CircleShape childNode(10.0f);
                     childNode.setOrigin({10.0f, 10.0f});
                     childNode.setPosition(children[j]);
-                    childNode.setFillColor(fade(primary, 120));
+                childNode.setFillColor(isDark ? fade(silverCol, 60) : fade(primary, 120));
                     childNode.setOutlineThickness(1.5f);
                     childNode.setOutlineColor(fade(accent, 200));
                     window.getWindow().draw(childNode);
