@@ -277,19 +277,22 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline* timeline, size_t i
             Node* minRight = root->right;
             size_t minRightIdx = 2 * id + 2;
             while (minRight->left) {
+                if (timeline)
+                timeline->addFrame(Frame(makeTreePayload({minRightIdx}), 6, "Finding..."));
+
                 minRight = minRight->left;
                 minRightIdx = 2 * minRightIdx + 1;
             }
 
-            if (timeline)
-            timeline->addFrame(Frame(makeTreePayload({currIdx, minRightIdx}), 6, "Overwrite " + std::to_string(minRight->value) + " on " + std::to_string(root->value)));
+            if (timeline) 
+            timeline->addFrame(Frame(makeTreePayload({currIdx, minRightIdx}), 7, "Node found! Overwrite " + std::to_string(minRight->value) + " on " + std::to_string(root->value)));
 
             root->value = minRight->value;
             initialRemove(root->value, root->right, timeline, 2*id+2);
 
             size_t newRootIdx = id;
             if (timeline)
-            timeline->addFrame(Frame(makeTreePayload({newRootIdx}), 7, "Removed the inorder successor"));
+            timeline->addFrame(Frame(makeTreePayload({newRootIdx}), 8, "Removed the inorder successor"));
         }
     }
 
@@ -334,13 +337,13 @@ void AVLTree::insert(int value, Timeline& timeline) {
 void AVLTree::remove(int value, Timeline& timeline) {
     timeline.addFrame(Frame(makeTreePayload({}), 1, "Attempting to remove " + std::to_string(value)));
 
-    if (initialRemove(value, root, &timeline, 0)) {
+    if (!initialRemove(value, root, &timeline, 0)) {
         timeline.addFrame(Frame(makeTreePayload({}), 2, "Remove " + std::to_string(value) + " failed."));
 
         return;
     }
 
-    timeline.addFrame(Frame(makeTreePayload({}), 3, "Value " + std::to_string(value) + " was not found in the tree."));
+    timeline.addFrame(Frame(makeTreePayload({}), 3, "Successfully removed " + std::to_string(value)));
 }
 
 void AVLTree::search(int value, Timeline& timeline) {

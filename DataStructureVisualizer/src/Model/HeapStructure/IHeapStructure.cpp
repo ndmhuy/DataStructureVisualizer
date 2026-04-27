@@ -164,34 +164,40 @@ void IHeapStructure::remove(int value, Timeline& timeline) {
 
     size_t targetIdx = INVALID_INDEX;
     for (size_t idx = 0; idx < heapArray.size(); ++idx) {
+        timeline.addFrame(Frame(HeapPayload(heapArray, {idx}), 2,
+            "Checking index " + std::to_string(idx)));
+
         if (heapArray[idx] == value) {
+            timeline.addFrame(Frame(HeapPayload(heapArray, {idx}), 3,
+                "Match found at index " + std::to_string(idx)));
+
             targetIdx = idx;
             break;
         }
     }
 
     if (targetIdx == INVALID_INDEX) {
-        timeline.addFrame(Frame(HeapPayload(heapArray, {}), 2,
+        timeline.addFrame(Frame(HeapPayload(heapArray, {}), 4,
             "Value " + std::to_string(value) + " not found!"));
         return;
     }
 
     size_t lastIdx = heapArray.size() - 1;
-    timeline.addFrame(Frame(HeapPayload(heapArray, {targetIdx, lastIdx}), 3,
+    timeline.addFrame(Frame(HeapPayload(heapArray, {targetIdx, lastIdx}), 5,
         "Swapping target with last element for removal"));
 
     std::swap(heapArray[targetIdx], heapArray.back());
-    timeline.addFrame(Frame(HeapPayload(heapArray, {lastIdx}), 4, "Removing the last element"));
+    timeline.addFrame(Frame(HeapPayload(heapArray, {lastIdx}), 6, "Removing the last element"));
 
     heapArray.pop_back();
 
     if (targetIdx < heapArray.size()) {
-        timeline.addFrame(Frame(HeapPayload(heapArray, {targetIdx}), 5,
+        timeline.addFrame(Frame(HeapPayload(heapArray, {targetIdx}), 7,
             "Re-balancing at swap position"));
         fixNode(targetIdx, timeline);
     }
 
-    timeline.addFrame(Frame(HeapPayload(heapArray, {}), 6, "Removing successfully!"));
+    timeline.addFrame(Frame(HeapPayload(heapArray, {}), 8, "Removing successfully!"));
 }
 
 void IHeapStructure::update(int oldValue, int newValue, Timeline& timeline) {
@@ -199,24 +205,30 @@ void IHeapStructure::update(int oldValue, int newValue, Timeline& timeline) {
 
     size_t targetIdx = INVALID_INDEX;
     for (size_t idx = 0; idx < heapArray.size(); ++idx) {
+        timeline.addFrame(Frame(HeapPayload(heapArray, {idx}), 2,
+            "Checking index " + std::to_string(idx)));
+
         if (heapArray[idx] == oldValue) {
+            timeline.addFrame(Frame(HeapPayload(heapArray, {idx}), 3,
+                "Match found at index " + std::to_string(idx)));
+
             targetIdx = idx;
             break;
         }
     }
 
     if (targetIdx == INVALID_INDEX) {
-        timeline.addFrame(Frame(HeapPayload(heapArray, {}), 2, "Old value not found!"));
+        timeline.addFrame(Frame(HeapPayload(heapArray, {}), 4, "Old value not found!"));
         return;
     }
 
     heapArray[targetIdx] = newValue;
-    timeline.addFrame(Frame(HeapPayload(heapArray, {targetIdx}), 3,
+    timeline.addFrame(Frame(HeapPayload(heapArray, {targetIdx}), 5,
         "Value changed. Re-balancing..."));
 
     fixNode(targetIdx, timeline);
 
-    timeline.addFrame(Frame(HeapPayload(heapArray, {}), 4, "Updating successfully!"));
+    timeline.addFrame(Frame(HeapPayload(heapArray, {}), 6, "Updating successfully!"));
 }
 
 void IHeapStructure::clear(Timeline& timeline) {
