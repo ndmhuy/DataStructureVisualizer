@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <cstdint>
 
 #include "View/Widgets/Sfml/Slider.h"
 
@@ -148,11 +149,64 @@ void Slider::applyTheme(const Theme& selectedTheme) {
 }
 
 void Slider::render(sf::RenderWindow& window) {
+    static sf::Clock animClock;
+    float time = animClock.getElapsedTime().asSeconds();
+
+    // 1. Knob Scale Animation
+    float targetScale = 1.0f;
+    if (isDragging) targetScale = 1.5f;
+    else if (isHovered) targetScale = 1.2f;
+
+    animScale += (targetScale - animScale) * 0.25f;
+    knob.setScale(sf::Vector2f{animScale, animScale});
+
+    // 2. Text Bump Animation (Giật nảy chữ khi số liệu đổi)
+    if (lastSpeed != *speed && lastSpeed != -1.0f) {
+        textScale = 1.4f; // Phình to đột biến
+    }
+    lastSpeed = *speed;
+    textScale += (1.0f - textScale) * 0.15f; // Thu nhỏ từ từ (Lerp)
+    text.setScale(sf::Vector2f{textScale, textScale});
+
+    // 3. Knob Position & Shake (Rung lắc)
+    sf::Vector2f renderPos = knobpos;
+    if (isDragging) {
+        float shakeX = std::sin(time * 60.0f) * 1.5f;
+        float shakeY = std::cos(time * 50.0f) * 1.5f;
+        renderPos.x += shakeX;
+        renderPos.y += shakeY;
+
+        knob.setOutlineThickness(4.0f);
+        sf::Color glowCol = knobColor;
+        glowCol.a = static_cast<std::uint8_t>(100 + std::sin(time * 20.0f) * 50); // Glow nhấp nháy
+        knob.setOutlineColor(glowCol);
+    } else if (isHovered) {
+        knob.setOutlineThickness(2.0f);
+        sf::Color glowCol = knobColor;
+        glowCol.a = 150;
+        knob.setOutlineColor(glowCol);
+    } else {
+        knob.setOutlineThickness(0.0f);
+    }
+    knob.setPosition(renderPos);
+
+    // 4. Thanh nạp (Filled Track)
+    sf::CircleShape filledSemiCircle = semiCircle1;
+    filledSemiCircle.setFillColor(sf::Color(knobColor.r, knobColor.g, knobColor.b, 150));
+    
+    sf::RectangleShape filledTrack = track;
+    filledTrack.setSize(sf::Vector2f(std::max(0.0f, knobpos.x - start), radius * 2));
+    filledTrack.setFillColor(sf::Color(knobColor.r, knobColor.g, knobColor.b, 150));
+
     window.draw(semiCircle1);
     window.draw(semiCircle2);
     window.draw(track);
+    window.draw(filledSemiCircle);
+    window.draw(filledTrack);
     window.draw(knob);
     window.draw(text);
+
+    knob.setPosition(knobpos); // Phục hồi lại toạ độ gốc sau khi vẽ xong
 }
 
 // when the speed is changed-> used this to change the text
