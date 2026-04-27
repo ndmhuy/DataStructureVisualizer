@@ -14,8 +14,13 @@ void CodePanel::setHighlightedLine(int line){
     highlightedline = line;
 }
 
+void CodePanel::setMessage(const std::string& msg) {
+    currentMessage = msg;
+}
+
 void CodePanel::clearCode(){
     highlightedline = -1;
+    currentMessage.clear();
     listofCodes.clear();
 }
 
@@ -26,7 +31,7 @@ void CodePanel::resize(const sf::RenderWindow& window) {
 }
 
 void CodePanel::render(const sf::RenderWindow& window){
-    if (listofCodes.empty()) return; // Don't draw anything if there's no code
+    if (listofCodes.empty() && currentMessage.empty()) return; // Chỉ ẩn nếu CẢ code và message đều trống
 
     // 1. Lấy kích thước và màu sắc từ Theme
     float panelWidth = theme.codePanelWidth;
@@ -62,21 +67,24 @@ void CodePanel::render(const sf::RenderWindow& window){
         theme.codePanelHighlightColor.b,
         theme.codePanelHighlightColor.a
     );
-    
+    float rounding = theme.codePanelRounding;
+    float borderThickness = theme.codePanelBorderThickness;
 
     // 2. Position the panel at the TOP RIGHT of the screen
     float windowX = window.getSize().x;
-    ImGui::SetNextWindowPos(
-        ImVec2(windowX - panelWidth - theme.codePanelRightOffset, theme.codePanelTopOffset),
-        ImGuiCond_Always
-    );
-    ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight));
 
     // 3. Remove default ImGui window styling
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | 
                              ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                              ImGuiWindowFlags_NoBringToFrontOnFocus;
     
+    // --- RENDER CODE PANEL (Chỉ vẽ khi có mã giả) ---
+    if (!listofCodes.empty() && showCode) {
+        ImGui::SetNextWindowPos(
+        ImVec2(windowX - panelWidth - theme.codePanelRightOffset, theme.codePanelTopOffset),
+        ImGuiCond_Always
+    );
+    ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight));
     ImGui::Begin("CustomCodePanel", nullptr, flags);
 
     // --- START CUSTOM DRAWING ---
@@ -84,9 +92,6 @@ void CodePanel::render(const sf::RenderWindow& window){
     ImVec2 p = ImGui::GetWindowPos();   
     ImVec2 s = ImGui::GetWindowSize();  
     
-    float rounding = theme.codePanelRounding;
-    float borderThickness = theme.codePanelBorderThickness;
-
     // Layer 1: Main Background
     draw_list->AddRectFilled(p, ImVec2(p.x + s.x, p.y + s.y), bgColor, rounding);
 
@@ -170,4 +175,31 @@ void CodePanel::render(const sf::RenderWindow& window){
     ImGui::PopStyleColor(); // Pop transparent child background
 
     ImGui::End();
+    }
+
+    if (!currentMessage.empty()) {
+        float msgY = (listofCodes.empty() || !showCode) ? theme.codePanelTopOffset : (theme.codePanelTopOffset + panelHeight + 15.0f);
+        ImGui::SetNextWindowPos(ImVec2(windowX - panelWidth - theme.codePanelRightOffset, msgY), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(panelWidth, 0)); 
+
+        ImGuiWindowFlags msgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
+                                    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                                    ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
+        ImGui::PushStyleColor(ImGuiCol_Border, borderColor);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, borderThickness);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, rounding);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding, padding));
+
+        ImGui::Begin("MessagePanel", nullptr, msgFlags);
+        
+        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+        ImGui::TextWrapped("Step info: %s", currentMessage.c_str());
+        ImGui::PopStyleColor();
+
+        ImGui::End();
+        ImGui::PopStyleVar(3);
+        ImGui::PopStyleColor(2);
+    }
 }

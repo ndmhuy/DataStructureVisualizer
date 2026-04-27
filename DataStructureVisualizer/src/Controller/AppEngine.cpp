@@ -19,6 +19,8 @@
 
 namespace {
 
+bool isInitialState = true;
+
 AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action) {
     switch (structureType) {
         case StructureType::SinglyLinkedList:
@@ -74,12 +76,14 @@ AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action)
 void syncCodePanelWithCurrentFrame(UIManager& uiManager,
 const Timeline& timeline) {
     const Frame* currentFrame = timeline.getCurrentFrame();
-    if (!currentFrame) {
+    if (!currentFrame || isInitialState) {
         uiManager.setCodePanelHighlightedLine(-1);
+        uiManager.setCodePanelMessage("");
         return;
     }
     
     uiManager.setCodePanelHighlightedLine(currentFrame->getCodeLineId());
+    uiManager.setCodePanelMessage(currentFrame->getMessage());
 }
     
 bool isGraphStructureType(StructureType structureType) {
@@ -151,21 +155,41 @@ StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
 }
 
 IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
+    sf::Vector2u winSize = window.getWindow().getSize();
+    LayoutConfig layoutConfig{};
+    layoutConfig.screenWidth = static_cast<float>(winSize.x);
+    layoutConfig.screenHeight = static_cast<float>(winSize.y);
+    float minDimension = std::min(layoutConfig.screenWidth, layoutConfig.screenHeight);
+    layoutConfig.padding = std::clamp(
+        minDimension * layoutConfig.layoutPaddingRatio,
+        layoutConfig.layoutPaddingMin,
+        layoutConfig.layoutPaddingMax);
+
     switch (structureType) {
         case StructureType::SinglyLinkedList:
-        return new SinglyLinkedList(LayoutConfig{});
+        return new SinglyLinkedList(layoutConfig);
         case StructureType::MinHeap:
-        return new MinHeap(LayoutConfig{});        
+        return new MinHeap(layoutConfig);
         case StructureType::MaxHeap:
-        return new MaxHeap(LayoutConfig{});          
+        return new MaxHeap(layoutConfig);
         case StructureType::AVLTree:
-        return new AVLTree(LayoutConfig{});
+        return new AVLTree(layoutConfig);
         case StructureType::AdjacencyList:
-        return new AdjacencyList(LayoutConfig{});
+        return new AdjacencyList(layoutConfig);
         case StructureType::AdjacencyMatrix:
-        return new AdjacencyMatrix(LayoutConfig{});
-        case StructureType::GridGraph:
-        return new GridGraph(10, 10);
+        return new AdjacencyMatrix(layoutConfig);
+        case StructureType::GridGraph: {
+        const int defaultRowsInt = std::clamp(
+            static_cast<int>(layoutConfig.screenHeight / layoutConfig.gridTargetCellPixels),
+            layoutConfig.gridDefaultRowsMin,
+            layoutConfig.gridDefaultRowsMax);
+        const float aspect = (winSize.y == 0) ? 1.0f : static_cast<float>(winSize.x) / static_cast<float>(winSize.y);
+        const int defaultColsInt = std::clamp(
+            static_cast<int>(defaultRowsInt * aspect),
+            layoutConfig.gridDefaultColsMin,
+            layoutConfig.gridDefaultColsMax);
+        return new GridGraph(static_cast<size_t>(defaultRowsInt), static_cast<size_t>(defaultColsInt));
+        }
         default:
         return nullptr;
     }
@@ -188,9 +212,12 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
     renderer.resetCustomPositions();
     clearUndoHistory();
 
+    isInitialState = true;
+
     Timeline timeline;
     if (activeStructure) {
         activeStructure->clear(timeline);
+        timeline.goToLastFrame();
     } else {
         timeline.clear();
     }
@@ -205,6 +232,7 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
 void AppEngine::handleDataActionRequest() {
     const int action = uiManager.getInputAction();
     if (action == 0) {
+        uiManager.resetInputAction();
         return;
     }
     
@@ -214,6 +242,7 @@ void AppEngine::handleDataActionRequest() {
     }
     
     const int mode = uiManager.getInputMode();
+    int selectedDS = uiManager.getSelectedDS();
     const std::string input1 = uiManager.getInputString1();
     const std::string input2 = uiManager.getInputString2();
     const std::string input3 = uiManager.getInputString3();
@@ -232,306 +261,604 @@ void AppEngine::handleDataActionRequest() {
     Timeline timeline;
     bool handled = false;
     
-    // New switch action
-    if (activeStructureType == StructureType::SinglyLinkedList || activeStructureType == StructureType::AVLTree) {
-        auto* standard = dynamic_cast<IStandardStructure*>(activeStructure);
-        if (!standard) return;
-
-        switch (action) {
-            case 1: { // 1. INIT
-                if (mode == 0) { // Array
+    switch (selectedDS) {
+        case 0: { // SINGLY LINKED LIST
+            auto* sll = dynamic_cast<IStandardStructure*>(activeStructure);
+            if (!sll) {
+                uiManager.resetInputAction();
+                return;
+            }
+            
+            switch (action) {
+                case 1: { // 1. INIT
+                    if (mode == 0) { // Array
+                        dataManager.inputFromConsole(input1);
+                        if (!dataManager.getData().empty()) {
+                            sll->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 1) { // Random
+                        int size = MathUtils::getRandomInRange(3, 15);
+                        dataManager.randomData(size, -99, 99);
+                        if (!dataManager.getData().empty()) {
+                            sll->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 2) { // File
+                        dataManager.inputFromFile(input1);
+                        if (!dataManager.getData().empty()) {
+                            sll->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 2: { // 2. INSERT
+                    if (mode == 0) { // Single
+                        dataManager.inputFromConsole(input1);
+                        if (!dataManager.getData().empty()) {
+                            sll->insert(dataManager.getData()[0], timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 1) { // Random
+                        dataManager.randomData(1, -99, 99);
+                        if (!dataManager.getData().empty()) {
+                            sll->insert(dataManager.getData()[0], timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 3: { // 3. SEARCH
                     dataManager.inputFromConsole(input1);
                     if (!dataManager.getData().empty()) {
-                        standard->initialize(dataManager.getData(), timeline);
+                        sll->search(dataManager.getData()[0], timeline);
                         handled = true;
                     }
-                } else if (mode == 1) { // Random
-                    int size = MathUtils::getRandomInRange(3, 15);
-                    dataManager.randomData(size, -99, 99);
-                    if (!dataManager.getData().empty()) {
-                        standard->initialize(dataManager.getData(), timeline);
-                        handled = true;
-                    }
-                } else if (mode == 2) { // File
-                    dataManager.inputFromFile(input1);
-                    if (!dataManager.getData().empty()) {
-                        standard->initialize(dataManager.getData(), timeline);
-                        handled = true;
-                    }
+                    break;
                 }
-                break;
-            }
-            case 2: { // 2. INSERT
-                if (mode == 0) { // Single
+                case 4: { // 4. DELETE
                     dataManager.inputFromConsole(input1);
                     if (!dataManager.getData().empty()) {
-                        standard->insert(dataManager.getData()[0], timeline);
+                        sll->remove(dataManager.getData()[0], timeline);
                         handled = true;
                     }
-                } else if (mode == 1) { // Random
-                    dataManager.randomData(1, -99, 99);
-                    if (!dataManager.getData().empty()) {
-                        standard->insert(dataManager.getData()[0], timeline);
+                    break;
+                }
+                case 5: { // 5. UPDATE
+                    dataManager.inputFromConsole(input1 + " " + input2);
+                    if (dataManager.getData().size() >= 2) {
+                        sll->update(dataManager.getData()[0], dataManager.getData()[1], timeline);
                         handled = true;
                     }
+                    break;
                 }
-                break;
-            }
-            case 3: { // 3. SEARCH
-                dataManager.inputFromConsole(input1);
-                if (!dataManager.getData().empty()) {
-                    standard->search(dataManager.getData()[0], timeline);
+                case 6: { // 6. CLEAR
+                    sll->clear(timeline);
                     handled = true;
+                    break;
                 }
-                break;
             }
-            case 4: { // 4. DELETE
-                dataManager.inputFromConsole(input1);
-                if (!dataManager.getData().empty()) {
-                    standard->remove(dataManager.getData()[0], timeline);
-                    handled = true;
-                }
-                break;
-            }
-            case 5: { // 5. UPDATE
-                dataManager.inputFromConsole(input1 + " " + input2);
-                if (dataManager.getData().size() >= 2) {
-                    standard->remove(dataManager.getData()[0], timeline);
-                    standard->insert(dataManager.getData()[1], timeline);
-                    handled = true;
-                }
-                break;
-            }
-            case 6: { // 6. CLEAR
-                standard->clear(timeline);
-                handled = true;
-                break;
-            }
+            break;
         }
-    }
-    else if (activeStructureType == StructureType::MinHeap || activeStructureType == StructureType::MaxHeap) {
-        auto* heap = dynamic_cast<IHeapStructure*>(activeStructure);
-        if (!heap) return;
+        case 1: { // MIN HEAP
+            auto* minheap = dynamic_cast<IHeapStructure*>(activeStructure);
+            if (!minheap) {
+                uiManager.resetInputAction();
+                return;
+            }
 
-        switch (action) {
-            case 1: { // 1. INIT
-                if (mode == 0) { // Array
+            switch (action) {
+                case 1: { // 1. INIT
+                    if (mode == 0) { // Array
+                        dataManager.inputFromConsole(input1);
+                        if (!dataManager.getData().empty()) {
+                            minheap->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 1) { // Random
+                        int size = MathUtils::getRandomInRange(3, 15);
+                        dataManager.randomData(size, -99, 99);
+                        if (!dataManager.getData().empty()) {
+                            minheap->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 2) { // File
+                        dataManager.inputFromFile(input1);
+                        if (!dataManager.getData().empty()) {
+                            minheap->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 2: { // 2. INSERT
+                    if (mode == 0) { // Single
+                        dataManager.inputFromConsole(input1);
+                        if (!dataManager.getData().empty()) {
+                            minheap->insert(dataManager.getData()[0], timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 1) { // Random
+                        dataManager.randomData(1, -99, 99);
+                        if (!dataManager.getData().empty()) {
+                            minheap->insert(dataManager.getData()[0], timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 3: { // 3. EXTRACTTOP
+                    minheap->extractTop(timeline);
+                    handled = true;
+                    break;
+                }
+                case 4: { // 4. PEEK
+                    minheap->peek(timeline);
+                    handled = true;
+                    break;
+                }
+                case 5: { // 5. SEARCH
                     dataManager.inputFromConsole(input1);
                     if (!dataManager.getData().empty()) {
-                        heap->initialize(dataManager.getData(), timeline);
+                        minheap->search(dataManager.getData()[0], timeline);
                         handled = true;
                     }
-                } else if (mode == 1) { // Random
-                    int size = MathUtils::getRandomInRange(3, 15);
-                    dataManager.randomData(size, -99, 99);
-                    if (!dataManager.getData().empty()) {
-                        heap->initialize(dataManager.getData(), timeline);
-                        handled = true;
-                    }
-                } else if (mode == 2) { // File
-                    dataManager.inputFromFile(input1);
-                    if (!dataManager.getData().empty()) {
-                        heap->initialize(dataManager.getData(), timeline);
-                        handled = true;
-                    }
+                    break;
                 }
-                break;
-            }
-            case 2: { // 2. INSERT
-                if (mode == 0) { // Single
+                case 6: { // 6. DELETE
                     dataManager.inputFromConsole(input1);
                     if (!dataManager.getData().empty()) {
-                        heap->insert(dataManager.getData()[0], timeline);
+                        minheap->remove(dataManager.getData()[0], timeline);
                         handled = true;
                     }
-                } else if (mode == 1) { // Random
-                    dataManager.randomData(1, -99, 99);
-                    if (!dataManager.getData().empty()) {
-                        heap->insert(dataManager.getData()[0], timeline);
+                    break;
+                }
+                case 7: { // 7. UPDATE
+                    dataManager.inputFromConsole(input1 + " " + input2);
+                    if (dataManager.getData().size() >= 2) {
+                        minheap->update(dataManager.getData()[0], dataManager.getData()[1], timeline);
                         handled = true;
                     }
+                    break;
                 }
-                break;
-            }
-            case 3: { // 3. EXTRACTTOP
-                heap->extractTop(timeline);
-                handled = true;
-                break;
-            }
-            case 4: { // 4. PEEK
-                heap->peek(timeline);
-                handled = true;
-                break;
-            }
-            case 5: { // 5. SEARCH
-                dataManager.inputFromConsole(input1);
-                if (!dataManager.getData().empty()) {
-                    heap->search(dataManager.getData()[0], timeline);
+                case 8: { // 8. CLEAR
+                    minheap->clear(timeline);
                     handled = true;
+                    break;
                 }
-                break;
             }
-            case 6: { // 6. DELETE
-                dataManager.inputFromConsole(input1);
-                if (!dataManager.getData().empty()) {
-                    heap->remove(dataManager.getData()[0], timeline);
-                    handled = true;
-                }
-                break;
-            }
-            case 7: { // 7. UPDATE
-                dataManager.inputFromConsole(input1 + " " + input2);
-                if (dataManager.getData().size() >= 2) {
-                    heap->remove(dataManager.getData()[0], timeline);
-                    heap->insert(dataManager.getData()[1], timeline);
-                    handled = true;
-                }
-                break;
-            }
-            case 8: { // 8. CLEAR
-                heap->clear(timeline);
-                handled = true;
-                break;
-            }
+            break;
         }
-    }
-    else if (activeStructureType == StructureType::GridGraph) {
-        auto* gridGraph = dynamic_cast<GridGraph*>(activeStructure);
-        if (!gridGraph) return;
+        case 2: { // MAX HEAP
+            auto* maxheap = dynamic_cast<IHeapStructure*>(activeStructure);
+            if (!maxheap) {
+                uiManager.resetInputAction();
+                return;
+            }
 
-        switch (action) {
-            case 1: { // 1. INIT
-                if (mode == 0) { // Empty (String 1 = N, String 2 = M)
+            switch (action) {
+                case 1: { // 1. INIT
+                    if (mode == 0) { // Array
+                        dataManager.inputFromConsole(input1);
+                        if (!dataManager.getData().empty()) {
+                            maxheap->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 1) { // Random
+                        int size = MathUtils::getRandomInRange(3, 15);
+                        dataManager.randomData(size, -99, 99);
+                        if (!dataManager.getData().empty()) {
+                            maxheap->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 2) { // File
+                        dataManager.inputFromFile(input1);
+                        if (!dataManager.getData().empty()) {
+                            maxheap->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 2: { // 2. INSERT
+                    if (mode == 0) { // Single
+                        dataManager.inputFromConsole(input1);
+                        if (!dataManager.getData().empty()) {
+                            maxheap->insert(dataManager.getData()[0], timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 1) { // Random
+                        dataManager.randomData(1, -99, 99);
+                        if (!dataManager.getData().empty()) {
+                            maxheap->insert(dataManager.getData()[0], timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 3: { // 3. EXTRACTTOP
+                    maxheap->extractTop(timeline);
+                    handled = true;
+                    break;
+                }
+                case 4: { // 4. PEEK
+                    maxheap->peek(timeline);
+                    handled = true;
+                    break;
+                }
+                case 5: { // 5. SEARCH
+                    dataManager.inputFromConsole(input1);
+                    if (!dataManager.getData().empty()) {
+                        maxheap->search(dataManager.getData()[0], timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 6: { // 6. DELETE
+                    dataManager.inputFromConsole(input1);
+                    if (!dataManager.getData().empty()) {
+                        maxheap->remove(dataManager.getData()[0], timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 7: { // 7. UPDATE
+                    dataManager.inputFromConsole(input1 + " " + input2);
+                    if (dataManager.getData().size() >= 2) {
+                        maxheap->update(dataManager.getData()[0], dataManager.getData()[1], timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 8: { // 8. CLEAR
+                    maxheap->clear(timeline);
+                    handled = true;
+                    break;
+                }
+            }
+            break;
+        }
+        case 3: { // AVL TREE
+            auto* avl = dynamic_cast<IStandardStructure*>(activeStructure);
+            if (!avl) {
+                uiManager.resetInputAction();
+                return;
+            }
+
+            switch (action) {
+                case 1: { // 1. INIT
+                    if (mode == 0) { // Array
+                        dataManager.inputFromConsole(input1);
+                        if (!dataManager.getData().empty()) {
+                            avl->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 1) { // Random
+                        int size = MathUtils::getRandomInRange(3, 15);
+                        dataManager.randomData(size, -99, 99);
+                        if (!dataManager.getData().empty()) {
+                            avl->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 2) { // File
+                        dataManager.inputFromFile(input1);
+                        if (!dataManager.getData().empty()) {
+                            avl->initialize(dataManager.getData(), timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 2: { // 2. INSERT
+                    if (mode == 0) { // Single
+                        dataManager.inputFromConsole(input1);
+                        if (!dataManager.getData().empty()) {
+                            avl->insert(dataManager.getData()[0], timeline);
+                            handled = true;
+                        }
+                    } else if (mode == 1) { // Random
+                        dataManager.randomData(1, -99, 99);
+                        if (!dataManager.getData().empty()) {
+                            avl->insert(dataManager.getData()[0], timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 3: { // 3. SEARCH
+                    dataManager.inputFromConsole(input1);
+                    if (!dataManager.getData().empty()) {
+                        avl->search(dataManager.getData()[0], timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 4: { // 4. DELETE
+                    dataManager.inputFromConsole(input1);
+                    if (!dataManager.getData().empty()) {
+                        avl->remove(dataManager.getData()[0], timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 5: { // 5. UPDATE
+                    dataManager.inputFromConsole(input1 + " " + input2);
+                    if (dataManager.getData().size() >= 2) {
+                        avl->update(dataManager.getData()[0], dataManager.getData()[1], timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 6: { // 6. CLEAR
+                    avl->clear(timeline);
+                    handled = true;
+                    break;
+                }
+            }
+            break;
+        }
+        case 4: { // GRID GRAPH
+            auto* gridGraph = dynamic_cast<GridGraph*>(activeStructure);
+            if (!gridGraph) {
+                uiManager.resetInputAction();
+                return;
+            }
+
+            switch (action) {
+                case 1: { // 1. INIT
+                    if (mode == 0) { // Empty (String 1 = N, String 2 = M)
+                        dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
+                        if (dataManager.getData().size() >= 2) {
+                            gridGraph->initialize(dataManager.getData()[0], dataManager.getData()[1], timeline); 
+                            handled = true;
+                        }
+                    } else if (mode == 1) { // File
+                        dataManager.inputFromFileGridGraph(input1);
+                        if (!dataManager.getDataGridGraph().empty()) {
+                            gridGraph->initializeFromData(dataManager.getDataGridGraph(), timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 2: { // 2. RANDOM (String 1 = N, String 2 = M)
                     dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
-                    if (!dataManager.getData().size() >= 2) {
-                        gridGraph->initialize(dataManager.getData()[0], dataManager.getData()[1], timeline); 
-                        handled = true;
-                    }
-                } else if (mode == 1) { // File
-                    dataManager.inputFromFileGridGraph(input1);
-                    if (!dataManager.getDataGridGraph().empty()) {
+                    if (dataManager.getData().size() >= 2) {
+                        int percentage = MathUtils::getRandomInRange(30, 40);
+
+                        dataManager.randomDataGridGraph(dataManager.getData()[0], dataManager.getData()[1], percentage);
                         gridGraph->initializeFromData(dataManager.getDataGridGraph(), timeline);
                         handled = true;
                     }
+                    break;
                 }
-                break;
+                case 3: { // 3. SET OBSTACLES (String 1 = i, String 2 = j)
+                    dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
+                    if (dataManager.getData().size() >= 2) { // This should let user have more options about the CellState
+                        if (mode == 0) {
+                            gridGraph->setCellState(dataManager.getData()[0], dataManager.getData()[1], CellState::Empty, timeline);
+                        } else if (mode == 1) {
+                            gridGraph->setCellState(dataManager.getData()[0], dataManager.getData()[1], CellState::Wall, timeline);
+                        }
+                        handled = true; 
+                    }
+                    break;
+                }
+                case 4: { // 4. BFS (x1, y1, x2, y2)
+                    dataManager.inputFromConsoleNonNegative(input1 + " " + input2 + " " + input3 + " " + input4);
+        
+                    if (dataManager.getData().size() >= 4) {
+                        std::pair<size_t, size_t> start = {dataManager.getData()[0], dataManager.getData()[1]};
+                        std::pair<size_t, size_t> end = {dataManager.getData()[2], dataManager.getData()[3]};
+                        if (mode == 0) {
+                            gridGraph->runAStar(start, end, timeline);
+                        } else if (mode == 1) {
+                            gridGraph->runBFSShortestPath(start, end, timeline);
+                        }
+                        handled = true;
+                    }
+                    break;
+                }
+                case 5: { // 5. CLEAR
+                    gridGraph->clear(timeline);
+                    handled = true;
+                    break;
+                }
             }
-            case 2: { // 2. RANDOM (String 1 = N, String 2 = M)
-                dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
-                if (dataManager.getData().size() >= 2) {
-                    int rows = MathUtils::getRandomInRange(4, 16);
-                    int columns = MathUtils::getRandomInRange(4, 16);
-                    int percentage = MathUtils::getRandomInRange(30, 40);
+            break;
+        }
+        case 5: { // DIRECTED GRAPH
+            auto* directedgraph = dynamic_cast<IGraphStructure*>(activeStructure);
+            if (!directedgraph) {
+                uiManager.resetInputAction();
+                return;
+            }
 
-                    dataManager.randomDataGridGraph((size_t)rows, (size_t)columns, percentage);
+            switch (action) {
+                case 1: { // 1. INIT
+                    dataManager.inputFromFileGraph(input1);
+                    if (!dataManager.getDataGraph().empty()) {
+                        directedgraph->initialize(dataManager.getDataGraph(), timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 2: { // 2. CREATE NODE
+                    directedgraph->addVertex(&timeline);
                     handled = true;
+                    break;
                 }
-                break;
-            }
-            case 3: { // 3. SET OBSTACLES (String 1 = i, String 2 = j)
-                dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
-                
-                if (dataManager.getData().size() >= 2) { // This should let user have more options about the CellState
-                    gridGraph->setCellState(dataManager.getData()[0], dataManager.getData()[1], CellState::Wall, timeline);
-                    handled = true; 
+                case 3: { // 3. CREATE EDGE
+                    dataManager.inputFromConsoleGraph(input1 + " " + input2 + " " + input3);
+                    if (!dataManager.getDataGraph().empty()) {
+                        Edge addEdge = dataManager.getDataGraph()[0];
+                        directedgraph->addEdge(addEdge.from, addEdge.to, addEdge.weight, &timeline);
+                        handled = true;
+                    }
+                    break;
                 }
-                break;
-            }
-            case 4: { // 4. BFS (x1, y1, x2, y2)
-                dataManager.inputFromConsoleNonNegative(input1 + " " + input2 + " " + input3 + " " + input4);
-    
-                if (dataManager.getData().size() >= 4) {
-                    std::pair<size_t, size_t> start = {dataManager.getData()[0], dataManager.getData()[1]};
-                    std::pair<size_t, size_t> end = {dataManager.getData()[2], dataManager.getData()[3]};
-                    gridGraph->runBFSShortestPath(start, end, timeline);
+                case 4: { // 4. OPSP
+                    dataManager.inputFromConsoleNonNegative(input1);
+                    
+                    if (dataManager.getData().size() >= 1) {
+                        directedgraph->runAStar(dataManager.getData()[0], dataManager.getData()[1], timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 5: { // 5. SPSP
+                    dataManager.inputFromConsoleNonNegative(input1);
+                    if (!dataManager.getData().empty()) {
+                        if (mode == 0) { // DAG
+                            directedgraph->runDAGShortestPath(dataManager.getDataGraph()[0].from, timeline);
+                            handled = true;
+                        } else if (mode == 1) { // Dijkstra
+                            directedgraph->runDijkstra(dataManager.getDataGraph()[0].from, timeline);
+                            handled = true;
+                        } else if (mode == 2) { // BellmanFord
+                            directedgraph->runBellmanFord(dataManager.getDataGraph()[0].from, timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 6: { // 6. APSP
+                    if (mode == 0) {
+                        directedgraph->runFloydWarshall(timeline);
+                        handled = true;
+                    } else if (mode == 1) {
+                        directedgraph->runJohnson(timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 7: { // 7. CLEAR
+                    directedgraph->clear(timeline);
                     handled = true;
+                    break;
                 }
-                break;
+                case 8: { // 8. RANDOM
+                    dataManager.inputFromConsole(input1 + " " + input2);
+                    if (dataManager.getData().size() >= 2) {
+                        int vCount = MathUtils::getRandomInRange(3, 20);
+                        
+                        int minWeight = dataManager.getData()[0];
+                        int maxWeight = dataManager.getData()[1];
+
+                        if (mode == 0) {
+                            int eCount = MathUtils::getRandomInRange(0, 190);
+                            dataManager.randomDataDAG(vCount, eCount, minWeight, maxWeight);
+                        }
+                        else if (mode == 1) {
+                            sf::Vector2u winSize = window.getWindow().getSize();
+                            // dataManager.randomDataGraph(vCount, eCount, minWeight, maxWeight);
+                            dataManager.randomDataPlanarGraph(vCount, minWeight, maxWeight, (float)winSize.x, (float)winSize.y);
+                        }
+
+                        if (!dataManager.getDataGraph().empty()) {
+                            directedgraph->initialize(dataManager.getDataGraph(), timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
             }
-            case 5: { // 5. CLEAR
-                gridGraph->clear(timeline);
-                handled = true;
-                break;
+            break;
+        }
+        case 6: { // UNDIRECTED GRAPH
+            auto* undirectedgraph = dynamic_cast<IGraphStructure*>(activeStructure);
+            if (!undirectedgraph) {
+                uiManager.resetInputAction();
+                return;
             }
+
+            switch (action) {
+                case 1: { // 1. INIT
+                    dataManager.inputFromFileGraph(input1);
+                    if (!dataManager.getDataGraph().empty()) {
+                        undirectedgraph->initialize(dataManager.getDataGraph(), timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 2: { // 2. CREATE NODE
+                    undirectedgraph->addVertex(&timeline);
+                    handled = true;
+                    break;
+                }
+                case 3: { // 3. CREATE EDGE
+                    dataManager.inputFromConsoleGraph(input1 + " " + input2 + " " + input3);
+                    if (!dataManager.getDataGraph().empty()) {
+                        Edge addEdge = dataManager.getDataGraph()[0];
+                        undirectedgraph->addEdge(addEdge.from, addEdge.to, addEdge.weight, &timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 4: { // 4. OPSP
+                    dataManager.inputFromConsoleNonNegative(input1);
+                    
+                    if (dataManager.getData().size() >= 1) {
+                        undirectedgraph->runAStar(dataManager.getData()[0], dataManager.getData()[1], timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 5: { // 5. SPSP
+                    dataManager.inputFromConsoleNonNegative(input1);
+                    if (!dataManager.getData().empty()) {
+                        if (mode == 0) { // Dijkstra
+                            undirectedgraph->runDijkstra(dataManager.getDataGraph()[0].from, timeline);
+                            handled = true;
+                        } else if (mode == 1) { // BellmanFord
+                            undirectedgraph->runBellmanFord(dataManager.getDataGraph()[0].from, timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+                case 6: { // 6. APSP
+                    if (mode == 0) {
+                        undirectedgraph->runFloydWarshall(timeline);
+                        handled = true;
+                    } else if (mode == 1) {
+                        undirectedgraph->runJohnson(timeline);
+                        handled = true;
+                    }
+                    break;
+                }
+                case 7: { // 7. CLEAR
+                    undirectedgraph->clear(timeline);
+                    handled = true;
+                    break;
+                }
+                case 8: { // 8. RANDOM
+                    dataManager.inputFromConsole(input1 + " " + input2);
+                    if (dataManager.getData().size() >= 2) {
+                        int vCount = MathUtils::getRandomInRange(3, 20);
+                        
+                        int minWeight = dataManager.getData()[0];
+                        int maxWeight = dataManager.getData()[1];
+
+                        sf::Vector2u winSize = window.getWindow().getSize();
+                        // dataManager.randomDataGraph(vCount, eCount, minWeight, maxWeight);
+                        dataManager.randomDataPlanarGraph(vCount, minWeight, maxWeight, (float)winSize.x, (float)winSize.y);
+                        
+                        if (!dataManager.getDataGraph().empty()) {
+                            undirectedgraph->initialize(dataManager.getDataGraph(), timeline);
+                            handled = true;
+                        }
+                    }
+                    break;
+                }
+            }
+            break;
         }
     }
-    else if (activeStructureType == StructureType::AdjacencyList || activeStructureType == StructureType::AdjacencyMatrix) {
-        auto* graph = dynamic_cast<IGraphStructure*>(activeStructure);
-        if (!graph) return;
 
-        switch (action) {
-            case 1: { // 1. INIT
-                dataManager.inputFromFileGraph(input1);
-                if (!dataManager.getDataGraph().empty()) {
-                    graph->initialize(dataManager.getDataGraph(), timeline);
-                    handled = true;
-                }
-                break;
-            }
-            // Issue: cannot put 'dataGraph.from/input1' into addVertex function
-            // case 2: { // 2. CREATE NODE
-            //     dataManager.inputFromConsoleGraph(input1 + " -1 1");
-            //     if (!dataManager.getDataGraph().empty()) {
-            //         graph->addVertex(dataManager.getDataGraph()[0].from, timeline);
-            //         handled = true;
-            //     }
-            //     break;
-            // }
-            // Issue: timeline being *
-            // case 3: { // 3. CREATE EDGE
-            //     dataManager.inputFromConsoleGraph(input1 + " " + input2 + " " + input3);
-            //     if (!dataManager.getDataGraph().empty()) {
-            //         graph->addEdge(dataManager.getDataGraph()[0].from, dataManager.getDataGraph()[0].to, dataManager.getDataGraph()[0].weight, timeline);
-            //         handled = true;
-            //     }
-            //     break;
-            // }
-            case 4: { // 4. SSSP
-                dataManager.inputFromConsoleNonNegative(input1);
-                
-                if (dataManager.getData().size() >= 1) {
-                    graph->runDijkstra(dataManager.getData()[0], timeline);
-                    handled = true;
-                }
-                break;
-            }
-            // Issue: cannot put 'dataGraph.to'/input2
-            // case 5: { // 5. OPSP
-            //     dataManager.inputFromConsoleGraph(input1 + input2 + " 1");
-            //     if (mode == 0) { // DAG
-            //         graph->runDAGShortestPath(dataManager.getDataGraph()[0].from, timeline);
-            //         handled = true;
-            //     } else if (mode == 1) { // Dijkstra
-            //         graph->runDijkstra(dataManager.getDataGraph()[0].from, timeline);
-            //         handled = true;
-            //     } else if (mode == 2) { // BellmanFord
-            //         graph->runBellmanFord(dataManager.getDataGraph()[0].from, timeline);
-            //         handled = true;
-            //     }
-            //     break;
-            // }
-            case 6: { // 6. APSP
-                graph->runFloydWarshall(timeline);
-                handled = true;
-                break;
-            }
-            case 7: { // 7. CLEAR
-                graph->clear(timeline);
-                handled = true;
-                break;
-            }
-            case 8: { // 8. RANDOM
-                int vCount = MathUtils::getRandomInRange(1, 20);
-                int eCount = MathUtils::getRandomInRange(0, 190);
-
-                dataManager.randomDataGraph(vCount, eCount, 1, 99);
-                graph->initialize(dataManager.getDataGraph(), timeline);
-                handled = true;
-            }
-        }
-    }
-    
     if (handled && timeline.getFrameCount() > 0) {
+        isInitialState = false;
         playbackController.setTimeline(timeline);
         playbackController.play();
     }
@@ -599,6 +926,18 @@ void AppEngine::processInput(const sf::Event& event) {
     if (const auto* resized = event.getIf<sf::Event::Resized>()) {
         sf::FloatRect visibleArea({0.f, 0.f}, {(float)resized->size.x, (float)resized->size.y});
         window.getWindow().setView(sf::View(visibleArea));
+
+        if (auto* graph = dynamic_cast<IGraphStructure*>(activeStructure)) {
+            LayoutConfig resizedConfig = graph->getLayoutConfig();
+            resizedConfig.screenWidth = static_cast<float>(resized->size.x);
+            resizedConfig.screenHeight = static_cast<float>(resized->size.y);
+            float minDimension = std::min(resizedConfig.screenWidth, resizedConfig.screenHeight);
+            resizedConfig.padding = std::clamp(
+                minDimension * resizedConfig.layoutPaddingRatio,
+                resizedConfig.layoutPaddingMin,
+                resizedConfig.layoutPaddingMax);
+            graph->setLayoutConfig(resizedConfig);
+        }
     }
         
     // Pass the event to Dear ImGui and your custom buttons

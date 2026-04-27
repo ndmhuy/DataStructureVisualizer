@@ -14,8 +14,20 @@ void AdjacencyList::addVertex(Timeline* timeline) {
 }
 
 void AdjacencyList::addEdge(size_t from, size_t to, int weight, Timeline* timeline) {
+    bool createdFrom = adjacencyList.find(from) == adjacencyList.end();
+    bool createdTo = adjacencyList.find(to) == adjacencyList.end();
+
     adjacencyList[from];
     adjacencyList[to];
+
+    if (timeline) {
+        if (createdFrom) {
+            timeline->addFrame(Frame(makeGraphPayload({from}), 0, "Added vertex " + std::to_string(from) + " while creating edge"));
+        }
+        if (createdTo && to != from) {
+            timeline->addFrame(Frame(makeGraphPayload({to}), 0, "Added vertex " + std::to_string(to) + " while creating edge"));
+        }
+    }
     
     if (!hasEdge(from, to)) {
         adjacencyList[from].emplace_back(to, weight);

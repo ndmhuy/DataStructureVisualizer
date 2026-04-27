@@ -1,6 +1,7 @@
 #include "View/Render/Renderer.h"
 #include "Model/Frame.h"
 #include "Utilities/GlobalConstant.h"
+#include "Utilities/LayoutConfig.h"
 
 #include <algorithm>
 
@@ -444,12 +445,14 @@ void Renderer::visit(const TreePayload& payload) {
     // Coordinate mapping instead of array
     // We use map since node id is not filled completely from 0 to final id
     std::map<size_t, sf::Vector2f> positions;
+    sf::Vector2f nodeSize = getNodeSize();
 
     // Adapt with window.size()
     float startX = static_cast<float>(winSize.x) / 2.0f;
     float startY = static_cast<float>(winSize.y) * 0.15f;
-    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
-    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
+
+    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.005f, nodeSize.x - 40.0f);
+    float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.095f, nodeSize.y + 40.0f);
 
     for (const auto& node : nodes) {
         size_t id = node.id;
@@ -467,7 +470,6 @@ void Renderer::visit(const TreePayload& payload) {
     }
 
     // Draw edges (with arrow) then draw nodes
-    sf::Vector2f nodeSize = getNodeSize();
     for (const auto& node : nodes) {
         // Lambda function 
         // As my understanding, this is "small" function that is just used for specific part and dont need using anywhere else
@@ -506,12 +508,15 @@ void Renderer::visit(const HeapPayload& payload) {
     sf::Vector2u winSize = window.getWindow().getSize();
     // Coordinates temp buffer
     std::vector<sf::Vector2f> positions(heapArray.size());
+    sf::Vector2f nodeSize = getNodeSize();
 
     // Adapt with window.size()
     float startX = static_cast<float>(winSize.x) / 2.0f;
     float startY = static_cast<float>(winSize.y) * 0.15f; 
-    float distanceHorizontal = static_cast<float>(winSize.x) * 0.022f;
-    float distanceVertical = static_cast<float>(winSize.y) * 0.078f;
+
+    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.005f, nodeSize.x - 40.0f);
+    float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.095f, nodeSize.y + 40.0f);
+
     float height = std::ceil(log2(heapArray.size()+1));
 
     for (size_t idx = 0; idx < heapArray.size(); idx++) {
@@ -542,7 +547,6 @@ void Renderer::visit(const HeapPayload& payload) {
     }
 
     // Draw edges then draw nodes
-    sf::Vector2f nodeSize = getNodeSize();
     for (size_t idx = 1; idx < heapArray.size(); ++idx) {
         size_t parentIdx = (idx - 1) / 2;
 
@@ -581,26 +585,67 @@ void Renderer::visit(const GraphPayload& payload) {
 
     currentChildren.clear(); 
     defaultNodePositions.clear();
-    std::vector<sf::Vector2f> positions(vertices.size());
+    std::map<size_t, sf::Vector2f> autoPositionsByVertexId;
     for (size_t i = 0; i < vertices.size(); ++i) {
+        size_t vertexId = vertices[i];
+        sf::Vector2f position;
+
         if (payload.positions.size() == vertices.size()) {
-            positions[i] = {payload.positions[i].x, payload.positions[i].y};
+            position = {payload.positions[i].x, payload.positions[i].y};
         } else {
             if (vertices.size() == 1) {
-                positions[i] = {cx, cy};
+                position = {cx, cy};
             } else {
                 float angle = i * (2.0f * M_PI / vertices.size()) - M_PI / 2.0f;
-                positions[i] = {cx + radius * std::cos(angle), cy + radius * std::sin(angle)};
+                position = {cx + radius * std::cos(angle), cy + radius * std::sin(angle)};
             }
         }
 
-        defaultNodePositions[i] = positions[i];
-        auto customPosIt = customNodePositions.find(i);
-        if (customPosIt != customNodePositions.end()) {
-            positions[i] = customPosIt->second;
+        autoPositionsByVertexId[vertexId] = position;
+    }
+
+    if (!autoPositionsByVertexId.empty()) {
+        auto firstIt = autoPositionsByVertexId.begin();
+        float minX = firstIt->second.x;
+        float maxX = firstIt->second.x;
+        float minY = firstIt->second.y;
+        float maxY = firstIt->second.y;
+
+        for (const auto& [_, pos] : autoPositionsByVertexId) {
+            minX = std::min(minX, pos.x);
+            maxX = std::max(maxX, pos.x);
+            minY = std::min(minY, pos.y);
+            maxY = std::max(maxY, pos.y);
+        }
+
+        const float bboxW = std::max(1.0f, maxX - minX);
+        const float bboxH = std::max(1.0f, maxY - minY);
+        const float margin = std::max(nodeSize.x, nodeSize.y) * 0.75f + 20.0f;
+        const float availableW = std::max(40.0f, static_cast<float>(winSize.x) - 2.0f * margin);
+        const float availableH = std::max(40.0f, static_cast<float>(winSize.y) - 2.0f * margin);
+
+        const float fitScale = std::min(1.0f, std::min(availableW / bboxW, availableH / bboxH));
+
+        const sf::Vector2f sourceCenter = {(minX + maxX) / 2.0f, (minY + maxY) / 2.0f};
+        const sf::Vector2f targetCenter = {cx, cy};
+
+        for (auto& [_, pos] : autoPositionsByVertexId) {
+            pos = targetCenter + (pos - sourceCenter) * fitScale;
+            pos.x = std::clamp(pos.x, margin, static_cast<float>(winSize.x) - margin);
+            pos.y = std::clamp(pos.y, margin, static_cast<float>(winSize.y) - margin);
         }
     }
 
+    defaultNodePositions = autoPositionsByVertexId;
+    std::map<size_t, sf::Vector2f> positionsByVertexId = autoPositionsByVertexId;
+    for (const auto& [vertexId, customPos] : customNodePositions) {
+        auto it = positionsByVertexId.find(vertexId);
+        if (it != positionsByVertexId.end()) {
+            it->second = customPos;
+        }
+    }
+
+    std::vector<std::pair<std::pair<size_t, size_t>, int>> drawnTexts;
     for (const auto& edge : edges) {
         bool highlighted = false;
         for (const auto& he : hEdges) {
@@ -609,14 +654,40 @@ void Renderer::visit(const GraphPayload& payload) {
                 break;
             }
         }
-        if (edge.from < vertices.size() && edge.to < vertices.size()) {
-            drawLineWithArrow(positions[edge.from], nodeSize, ShapeType::Circle, positions[edge.to], nodeSize, ShapeType::Circle, 3.0f, 15.0f, highlighted);
+        auto fromPosIt = positionsByVertexId.find(edge.from);
+        auto toPosIt = positionsByVertexId.find(edge.to);
+        if (fromPosIt != positionsByVertexId.end() && toPosIt != positionsByVertexId.end()) {
+            drawLineWithArrow(fromPosIt->second, nodeSize, ShapeType::Circle, toPosIt->second, nodeSize, ShapeType::Circle, 3.0f, 15.0f, highlighted);
+            
+            bool textAlreadyDrawn = false;
+            for (const auto& dt : drawnTexts) {
+                if ((dt.first.first == edge.from && dt.first.second == edge.to) ||
+                    (dt.first.first == edge.to && dt.first.second == edge.from && dt.second == edge.weight)) {
+                    textAlreadyDrawn = true;
+                    break;
+                }
+            }
+            
+            if (!textAlreadyDrawn) {
+                bool textHighlighted = highlighted;
+                if (!textHighlighted) {
+                    for (const auto& he : hEdges) {
+                        if (he.from == edge.to && he.to == edge.from) {
+                            textHighlighted = true;
+                            break;
+                        }
+                    }
+                }
+                drawTextOnLine(fromPosIt->second, toPosIt->second, 12.0f, std::to_string(edge.weight), 16, textHighlighted ? theme.accentColor : theme.textColor);
+                drawnTexts.push_back({{edge.from, edge.to}, edge.weight});
+            }
         }
     }
 
     for (size_t i = 0; i < vertices.size(); ++i) {
-        bool highlighted = std::find(hIndices.begin(), hIndices.end(), i) != hIndices.end();
-        drawImageNode(positions[i], std::to_string(vertices[i]), highlighted);
+        size_t vertexId = vertices[i];
+        bool highlighted = std::find(hIndices.begin(), hIndices.end(), vertexId) != hIndices.end();
+        drawImageNode(positionsByVertexId[vertexId], std::to_string(vertexId), highlighted);
     }
 }
 
@@ -624,10 +695,22 @@ void Renderer::visit(const SingleSourcePayload& payload) {
     visit(payload.baseGraph);
     
     sf::Vector2f nodeSize = getNodeSize();
-    for (size_t i = 0; i < payload.distances.size(); ++i) {
-        if (i < defaultNodePositions.size()) {
-            std::string distStr = (payload.distances[i] >= 1e9) ? "INF" : std::to_string(payload.distances[i]);
-            drawTextPositioned(defaultNodePositions[i], "d: " + distStr, 14, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
+    for (size_t i = 0; i < payload.baseGraph.vertices.size(); ++i) {
+        size_t vertexId = payload.baseGraph.vertices[i];
+        auto posIt = defaultNodePositions.find(vertexId);
+        if (posIt == defaultNodePositions.end()) {
+            continue;
+        }
+
+        sf::Vector2f pos = posIt->second;
+        auto customPosIt = customNodePositions.find(vertexId);
+        if (customPosIt != customNodePositions.end()) {
+            pos = customPosIt->second;
+        }
+
+        if (vertexId < payload.distances.size()) {
+            std::string distStr = (payload.distances[vertexId] >= 1e9) ? "INF" : std::to_string(payload.distances[vertexId]);
+            drawTextPositioned(pos, "d: " + distStr, 14, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
         }
     }
 }
@@ -636,14 +719,26 @@ void Renderer::visit(const AStarPayload& payload) {
     visit(payload.baseGraph);
     
     sf::Vector2f nodeSize = getNodeSize();
-    for (size_t i = 0; i < payload.fCosts.size(); ++i) {
-        if (i < defaultNodePositions.size()) {
-            std::string fStr = (payload.fCosts[i] >= 1e9) ? "INF" : std::to_string(payload.fCosts[i]);
-            std::string gStr = (payload.gCosts[i] >= 1e9) ? "INF" : std::to_string(payload.gCosts[i]);
-            std::string hStr = (payload.hCosts[i] >= 1e9) ? "INF" : std::to_string(payload.hCosts[i]);
+    for (size_t i = 0; i < payload.baseGraph.vertices.size(); ++i) {
+        size_t vertexId = payload.baseGraph.vertices[i];
+        auto posIt = defaultNodePositions.find(vertexId);
+        if (posIt == defaultNodePositions.end()) {
+            continue;
+        }
+
+        sf::Vector2f pos = posIt->second;
+        auto customPosIt = customNodePositions.find(vertexId);
+        if (customPosIt != customNodePositions.end()) {
+            pos = customPosIt->second;
+        }
+
+        if (vertexId < payload.fCosts.size()) {
+            std::string fStr = (payload.fCosts[vertexId] >= 1e9) ? "INF" : std::to_string(payload.fCosts[vertexId]);
+            std::string gStr = (payload.gCosts[vertexId] >= 1e9) ? "INF" : std::to_string(payload.gCosts[vertexId]);
+            std::string hStr = (payload.hCosts[vertexId] >= 1e9) ? "INF" : std::to_string(payload.hCosts[vertexId]);
             
             std::string text = "f:" + fStr + "\ng:" + gStr + "\nh:" + hStr;
-            drawTextPositioned(defaultNodePositions[i], text, 12, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
+            drawTextPositioned(pos, text, 12, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
         }
     }
 }
@@ -676,15 +771,26 @@ void Renderer::visit(const GridPayload& payload) {
     size_t cols = grid[0].size();
 
     sf::Vector2u winSize = window.getWindow().getSize();
-    float availableWidth = winSize.x * 0.8f;
-    float availableHeight = winSize.y * 0.8f;
+    LayoutConfig layoutDefaults{};
+    float horizontalPadding = std::max(
+        layoutDefaults.gridHorizontalPaddingMin,
+        static_cast<float>(winSize.x) * layoutDefaults.gridHorizontalPaddingRatio);
+    float topPadding = std::max(
+        layoutDefaults.gridTopPaddingMin,
+        static_cast<float>(winSize.y) * layoutDefaults.gridTopPaddingRatio);
+    float bottomPadding = std::max(
+        layoutDefaults.gridBottomPaddingMin,
+        static_cast<float>(winSize.y) * layoutDefaults.gridBottomPaddingRatio);
+
+    float availableWidth = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.x) - 2.0f * horizontalPadding);
+    float availableHeight = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.y) - topPadding - bottomPadding);
 
     float cellSize = std::min(availableWidth / cols, availableHeight / rows);
     float gridWidth = cols * cellSize;
     float gridHeight = rows * cellSize;
 
     float startX = (winSize.x - gridWidth) / 2.0f;
-    float startY = (winSize.y - gridHeight) / 2.0f;
+    float startY = topPadding + (availableHeight - gridHeight) / 2.0f;
 
     for (size_t r = 0; r < rows; ++r) {
         for (size_t c = 0; c < cols; ++c) {
