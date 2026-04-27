@@ -38,7 +38,8 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
         if (ImGui::Button("Back", ImVec2(80.0f, 35.0f))) {
             if (currentState == MenuState::Heap) currentState = MenuState::Main;
             else if (currentState == MenuState::ShortestPath) currentState = MenuState::Main;
-            else if (currentState == MenuState::Graph) currentState = MenuState::ShortestPath;
+            else if (currentState == MenuState::GraphType) currentState = MenuState::ShortestPath;
+            else if (currentState == MenuState::GraphRepr) currentState = MenuState::GraphType;
         }
     }
 
@@ -46,7 +47,8 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     std::string titleStr = "DATA STRUCTURE VISUALIZER";
     if (currentState == MenuState::Heap) titleStr = "SELECT HEAP TYPE";
     else if (currentState == MenuState::ShortestPath) titleStr = "SELECT ENVIRONMENT";
-    else if (currentState == MenuState::Graph) titleStr = "SELECT GRAPH STRUCTURE";
+    else if (currentState == MenuState::GraphType) titleStr = "SELECT GRAPH TYPE";
+    else if (currentState == MenuState::GraphRepr) titleStr = "SELECT GRAPH STRUCTURE";
 
     const char* title = titleStr.c_str();
     ImVec2 titleSize = ImGui::CalcTextSize(title);
@@ -66,7 +68,8 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     std::vector<std::string>* currentNames = &mainNames;
     if (currentState == MenuState::Heap) currentNames = &heapNames;
     else if (currentState == MenuState::ShortestPath) currentNames = &spaNames;
-    else if (currentState == MenuState::Graph) currentNames = &graphNames;
+    else if (currentState == MenuState::GraphType) currentNames = &graphTypeNames;
+    else if (currentState == MenuState::GraphRepr) currentNames = &graphReprNames;
 
     int totalItems = currentNames->size();
     int rows = (totalItems + cols - 1) / cols;
@@ -93,10 +96,13 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
                 else if (i == 1) selectedDS = 2; // Max Heap
             } else if (currentState == MenuState::ShortestPath) {
                 if (i == 0) selectedDS = 4; // Grid
-                else if (i == 1) currentState = MenuState::Graph;
-            } else if (currentState == MenuState::Graph) {
-                if (i == 0) selectedDS = 5; // Adjacency Matrix
-                else if (i == 1) selectedDS = 6; // Adjacency List
+                else if (i == 1) currentState = MenuState::GraphType;
+            } else if (currentState == MenuState::GraphType) {
+                if (i == 0) { isDirectedGraph = true; currentState = MenuState::GraphRepr; }
+                else if (i == 1) { isDirectedGraph = false; currentState = MenuState::GraphRepr; }
+            } else if (currentState == MenuState::GraphRepr) {
+                if (isDirectedGraph) selectedDS = 5; // Directed Graph
+                else selectedDS = 6; // Undirected Graph
             }
         }
     }

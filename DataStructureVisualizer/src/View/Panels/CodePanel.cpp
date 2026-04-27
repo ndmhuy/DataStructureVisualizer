@@ -78,7 +78,7 @@ void CodePanel::render(const sf::RenderWindow& window){
                              ImGuiWindowFlags_NoBringToFrontOnFocus;
     
     // --- RENDER CODE PANEL (Chỉ vẽ khi có mã giả) ---
-    if (!listofCodes.empty()) {
+    if (!listofCodes.empty() && showCode) {
         ImGui::SetNextWindowPos(
         ImVec2(windowX - panelWidth - theme.codePanelRightOffset, theme.codePanelTopOffset),
         ImGuiCond_Always
@@ -144,7 +144,7 @@ void CodePanel::render(const sf::RenderWindow& window){
     }
 
     if (!currentMessage.empty()) {
-        float msgY = listofCodes.empty() ? theme.codePanelTopOffset : (theme.codePanelTopOffset + panelHeight + 15.0f);
+        float msgY = (listofCodes.empty() || !showCode) ? theme.codePanelTopOffset : (theme.codePanelTopOffset + panelHeight + 15.0f);
         ImGui::SetNextWindowPos(ImVec2(windowX - panelWidth - theme.codePanelRightOffset, msgY), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(panelWidth, 0)); 
 
