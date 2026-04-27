@@ -18,6 +18,11 @@ class GridGraph : public IVisualizable {
     size_t rows;
     size_t cols;
 
+    bool isValidCell(size_t r, size_t c) const {
+        return r < rows && c < cols;
+    }
+    void resetAlgorithmStates(Timeline& timeline);
+
     public:
     GridGraph(size_t r, size_t c);
 

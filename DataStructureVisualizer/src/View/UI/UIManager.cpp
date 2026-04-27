@@ -246,6 +246,11 @@ void UIManager::render(sf::RenderWindow& window) {
             themeToggleRequested = true;
         }
         
+        ImGui::SameLine(0.0f, 20.0f);
+        if (ImGui::Button(codePanel.isShowingCode() ? "Hide Code" : "Show Code", ImVec2(90.0f, 35.0f))) {
+            codePanel.toggleShowCode();
+        }
+        
         ImGui::PopStyleColor(4);
         ImGui::PopStyleVar();
         ImGui::End();
@@ -297,7 +302,7 @@ void UIManager::reset() {
     stepBackwardClicked = false;
 
     //Reset Navigation Menu
-    //navMenu.resetState();
+    navMenu.resetState();
 
     syncPlaybackUI(false, true, true, true); // Đặt nút Playback về trạng thái vô hiệu hóa (Rỗng)
 }
@@ -358,6 +363,10 @@ void UIManager::setCodePanelCode(std::vector<std::string>& code) {
 
 void UIManager::setCodePanelHighlightedLine(int line) {
     codePanel.setHighlightedLine(line);
+}
+
+void UIManager::setCodePanelMessage(const std::string& msg) {
+    codePanel.setMessage(msg);
 }
 
 void UIManager::clearCodePanel() {

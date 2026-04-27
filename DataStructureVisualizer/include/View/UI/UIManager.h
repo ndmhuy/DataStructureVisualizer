@@ -73,7 +73,7 @@ public:
 
     // --- Interact Navigation Menu ---
     void reset(); // Khôi phục toàn bộ UI về trạng thái mặc định (Gọi khi Back to Menu)
-    int getSelectedDS(); // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: ADJ Matrix, 6: ADJ List
+    int getSelectedDS(); // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: Directed Graph, 6: Undirected Graph
     void resetDSSelection(); 
     void setShowMainMenu(bool show);
     bool checkBackToMenuClicked(); // check if User back to Main menu
@@ -114,10 +114,10 @@ public:
     1/ Init: N=(ô nhập liệu 1), M=(ô nhập liệu 2)/ File browser
     2/ Random: N=(ô nhập liệu 1), M=(ô nhập liệu 2)
     3/ Set status: i=(ô nhập liệu 1), j=(ô nhập liệu 2)
-    4/ BFS: from x1=(ô nhập liệu 1), y1=(ô nhập liệu 2) to x2=(ô nhập liệu 3), y2=(ô nhập liệu 4)
+    4/ Shortest Path: from x1=(ô nhập liệu 1), y1=(ô nhập liệu 2) to x2=(ô nhập liệu 3), y2=(ô nhập liệu 4)
     5/ Clear: nút Confirm 
 
-    SPA: (5)- ADJ Matrix (6)- ADJ List
+    SPA: (5)- Directed Graph (6)- Undirected Graph
     1/Init:
     8/Random:
     2/Create Node:
@@ -138,6 +138,7 @@ public:
     // --- Interact CodePanel ---
     void setCodePanelCode(std::vector<std::string>& code); //pass codes
     void setCodePanelHighlightedLine(int line); //pass 0-indexed to highlight
+    void setCodePanelMessage(const std::string& msg); //pass message text
     void clearCodePanel(); //Clean after done showing code
 
     // --- Interact Buttons ---
