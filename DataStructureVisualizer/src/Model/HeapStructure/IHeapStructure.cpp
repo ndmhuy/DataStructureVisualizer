@@ -63,11 +63,11 @@ void IHeapStructure::fixNode(size_t i, Timeline& timeline) {
         shiftUp(i, timeline);
     }
     else {
-        heapify(heapArray.size(), i, timeline);
+        heapify(heapArray.size(), i, &timeline);
     }
 }
 
-void IHeapStructure::heapify(size_t n, size_t i, Timeline& timeline) {
+void IHeapStructure::heapify(size_t n, size_t i, Timeline* timeline) {
     size_t curr = i;
     size_t l = left(n, i);
     size_t r = right(n, i);
@@ -80,7 +80,8 @@ void IHeapStructure::heapify(size_t n, size_t i, Timeline& timeline) {
         highlights.push_back(r);
     }
 
-    timeline.addFrame(Frame(HeapPayload(heapArray, highlights), 1,
+    if (timeline)
+    timeline->addFrame(Frame(HeapPayload(heapArray, highlights), 1,
         "Comparing node " + std::to_string(heapArray[i]) + " with its children"));
 
     if (l != INVALID_INDEX && compare(l, curr)) {
@@ -91,18 +92,21 @@ void IHeapStructure::heapify(size_t n, size_t i, Timeline& timeline) {
     }
 
     if (curr != i) {
-        timeline.addFrame(Frame(HeapPayload(heapArray, {i, curr}), 2,
+        if (timeline)
+        timeline->addFrame(Frame(HeapPayload(heapArray, {i, curr}), 2,
             "Violation found! Swapping " + std::to_string(heapArray[i]) + " and " + std::to_string(heapArray[curr])));
 
         std::swap(heapArray[i], heapArray[curr]);
 
-        timeline.addFrame(Frame(HeapPayload(heapArray, {curr}), 3,
+        if (timeline)
+        timeline->addFrame(Frame(HeapPayload(heapArray, {curr}), 3,
             "Heapifying " + std::to_string(heapArray[curr])));
 
         heapify(n, curr, timeline);
     }
     else {
-        timeline.addFrame(Frame(HeapPayload(heapArray, {}), 4,
+        if (timeline)
+        timeline->addFrame(Frame(HeapPayload(heapArray, {}), 4,
             "Node " + std::to_string(heapArray[i]) + " is in correct position."));
     }
 }
@@ -117,7 +121,7 @@ void IHeapStructure::initialize(const std::vector<int>& data, Timeline& timeline
     size_t heapSize = heapArray.size();
     if (heapSize > 1) {
         for (size_t idx = heapSize / 2; idx > 0; --idx) {
-            heapify(heapSize, idx - 1, timeline);
+            heapify(heapSize, idx - 1, nullptr);
         }
     }
 
@@ -242,7 +246,7 @@ void IHeapStructure::extractTop(Timeline& timeline) {
     heapArray.pop_back();
     if (!heapArray.empty()) {
         timeline.addFrame(Frame(HeapPayload(heapArray, {0}), 5, "Re-heapifying from the top"));
-        heapify(heapArray.size(), 0, timeline);
+        heapify(heapArray.size(), 0, &timeline);
     }
 
     timeline.addFrame(Frame(HeapPayload(heapArray, {}), 6, "Extracting successfully!"));

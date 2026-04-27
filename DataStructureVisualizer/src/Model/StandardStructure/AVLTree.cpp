@@ -88,58 +88,61 @@ void AVLTree::deleteNodes(Node*& root) {
     root = nullptr;
 }
 
-AVLTree::Node* AVLTree::rotateRight(Node* root, Timeline& timeline, size_t id) {
+AVLTree::Node* AVLTree::rotateRight(Node* root, Timeline* timeline, size_t id) {
     makeTreePayload();
     Node* curr = root->left;
     size_t currIdx = 2 * id + 1;
     size_t rootIdx = id;
 
-    timeline.addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 1, "Changing the connection between" + std::to_string(root->value) + " and " + std::to_string(curr->value)));
+    if (timeline)
+    timeline->addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 1, "Changing the connection between " + std::to_string(root->value) + " and " + std::to_string(curr->value)));
     root->left = curr->right;
     curr->right = root;
 
     // Update again
     currIdx = id;
     rootIdx = 2 * id + 2;
-    timeline.addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 2, "Rotating done"));
+    // timeline.addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 2, "Rotating done"));
 
     root->height = 1 + std::max(Node::heightOf(root->left), Node::heightOf(root->right));
     curr->height = 1 + std::max(Node::heightOf(curr->left), Node::heightOf(curr->right));
-    timeline.addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 3, "Updating the height"));
+    // timeline.addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 2, "Updating the height"));
 
     return curr;
 }
 
-AVLTree::Node* AVLTree::rotateLeft(Node* root, Timeline& timeline, size_t id) {
+AVLTree::Node* AVLTree::rotateLeft(Node* root, Timeline* timeline, size_t id) {
     makeTreePayload();
     Node* curr = root->right;
     size_t currIdx = 2 * id + 2;
     size_t rootIdx = id;
 
-    timeline.addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 1, "Changing the connection between" + std::to_string(root->value) + " and " + std::to_string(curr->value)));
+    if (timeline)
+    timeline->addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 1, "Changing the connection between " + std::to_string(root->value) + " and " + std::to_string(curr->value)));
     root->right = curr->left;
     curr->left = root;
 
     // Update again
     currIdx = id;
     rootIdx = 2 * id + 1;
-    timeline.addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 2, "Rotating done"));
+    // timeline.addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 2, "Rotating done"));
 
     root->height = 1 + std::max(Node::heightOf(root->left), Node::heightOf(root->right));
     curr->height = 1 + std::max(Node::heightOf(curr->left), Node::heightOf(curr->right));
-    timeline.addFrame(Frame(makeTreePayload({currIdx, rootIdx}), 3, "Updating the height"));
+    // 
 
     return curr;
 }
 
-void AVLTree::balance(Node*& root, Timeline& timeline, size_t id) {
+void AVLTree::balance(Node*& root, Timeline* timeline, size_t id) {
     if (!root) {
         return;
     }
 
     makeTreePayload();
     size_t rootIdx = id;
-    timeline.addFrame(Frame(makeTreePayload({rootIdx}), 1, "Updating the height"));
+    if (timeline)
+    timeline->addFrame(Frame(makeTreePayload({rootIdx}), 1, "Updating the height"));
 
     root->height = 1 + std::max(Node::heightOf(root->left), Node::heightOf(root->right));
     int balance_factor = root->balanceFactor();
@@ -149,44 +152,58 @@ void AVLTree::balance(Node*& root, Timeline& timeline, size_t id) {
         hasRotation = true;
 
         if (root->left->balanceFactor() < 0) {
-            timeline.addFrame(Frame(makeTreePayload({rootIdx}), 2, "Found left right imbalance"));
+            if (timeline)
+            timeline->addFrame(Frame(makeTreePayload({rootIdx}), 2, "Found left right imbalance"));
 
             root->left = rotateLeft(root->left, timeline, 2*id+1);
         }
         else {
-            timeline.addFrame(Frame(makeTreePayload({rootIdx}), 3, "Found left left imbalance"));
+            if (timeline)
+            timeline->addFrame(Frame(makeTreePayload({rootIdx}), 3, "Found left left imbalance"));
         }
 
         root = rotateRight(root, timeline, id);
+        if (timeline) {
+        timeline->addFrame(Frame(makeTreePayload({rootIdx}), 4, "Rotating done"));
+        timeline->addFrame(Frame(makeTreePayload({rootIdx}), 5, "Updating the height"));
+        }
     }
     else if (balance_factor < -1) {
         hasRotation = true;
 
         if (root->right->balanceFactor() > 0) {
-            timeline.addFrame(Frame(makeTreePayload({rootIdx}), 4, "Found right left imbalance"));
+            if (timeline)
+            timeline->addFrame(Frame(makeTreePayload({rootIdx}), 6, "Found right left imbalance"));
 
             root->right = rotateRight(root->right, timeline, 2*id+2);
         }
         else {
-            timeline.addFrame(Frame(makeTreePayload({rootIdx}), 5, "Found right right imbalance"));
+            if (timeline)
+            timeline->addFrame(Frame(makeTreePayload({rootIdx}), 7, "Found right right imbalance"));
         }
 
         root = rotateLeft(root, timeline, id);
+        if (timeline) {
+        timeline->addFrame(Frame(makeTreePayload({rootIdx}), 8, "Rotating done"));
+        timeline->addFrame(Frame(makeTreePayload({rootIdx}), 9, "Updating the height"));
+        }
     }
 
     // Update again if needed
     if (hasRotation) {
         rootIdx = id;
-        timeline.addFrame(Frame(makeTreePayload({rootIdx}), 6, "Balance completed"));
+        if (timeline)
+        timeline->addFrame(Frame(makeTreePayload({rootIdx}), 10, "Balance completed"));
     }
 }
 
-bool AVLTree::initialInsert(int value, Node*& root, Timeline& timeline, size_t id) {
+bool AVLTree::initialInsert(int value, Node*& root, Timeline* timeline, size_t id) {
     if (!root) {
         root = new Node(value);
         makeTreePayload();
 
-        timeline.addFrame(Frame(makeTreePayload({id}), 1, "Inserted " + std::to_string(value)));
+        if (timeline)
+        timeline->addFrame(Frame(makeTreePayload({id}), 1, "Inserted " + std::to_string(value)));
 
         return true;
     }
@@ -195,17 +212,20 @@ bool AVLTree::initialInsert(int value, Node*& root, Timeline& timeline, size_t i
 
     bool isPut = false;
     if (value < root->value) {
-        timeline.addFrame(Frame(makeTreePayload({currIdx}), 2, std::to_string(value) + " < " + std::to_string(root->value) + ", go to the left branch"));
+        if (timeline)
+        timeline->addFrame(Frame(makeTreePayload({currIdx}), 2, std::to_string(value) + " < " + std::to_string(root->value) + ", go to the left branch"));
 
         isPut = initialInsert(value, root->left, timeline, 2*id+1);
     }
     else if (value > root->value) {
-        timeline.addFrame(Frame(makeTreePayload({currIdx}), 3, std::to_string(value) + " > " + std::to_string(root->value) + ", go to the right branch"));
+        if (timeline)
+        timeline->addFrame(Frame(makeTreePayload({currIdx}), 3, std::to_string(value) + " > " + std::to_string(root->value) + ", go to the right branch"));
 
         isPut = initialInsert(value, root->right, timeline, 2*id+2);
     }
     else {
-        timeline.addFrame(Frame(makeTreePayload({currIdx}), 4, std::to_string(value) + " has existed in tree. Canceled"));
+        if (timeline)
+        timeline->addFrame(Frame(makeTreePayload({currIdx}), 4, std::to_string(value) + " has existed in tree. Canceled"));
 
         return false;
     }
@@ -217,7 +237,7 @@ bool AVLTree::initialInsert(int value, Node*& root, Timeline& timeline, size_t i
     return isPut;
 }
 
-bool AVLTree::initialRemove(int value, Node*& root, Timeline& timeline, size_t id) {
+bool AVLTree::initialRemove(int value, Node*& root, Timeline* timeline, size_t id) {
     if (!root) {
         return false;
     }
@@ -226,17 +246,20 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline& timeline, size_t i
 
     bool isRemove = false;
     if (value < root->value) {
-        timeline.addFrame(Frame(makeTreePayload({currIdx}), 1, std::to_string(value) + " < " + std::to_string(root->value) + ", go to the left branch"));
+        if (timeline)
+        timeline->addFrame(Frame(makeTreePayload({currIdx}), 1, std::to_string(value) + " < " + std::to_string(root->value) + ", go to the left branch"));
 
         isRemove = initialRemove(value, root->left, timeline, 2*id+1);
     }
     else if (value > root->value) {
-        timeline.addFrame(Frame(makeTreePayload({currIdx}), 2, std::to_string(value) + " > " + std::to_string(root->value) + ", go to the right branch"));
+        if (timeline)
+        timeline->addFrame(Frame(makeTreePayload({currIdx}), 2, std::to_string(value) + " > " + std::to_string(root->value) + ", go to the right branch"));
 
         isRemove = initialRemove(value, root->right, timeline, 2*id+2);
     }
     else {
-        timeline.addFrame(Frame(makeTreePayload({currIdx}), 3, "Found " + std::to_string(value)));
+        if (timeline)
+        timeline->addFrame(Frame(makeTreePayload({currIdx}), 3, "Found " + std::to_string(value)));
 
         isRemove = true;
         if (!root->left || !root->right) {
@@ -244,10 +267,12 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline& timeline, size_t i
             root = (root->left) ? root->left : root->right;
             delete temp;
 
-            timeline.addFrame(Frame(makeTreePayload({}), 4, "Removed " + std::to_string(value)));
+            if (timeline)
+            timeline->addFrame(Frame(makeTreePayload({}), 4, "Removed " + std::to_string(value)));
         }
         else {
-            timeline.addFrame(Frame(makeTreePayload({currIdx}), 5, "There are 2 children, finding the inorder successor node"));
+            if (timeline)
+            timeline->addFrame(Frame(makeTreePayload({currIdx}), 5, "There are 2 children, finding the inorder successor node"));
 
             Node* minRight = root->right;
             size_t minRightIdx = 2 * id + 2;
@@ -256,13 +281,15 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline& timeline, size_t i
                 minRightIdx = 2 * minRightIdx + 1;
             }
 
-            timeline.addFrame(Frame(makeTreePayload({currIdx, minRightIdx}), 6, "Overwrite " + std::to_string(minRight->value) + " on " + std::to_string(root->value)));
+            if (timeline)
+            timeline->addFrame(Frame(makeTreePayload({currIdx, minRightIdx}), 6, "Overwrite " + std::to_string(minRight->value) + " on " + std::to_string(root->value)));
 
             root->value = minRight->value;
             initialRemove(root->value, root->right, timeline, 2*id+2);
 
             size_t newRootIdx = id;
-            timeline.addFrame(Frame(makeTreePayload({newRootIdx}), 7, "Removed the inorder successor"));
+            if (timeline)
+            timeline->addFrame(Frame(makeTreePayload({newRootIdx}), 7, "Removed the inorder successor"));
         }
     }
 
@@ -286,7 +313,7 @@ void AVLTree::initialize(const std::vector<int>& data, Timeline& timeline) {
     timeline.addFrame(Frame(makeTreePayload({}), 0, "Initializing AVL Tree from data..."));
 
     for (int value : data) {
-        initialInsert(value, root, timeline, 0);
+        initialInsert(value, root, nullptr, 0);
     }
 
     timeline.addFrame(Frame(makeTreePayload({}), 0, "Initialization complete."));
@@ -295,7 +322,7 @@ void AVLTree::initialize(const std::vector<int>& data, Timeline& timeline) {
 void AVLTree::insert(int value, Timeline& timeline) {
     timeline.addFrame(Frame(makeTreePayload({}), 1, "Starting insertion of " + std::to_string(value)));
 
-    if (!initialInsert(value, root, timeline, 0)) {
+    if (!initialInsert(value, root, &timeline, 0)) {
         timeline.addFrame(Frame(makeTreePayload({}), 2, "Insert " + std::to_string(value) + " failed."));
 
         return;
@@ -307,7 +334,7 @@ void AVLTree::insert(int value, Timeline& timeline) {
 void AVLTree::remove(int value, Timeline& timeline) {
     timeline.addFrame(Frame(makeTreePayload({}), 1, "Attempting to remove " + std::to_string(value)));
 
-    if (initialRemove(value, root, timeline, 0)) {
+    if (initialRemove(value, root, &timeline, 0)) {
         timeline.addFrame(Frame(makeTreePayload({}), 2, "Remove " + std::to_string(value) + " failed."));
 
         return;
