@@ -232,6 +232,7 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
 void AppEngine::handleDataActionRequest() {
     const int action = uiManager.getInputAction();
     if (action == 0) {
+        uiManager.resetInputAction();
         return;
     }
     
@@ -263,8 +264,11 @@ void AppEngine::handleDataActionRequest() {
     switch (selectedDS) {
         case 0: { // SINGLY LINKED LIST
             auto* sll = dynamic_cast<IStandardStructure*>(activeStructure);
-            if (!sll) return;
-
+            if (!sll) {
+                uiManager.resetInputAction();
+                return;
+            }
+            
             switch (action) {
                 case 1: { // 1. INIT
                     if (mode == 0) { // Array
@@ -339,7 +343,10 @@ void AppEngine::handleDataActionRequest() {
         }
         case 1: { // MIN HEAP
             auto* minheap = dynamic_cast<IHeapStructure*>(activeStructure);
-            if (!minheap) return;
+            if (!minheap) {
+                uiManager.resetInputAction();
+                return;
+            }
 
             switch (action) {
                 case 1: { // 1. INIT
@@ -425,7 +432,10 @@ void AppEngine::handleDataActionRequest() {
         }
         case 2: { // MAX HEAP
             auto* maxheap = dynamic_cast<IHeapStructure*>(activeStructure);
-            if (!maxheap) return;
+            if (!maxheap) {
+                uiManager.resetInputAction();
+                return;
+            }
 
             switch (action) {
                 case 1: { // 1. INIT
@@ -511,7 +521,10 @@ void AppEngine::handleDataActionRequest() {
         }
         case 3: { // AVL TREE
             auto* avl = dynamic_cast<IStandardStructure*>(activeStructure);
-            if (!avl) return;
+            if (!avl) {
+                uiManager.resetInputAction();
+                return;
+            }
 
             switch (action) {
                 case 1: { // 1. INIT
@@ -587,7 +600,10 @@ void AppEngine::handleDataActionRequest() {
         }
         case 4: { // GRID GRAPH
             auto* gridGraph = dynamic_cast<GridGraph*>(activeStructure);
-            if (!gridGraph) return;
+            if (!gridGraph) {
+                uiManager.resetInputAction();
+                return;
+            }
 
             switch (action) {
                 case 1: { // 1. INIT
@@ -654,7 +670,10 @@ void AppEngine::handleDataActionRequest() {
         }
         case 5: { // DIRECTED GRAPH
             auto* directedgraph = dynamic_cast<IGraphStructure*>(activeStructure);
-            if (!directedgraph) return;
+            if (!directedgraph) {
+                uiManager.resetInputAction();
+                return;
+            }
 
             switch (action) {
                 case 1: { // 1. INIT
@@ -749,7 +768,10 @@ void AppEngine::handleDataActionRequest() {
         }
         case 6: { // UNDIRECTED GRAPH
             auto* undirectedgraph = dynamic_cast<IGraphStructure*>(activeStructure);
-            if (!undirectedgraph) return;
+            if (!undirectedgraph) {
+                uiManager.resetInputAction();
+                return;
+            }
 
             switch (action) {
                 case 1: { // 1. INIT
