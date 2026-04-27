@@ -26,9 +26,12 @@ struct LayoutConfig {
     float gridBottomPaddingMin = 40.0f;
     float gridViewportMinSize = 40.0f;
 
-    int physicsIterations = 100;
-    float initialTemperature = 100.0f;
-    float coolingFactor = 0.95f;
+    int physicsIterations = 300;
+    float initialTemperature = 180.0f;
+    float coolingFactor = 0.985f;
+    float physicsInitialRadiusBase = 90.0f;
+    float physicsInitialRadiusPerNode = 8.0f;
+    float physicsOverlapNudge = 2.0f;
 };
 
 #endif // LAYOUTCONFIG_H

@@ -32,10 +32,12 @@ std::vector<Position> IGraphStructure::generatePhysicsBasedLayout(const LayoutCo
 
     float centerX = config.screenWidth / 2.0f;
     float centerY = config.screenHeight / 2.0f;
+    float initialRadius = std::min(
+        std::min(config.screenWidth, config.screenHeight) * 0.30f,
+        config.physicsInitialRadiusBase + config.physicsInitialRadiusPerNode * static_cast<float>(vertexCount));
     for (size_t i = 0; i < vertexCount; ++i) {
         float angle = static_cast<float>(i) * (2.0f * pi / static_cast<float>(vertexCount));
-        float radius = 50.0f + 50.0f * (static_cast<float>(vertexCount) / 10.0f);
-        positions[i] = Position(centerX + radius * std::cos(angle), centerY + radius * std::sin(angle));
+        positions[i] = Position(centerX + initialRadius * std::cos(angle), centerY + initialRadius * std::sin(angle));
     }
 
     float area = config.screenWidth * config.screenHeight;
@@ -53,6 +55,12 @@ std::vector<Position> IGraphStructure::generatePhysicsBasedLayout(const LayoutCo
 
                 float dist = Position::getDistance(positions[v], positions[u]);
                 if (dist <= 0.0001f) {
+                    if (v < u) {
+                        float nudgeAngle = static_cast<float>((v * 37u + u * 17u) % 360u) * pi / 180.0f;
+                        Position nudge(std::cos(nudgeAngle), std::sin(nudgeAngle));
+                        displacements[v] += nudge * config.physicsOverlapNudge;
+                        displacements[u] -= nudge * config.physicsOverlapNudge;
+                    }
                     continue;
                 }
 
