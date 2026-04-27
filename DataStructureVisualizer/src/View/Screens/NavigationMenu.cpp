@@ -43,15 +43,11 @@ void NavigationMenu::render(const sf::RenderWindow& window, const sf::Vector2u& 
     // --- ANIMATED CYBERPUNK BACKGROUND ---
     UIanimation::DrawCyberpunkBackground(winSize, (float)ImGui::GetTime(), ImGui::GetMousePos(), btnColor, btnHover);
 
-    bool hasTitleFont = ImGui::GetIO().Fonts->Fonts.Size > 1;
-    if (hasTitleFont) {
-        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]); // Dùng font số 2 (size 36)
-    }
-
     // --- add back button ---
     if (currentState != MenuState::Main) {
-        ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
-        if (UIanimation::ParticleButton("Back", ImVec2(80.0f, 35.0f), btnColor, btnHover, btnActive, &clickSound)) {
+        ImGui::SetCursorScreenPos(ImVec2(10.0f, 10.0f));
+        if (ImGui::InvisibleButton("BackBtn", ImVec2(80.0f, 35.0f))) {
+            clickSound.play();
             if (currentState == MenuState::Heap) currentState = MenuState::Main;
             else if (currentState == MenuState::ShortestPath) currentState = MenuState::Main;
             else if (currentState == MenuState::GraphType) currentState = MenuState::ShortestPath;
@@ -59,29 +55,6 @@ void NavigationMenu::render(const sf::RenderWindow& window, const sf::Vector2u& 
         }
     }
 
-    // --- Vẽ Tiêu đề (Nằm ở top-center) ---
-    std::string titleStr = "DATA STRUCTURE VISUALIZER";
-    if (currentState == MenuState::Heap) titleStr = "SELECT HEAP TYPE";
-    else if (currentState == MenuState::ShortestPath) titleStr = "SELECT ENVIRONMENT";
-    else if (currentState == MenuState::GraphType) titleStr = "SELECT GRAPH TYPE";
-    else if (currentState == MenuState::GraphRepr) titleStr = "SELECT GRAPH STRUCTURE";
-
-    const char* title = titleStr.c_str();
-    ImVec2 titleSize = ImGui::CalcTextSize(title);
-    
-    // Glowing Title Animation
-    float titleX = (winSize.x - titleSize.x) * 0.5f;
-    float titleY = winSize.y * 0.22f;
-    float time = (float)ImGui::GetTime();
-    ImDrawList* draw_list = ImGui::GetWindowDrawList();
-    float glowAlpha = 0.6f + 0.4f * std::sin(time * 2.5f);
-    ImU32 titleColor32 = ImGui::GetColorU32(ImVec4(theme.inputMenuTextColor.r/255.f, theme.inputMenuTextColor.g/255.f, theme.inputMenuTextColor.b/255.f, 1.0f));
-    draw_list->AddText(ImVec2(titleX, titleY) + ImVec2(0, 3), ImGui::GetColorU32(ImVec4(btnHover.x, btnHover.y, btnHover.z, glowAlpha * 0.7f)), title);
-    draw_list->AddText(ImVec2(titleX, titleY), titleColor32, title);
-
-    if (hasTitleFont) {
-        ImGui::PopFont();
-    }
 
     // --- Vẽ Lưới Nút Bấm ---
     float btnWidth = 350.0f;
@@ -117,10 +90,11 @@ void NavigationMenu::render(const sf::RenderWindow& window, const sf::Vector2u& 
         float yOffset = (1.0f - entranceAnim[i]) * 100.0f;
         float alpha = entranceAnim[i];
 
-        ImGui::SetCursorPos(ImVec2(startX + col * (btnWidth + spacingX), startY + row * (btnHeight + spacingY) + yOffset));
+        ImGui::SetCursorScreenPos(ImVec2(startX + col * (btnWidth + spacingX), startY + row * (btnHeight + spacingY)));
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
         
-        if (UIanimation::FloatButton((*currentNames)[i].c_str(), ImVec2(btnWidth, btnHeight), btnColor, btnHover, btnActive, &clickSound)) {
+        if (ImGui::InvisibleButton((*currentNames)[i].c_str(), ImVec2(btnWidth, btnHeight))) {
+            clickSound.play();
             if (currentState == MenuState::Main) {
                 if (i == 0) selectedDS = 0; // SLL
                 else if (i == 1) currentState = MenuState::Heap;

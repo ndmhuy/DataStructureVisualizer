@@ -1123,8 +1123,18 @@ void AppEngine::render() {
         DecorationPayload decPayload(appTime, sf::Vector2f(window.getWindow().getSize()));
         renderer.visit(decPayload);
 
-        MenuAnimPayload menuPayload(appTime, uiManager.getNavMenuState(), sf::Vector2f(window.getWindow().getSize()));
+        MenuAnimPayload menuPayload(
+            appTime, 
+            uiManager.getNavMenuState(), 
+            isDarkMode, 
+            sf::Vector2f(window.getWindow().getSize()), 
+            uiManager.getNavMenuNames(), 
+            uiManager.getNavMenuTitle()
+        );
         renderer.visit(menuPayload);
+    } else {
+        TopBarPayload tbPayload(isDarkMode, sf::Vector2f(window.getWindow().getSize()));
+        renderer.visit(tbPayload);
     }
 
     sf::View currentView = window.getWindow().getView();

@@ -82,6 +82,8 @@ public:
     void setShowMainMenu(bool show);
     bool isShowingMainMenu() const { return isMainMenu; }
     int getNavMenuState() const { return static_cast<int>(navMenu.getCurrentState()); }
+    std::vector<std::string> getNavMenuNames() const { return navMenu.getCurrentNames(); }
+    std::string getNavMenuTitle() const { return navMenu.getCurrentTitle(); }
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
     bool isMouseOverUI() const;

@@ -155,14 +155,26 @@ struct GridPayload : public IPayload {
 struct MenuAnimPayload : public IPayload {
     float time;
     int menuState; // 0: Main, 1: Heap, 2: SPA, 3: Graph
+    bool isDarkMode;
     sf::Vector2f winSize;
+    std::vector<std::string> buttonNames;
+    std::string title;
 
     MenuAnimPayload() = default;
-    MenuAnimPayload(float time, int menuState, sf::Vector2f winSize)
-        : time(time), menuState(menuState), winSize(winSize) {}
+    MenuAnimPayload(float time, int menuState, bool isDarkMode, sf::Vector2f winSize, std::vector<std::string> buttonNames, std::string title)
+        : time(time), menuState(menuState), isDarkMode(isDarkMode), winSize(winSize), buttonNames(std::move(buttonNames)), title(std::move(title)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new MenuAnimPayload(*this); }
+};
+
+struct TopBarPayload : public IPayload {
+    bool isDarkMode;
+    sf::Vector2f winSize;
+    TopBarPayload() = default;
+    TopBarPayload(bool dark, sf::Vector2f ws) : isDarkMode(dark), winSize(ws) {}
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new TopBarPayload(*this); }
 };
 
 struct DecorationPayload : public IPayload {

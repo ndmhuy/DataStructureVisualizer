@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <set>
+#include <cstdint>
 
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
@@ -1020,17 +1021,86 @@ void Renderer::visit(const GridPayload& payload) {
 }
 
 void Renderer::visit(const MenuAnimPayload& payload) {
+    auto drawSFMLButton = [&](sf::Vector2f bPos, sf::Vector2f bSize, const std::string& label, bool isDark, int fontSize) {
+        sf::FloatRect bounds(bPos, bSize);
+        sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window.getWindow());
+        sf::Vector2f mousePos = window.getWindow().mapPixelToCoords(mousePixelPos);
+        bool isHovered = bounds.contains(mousePos);
+
+        sf::Color primary = theme.inputMenuPrimaryColor;
+        sf::Color accent = theme.inputMenuAccentColor;
+        sf::Color highlight = theme.highlightColor;
+
+        sf::Color fillCol = isDark ? sf::Color(45, 40, 85, 240) : sf::Color(primary.r, primary.g, primary.b, 240);
+        if (isHovered) fillCol = isDark ? sf::Color(70, 60, 120, 255) : sf::Color(accent.r, accent.g, accent.b, 255);
+        sf::Color outCol = isDark ? sf::Color(100, 200, 255, 200) : sf::Color(accent.r, accent.g, accent.b, 220);
+        sf::Color txtCol = isDark ? sf::Color(180, 255, 220, 255) : sf::Color::White;
+
+        if (isHovered) {
+            float pulse = std::abs(std::sin(appTime * 5.0f));
+            outCol.a = static_cast<std::uint8_t>(150 + 105 * pulse);
+        }
+
+        float cut = 10.0f;
+        sf::ConvexShape rect(8);
+        rect.setPoint(0, sf::Vector2f(cut, 0));
+        rect.setPoint(1, sf::Vector2f(bSize.x - cut, 0));
+        rect.setPoint(2, sf::Vector2f(bSize.x, cut));
+        rect.setPoint(3, sf::Vector2f(bSize.x, bSize.y - cut));
+        rect.setPoint(4, sf::Vector2f(bSize.x - cut, bSize.y));
+        rect.setPoint(5, sf::Vector2f(cut, bSize.y));
+        rect.setPoint(6, sf::Vector2f(0, bSize.y - cut));
+        rect.setPoint(7, sf::Vector2f(0, cut));
+
+        rect.setPosition(bPos);
+        rect.setFillColor(fillCol);
+        rect.setOutlineThickness(isHovered ? 2.0f : 1.2f);
+        rect.setOutlineColor(outCol);
+        window.getWindow().draw(rect);
+
+        if (isHovered) {
+            float offset = 4.0f;
+            float corner = 14.0f;
+            sf::VertexArray lines(sf::PrimitiveType::Lines, 16);
+            
+            lines[0].position = bPos + sf::Vector2f(-offset, corner - offset); lines[0].color = highlight;
+            lines[1].position = bPos + sf::Vector2f(-offset, -offset); lines[1].color = highlight;
+            lines[2].position = bPos + sf::Vector2f(-offset, -offset); lines[2].color = highlight;
+            lines[3].position = bPos + sf::Vector2f(corner - offset, -offset); lines[3].color = highlight;
+
+            lines[4].position = bPos + sf::Vector2f(bSize.x + offset, corner - offset); lines[4].color = highlight;
+            lines[5].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[5].color = highlight;
+            lines[6].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[6].color = highlight;
+            lines[7].position = bPos + sf::Vector2f(bSize.x - corner + offset, -offset); lines[7].color = highlight;
+
+            lines[8].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y - corner + offset); lines[8].color = highlight;
+            lines[9].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[9].color = highlight;
+            lines[10].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[10].color = highlight;
+            lines[11].position = bPos + sf::Vector2f(bSize.x - corner + offset, bSize.y + offset); lines[11].color = highlight;
+
+            lines[12].position = bPos + sf::Vector2f(-offset, bSize.y - corner + offset); lines[12].color = highlight;
+            lines[13].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[13].color = highlight;
+            lines[14].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[14].color = highlight;
+            lines[15].position = bPos + sf::Vector2f(corner - offset, bSize.y + offset); lines[15].color = highlight;
+            
+            window.getWindow().draw(lines);
+        }
+
+        sf::Text t(mainFont, label, fontSize);
+        t.setFillColor(txtCol);
+        sf::FloatRect tb = t.getLocalBounds();
+        t.setOrigin({tb.position.x + tb.size.x / 2.0f, tb.position.y + tb.size.y / 2.0f});
+        t.setPosition({bPos.x + bSize.x / 2.0f, bPos.y + bSize.y / 2.0f});
+        window.getWindow().draw(t);
+    };
+
     float btnWidth = 350.0f;
     float btnHeight = 80.0f;
     float spacingX = 40.0f;
     float spacingY = 120.0f;
     int cols = 2;
     
-    int totalItems = 0;
-    if (payload.menuState == 0) totalItems = 4;
-    else if (payload.menuState == 1) totalItems = 2;
-    else if (payload.menuState == 2) totalItems = 2;
-    else if (payload.menuState == 3) totalItems = 2;
+    int totalItems = payload.buttonNames.size();
     
     int rows = (totalItems + cols - 1) / cols;
     float startY = payload.winSize.y * 0.48f;
@@ -1050,6 +1120,29 @@ void Renderer::visit(const MenuAnimPayload& payload) {
     sf::Color highlight = theme.highlightColor;
     bool isDark = theme.codePanelBackgroundColor.r < 100;
     sf::Color silverCol = sf::Color(200, 210, 220);
+
+    // VẼ TIÊU ĐỀ
+    sf::Text titleText(mainFont, payload.title, 36);
+    sf::Color titleCol = payload.isDarkMode ? sf::Color(180, 255, 220, 255) : theme.inputMenuTextColor;
+    titleText.setFillColor(titleCol);
+    sf::FloatRect titleBounds = titleText.getLocalBounds();
+    titleText.setOrigin({titleBounds.position.x + titleBounds.size.x / 2.0f, titleBounds.position.y + titleBounds.size.y / 2.0f});
+    
+    float titleY = payload.winSize.y * 0.22f;
+    titleText.setPosition({payload.winSize.x / 2.0f, titleY});
+    
+    float glowAlpha = 0.6f + 0.4f * std::sin(payload.time * 2.5f);
+    sf::Text titleGlow = titleText;
+    sf::Color glowCol = theme.inputMenuAccentColor;
+    glowCol.a = static_cast<std::uint8_t>(glowAlpha * 180);
+    titleGlow.setFillColor(glowCol);
+    titleGlow.setPosition({payload.winSize.x / 2.0f, titleY + 3.0f});
+    
+    window.getWindow().draw(titleGlow);
+    window.getWindow().draw(titleText);
+
+    if (payload.menuState != 0) drawSFMLButton({10.0f, 10.0f}, {80.0f, 35.0f}, "Back", payload.isDarkMode, 16);
+    drawSFMLButton({payload.winSize.x - 120.0f, 10.0f}, {100.0f, 35.0f}, payload.isDarkMode ? "Light Mode" : "Dark Mode", payload.isDarkMode, 16);
 
     for (int i = 0; i < totalItems; ++i) {
         int row = i / cols;
@@ -1366,7 +1459,92 @@ void Renderer::visit(const MenuAnimPayload& payload) {
                 window.getWindow().draw(rootNode);
             }
         }
+        // Vẽ nút SFML đè lên hình nền trang trí
+        drawSFMLButton({startX + col * (btnWidth + spacingX), startY + row * (btnHeight + spacingY)}, {btnWidth, btnHeight}, payload.buttonNames[i], payload.isDarkMode, 24);
     }
+    window.getWindow().setView(currentView);
+}
+
+void Renderer::visit(const TopBarPayload& payload) {
+    auto drawSFMLButton = [&](sf::Vector2f bPos, sf::Vector2f bSize, const std::string& label, bool isDark, int fontSize) {
+        sf::FloatRect bounds(bPos, bSize);
+        sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window.getWindow());
+        sf::Vector2f mousePos = window.getWindow().mapPixelToCoords(mousePixelPos);
+        bool isHovered = bounds.contains(mousePos);
+
+        sf::Color primary = theme.inputMenuPrimaryColor;
+        sf::Color accent = theme.inputMenuAccentColor;
+        sf::Color highlight = theme.highlightColor;
+
+        sf::Color fillCol = isDark ? sf::Color(45, 40, 85, 240) : sf::Color(primary.r, primary.g, primary.b, 240);
+        if (isHovered) fillCol = isDark ? sf::Color(70, 60, 120, 255) : sf::Color(accent.r, accent.g, accent.b, 255);
+        sf::Color outCol = isDark ? sf::Color(100, 200, 255, 200) : sf::Color(accent.r, accent.g, accent.b, 220);
+        sf::Color txtCol = isDark ? sf::Color(180, 255, 220, 255) : sf::Color::White;
+
+        if (isHovered) {
+            float pulse = std::abs(std::sin(appTime * 5.0f));
+            outCol.a = static_cast<std::uint8_t>(150 + 105 * pulse);
+        }
+
+        float cut = 10.0f;
+        sf::ConvexShape rect(8);
+        rect.setPoint(0, sf::Vector2f(cut, 0));
+        rect.setPoint(1, sf::Vector2f(bSize.x - cut, 0));
+        rect.setPoint(2, sf::Vector2f(bSize.x, cut));
+        rect.setPoint(3, sf::Vector2f(bSize.x, bSize.y - cut));
+        rect.setPoint(4, sf::Vector2f(bSize.x - cut, bSize.y));
+        rect.setPoint(5, sf::Vector2f(cut, bSize.y));
+        rect.setPoint(6, sf::Vector2f(0, bSize.y - cut));
+        rect.setPoint(7, sf::Vector2f(0, cut));
+
+        rect.setPosition(bPos);
+        rect.setFillColor(fillCol);
+        rect.setOutlineThickness(isHovered ? 2.0f : 1.2f);
+        rect.setOutlineColor(outCol);
+        window.getWindow().draw(rect);
+
+        if (isHovered) {
+            float offset = 4.0f;
+            float corner = 14.0f;
+            sf::VertexArray lines(sf::PrimitiveType::Lines, 16);
+            
+            lines[0].position = bPos + sf::Vector2f(-offset, corner - offset); lines[0].color = highlight;
+            lines[1].position = bPos + sf::Vector2f(-offset, -offset); lines[1].color = highlight;
+            lines[2].position = bPos + sf::Vector2f(-offset, -offset); lines[2].color = highlight;
+            lines[3].position = bPos + sf::Vector2f(corner - offset, -offset); lines[3].color = highlight;
+
+            lines[4].position = bPos + sf::Vector2f(bSize.x + offset, corner - offset); lines[4].color = highlight;
+            lines[5].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[5].color = highlight;
+            lines[6].position = bPos + sf::Vector2f(bSize.x + offset, -offset); lines[6].color = highlight;
+            lines[7].position = bPos + sf::Vector2f(bSize.x - corner + offset, -offset); lines[7].color = highlight;
+
+            lines[8].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y - corner + offset); lines[8].color = highlight;
+            lines[9].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[9].color = highlight;
+            lines[10].position = bPos + sf::Vector2f(bSize.x + offset, bSize.y + offset); lines[10].color = highlight;
+            lines[11].position = bPos + sf::Vector2f(bSize.x - corner + offset, bSize.y + offset); lines[11].color = highlight;
+
+            lines[12].position = bPos + sf::Vector2f(-offset, bSize.y - corner + offset); lines[12].color = highlight;
+            lines[13].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[13].color = highlight;
+            lines[14].position = bPos + sf::Vector2f(-offset, bSize.y + offset); lines[14].color = highlight;
+            lines[15].position = bPos + sf::Vector2f(corner - offset, bSize.y + offset); lines[15].color = highlight;
+            
+            window.getWindow().draw(lines);
+        }
+
+        sf::Text t(mainFont, label, fontSize);
+        t.setFillColor(txtCol);
+        sf::FloatRect tb = t.getLocalBounds();
+        t.setOrigin({tb.position.x + tb.size.x / 2.0f, tb.position.y + tb.size.y / 2.0f});
+        t.setPosition({bPos.x + bSize.x / 2.0f, bPos.y + bSize.y / 2.0f});
+        window.getWindow().draw(t);
+    };
+
+    sf::View currentView = window.getWindow().getView();
+    window.getWindow().setView(sf::View(sf::FloatRect({0.f, 0.f}, {payload.winSize.x, payload.winSize.y})));
+    
+    drawSFMLButton({10.0f, 10.0f}, {80.0f, 35.0f}, "Home", payload.isDarkMode, 16);
+    drawSFMLButton({payload.winSize.x - 120.0f, 10.0f}, {100.0f, 35.0f}, payload.isDarkMode ? "Light Mode" : "Dark Mode", payload.isDarkMode, 16);
+
     window.getWindow().setView(currentView);
 }
 
@@ -1569,7 +1747,7 @@ void Renderer::visit(const DecorationPayload& payload) {
         int nPoly = 6;
         float pRadius = 38.0f;
         std::vector<sf::Vector2f> polyPts(nPoly);
-        for(int i = 0; i < nPoly; ++i) polyPts[i] = {pRadius * std::cos(i * 2.0f * M_PI / nPoly), pRadius * std::sin(i * 2.0f * M_PI / nPoly)};
+        for(int i = 0; i < nPoly; ++i) polyPts[i] = {static_cast<float>(pRadius * std::cos(i * 2.0f * M_PI / nPoly)), static_cast<float>(pRadius * std::sin(i * 2.0f * M_PI / nPoly))};
         for(int i = 0; i < nPoly; ++i) {
             drawLineLocal(polyPts[i].x, polyPts[i].y, polyPts[(i+1)%nPoly].x, polyPts[(i+1)%nPoly].y, fade(hlCol, 150), stPoly); // Viền lục giác
             drawLineLocal(polyPts[i].x, polyPts[i].y, 0, 0, fade(pCol, 80), stPoly); // Trục nối tâm

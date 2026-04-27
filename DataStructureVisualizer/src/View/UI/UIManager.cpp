@@ -213,13 +213,16 @@ void UIManager::render(sf::RenderWindow& window) {
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
                                  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | 
                                  ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         ImGui::Begin("ThemeMenu", nullptr, flags);
         
-        if (UIanimation::GlitchButton(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(100.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
+        if (ImGui::InvisibleButton("ThemeBtn", ImVec2(100.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
+            clickSound.play();
         }
         ImGui::End();
+        ImGui::PopStyleVar();
 
     } else {
         ImGuiWindowFlags panelFlags = 
@@ -240,29 +243,32 @@ void UIManager::render(sf::RenderWindow& window) {
         
         ImGui::Begin("TopControlBar", nullptr, panelFlags);
         
-        ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
-        if (UIanimation::ParticleButton("Home", ImVec2(80.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
+        ImGui::SetCursorScreenPos(ImVec2(10.0f, 10.0f));
+        if (ImGui::InvisibleButton("HomeBtn", ImVec2(80.0f, 35.0f))) {
             backToMenuClicked = true;
             isMainMenu = true;
             navMenu.resetState();
+            clickSound.play();
         }
 
-        ImGui::SameLine(0.0f, 30.0f);
+        ImGui::SetCursorScreenPos(ImVec2(120.0f, 10.0f));
         ImGui::SetNextItemWidth(120.0f);
         if (ImGui::SliderFloat("##ScaleApp", &theme.nodeScale, 0.3f, 2.0f, "Size %.1f")) {
             theme.arrayScale = theme.nodeScale;
             themeScaleChanged = true;
         }
         
-        ImGui::SameLine(0.0f, 20.0f);
-        if (UIanimation::GlitchButton(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(100.0f, 35.0f), btnColor, btnHover, btnHover, &clickSound)) {
+        ImGui::SetCursorScreenPos(ImVec2(winSize.x - 120.0f, 10.0f));
+        if (ImGui::InvisibleButton("ThemeBtnTop", ImVec2(100.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
+            clickSound.play();
         }
         
-        ImGui::SameLine(0.0f, 20.0f);
+        ImGui::SetCursorScreenPos(ImVec2(winSize.x - 230.0f, 10.0f));
         if (ImGui::Button(codePanel.isShowingCode() ? "Hide Code" : "Show Code", ImVec2(90.0f, 35.0f))) {
             codePanel.toggleShowCode();
+            clickSound.play();
         }
         ImGui::End();
 
