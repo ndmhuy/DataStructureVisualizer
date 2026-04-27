@@ -155,21 +155,41 @@ StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
 }
 
 IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
+    sf::Vector2u winSize = window.getWindow().getSize();
+    LayoutConfig layoutConfig{};
+    layoutConfig.screenWidth = static_cast<float>(winSize.x);
+    layoutConfig.screenHeight = static_cast<float>(winSize.y);
+    float minDimension = std::min(layoutConfig.screenWidth, layoutConfig.screenHeight);
+    layoutConfig.padding = std::clamp(
+        minDimension * layoutConfig.layoutPaddingRatio,
+        layoutConfig.layoutPaddingMin,
+        layoutConfig.layoutPaddingMax);
+
     switch (structureType) {
         case StructureType::SinglyLinkedList:
-        return new SinglyLinkedList(LayoutConfig{});
+        return new SinglyLinkedList(layoutConfig);
         case StructureType::MinHeap:
-        return new MinHeap(LayoutConfig{});        
+        return new MinHeap(layoutConfig);
         case StructureType::MaxHeap:
-        return new MaxHeap(LayoutConfig{});          
+        return new MaxHeap(layoutConfig);
         case StructureType::AVLTree:
-        return new AVLTree(LayoutConfig{});
+        return new AVLTree(layoutConfig);
         case StructureType::AdjacencyList:
-        return new AdjacencyList(LayoutConfig{});
+        return new AdjacencyList(layoutConfig);
         case StructureType::AdjacencyMatrix:
-        return new AdjacencyMatrix(LayoutConfig{});
-        case StructureType::GridGraph:
-        return new GridGraph(9, 9);
+        return new AdjacencyMatrix(layoutConfig);
+        case StructureType::GridGraph: {
+        const int defaultRowsInt = std::clamp(
+            static_cast<int>(layoutConfig.screenHeight / layoutConfig.gridTargetCellPixels),
+            layoutConfig.gridDefaultRowsMin,
+            layoutConfig.gridDefaultRowsMax);
+        const float aspect = (winSize.y == 0) ? 1.0f : static_cast<float>(winSize.x) / static_cast<float>(winSize.y);
+        const int defaultColsInt = std::clamp(
+            static_cast<int>(defaultRowsInt * aspect),
+            layoutConfig.gridDefaultColsMin,
+            layoutConfig.gridDefaultColsMax);
+        return new GridGraph(static_cast<size_t>(defaultRowsInt), static_cast<size_t>(defaultColsInt));
+        }
         default:
         return nullptr;
     }
@@ -884,6 +904,18 @@ void AppEngine::processInput(const sf::Event& event) {
     if (const auto* resized = event.getIf<sf::Event::Resized>()) {
         sf::FloatRect visibleArea({0.f, 0.f}, {(float)resized->size.x, (float)resized->size.y});
         window.getWindow().setView(sf::View(visibleArea));
+
+        if (auto* graph = dynamic_cast<IGraphStructure*>(activeStructure)) {
+            LayoutConfig resizedConfig = graph->getLayoutConfig();
+            resizedConfig.screenWidth = static_cast<float>(resized->size.x);
+            resizedConfig.screenHeight = static_cast<float>(resized->size.y);
+            float minDimension = std::min(resizedConfig.screenWidth, resizedConfig.screenHeight);
+            resizedConfig.padding = std::clamp(
+                minDimension * resizedConfig.layoutPaddingRatio,
+                resizedConfig.layoutPaddingMin,
+                resizedConfig.layoutPaddingMax);
+            graph->setLayoutConfig(resizedConfig);
+        }
     }
         
     // Pass the event to Dear ImGui and your custom buttons

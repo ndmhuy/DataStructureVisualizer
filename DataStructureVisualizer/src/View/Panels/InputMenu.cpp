@@ -431,8 +431,8 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
             }
         }
         else if (cur == 4) DrawConfirm(5);
-    } else if (currentDS == 5 || currentDS == 6) { // SHORTEST PATH ALGORITHM
-        if (cur == 0) { // Init from file
+    } else if (currentDS == 5) { // DIRECTED GRAPH
+        if (cur == 0) { // Init
             if (DrawButton("Adj Matrix", insertSubMode == 0, 100.0f)) {
                 if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; }
             }
@@ -470,14 +470,7 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
                 hasAction = 8; currentOption = -1; isopenMenu = false;
             }
         }
-        else if (cur == 2) { // Create Node
-            DrawInput("##in_create_node", inputBuf1, sizeof(inputBuf1), 100.0f, UnsignedNumberOnlyFilter);
-            ImGui::SameLine();
-            if (DrawButton("OK", false, 60.0f)) {
-                outMode = 0; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
-                hasAction = 2; currentOption = -1; isopenMenu = false;
-            }
-        }
+        else if (cur == 2) DrawConfirm(2); // Create Node
         else if (cur == 3) { // Create Edge
             ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
             DrawInput("##in_edge_u", inputBuf1, sizeof(inputBuf1), 50.0f, UnsignedNumberOnlyFilter);
@@ -516,6 +509,99 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
             ImGui::SameLine();
             if (DrawButton("Bellman", insertSubMode == 2, 80.0f)) {
                 if (insertSubMode != 2) { insertSubMode = 2; inputBuf1[0] = '\0'; }
+            }
+            ImGui::SameLine(0, 15.0f);
+            ImGui::SetCursorPosY(textY); ImGui::Text("start="); ImGui::SameLine();
+            DrawInput("##in_spsp_u", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = insertSubMode; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
+                hasAction = 5; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 6) { // APSP
+            if (DrawButton("Floyd", insertSubMode == 0, 60.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Johnson", insertSubMode == 1, 80.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; }
+            }
+            ImGui::SameLine(0, 15.0f);
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = insertSubMode; outString1 = ""; outString2 = ""; outString3 = ""; outString4 = "";
+                hasAction = 6; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 7) DrawConfirm(7); // Clear
+    } else if (currentDS == 6) { // UNDIRECTED GRAPH
+        if (cur == 0) { // Init
+            if (DrawButton("Adj Matrix", insertSubMode == 0, 100.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Adj List", insertSubMode == 1, 100.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; }
+            }
+            ImGui::SameLine(0, 15.0f);
+            DrawInput("##in_file", inputBuf1, sizeof(inputBuf1), 150.0f, nullptr);
+            ImGui::SameLine();
+            if (DrawButton("Browse", false, 60.0f)) fileDialog.Open();
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = insertSubMode; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
+                hasAction = 1; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 1) { // Random
+            if (DrawButton("Graph", true, 60.0f)) {} // Luôn active mode 0
+            ImGui::SameLine(0, 15.0f);
+            ImGui::SetCursorPosY(textY); ImGui::Text("minW="); ImGui::SameLine();
+            DrawInput("##in_rand_minw", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("maxW="); ImGui::SameLine();
+            DrawInput("##in_rand_maxw", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                hasAction = 8; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 2) DrawConfirm(2); // Create Node
+        else if (cur == 3) { // Create Edge
+            ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
+            DrawInput("##in_edge_u", inputBuf1, sizeof(inputBuf1), 50.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("v="); ImGui::SameLine();
+            DrawInput("##in_edge_v", inputBuf2, sizeof(inputBuf2), 50.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("(u,v)="); ImGui::SameLine();
+            DrawInput("##in_edge_w", inputBuf3, sizeof(inputBuf3), 50.0f, UnsignedNumberOnlyFilter); // Unsigned for Undirected
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = inputBuf3; outString4 = "";
+                hasAction = 3; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 4) { // OPSP
+            ImGui::SetCursorPosY(textY); ImGui::Text("u="); ImGui::SameLine();
+            DrawInput("##in_opsp_u", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
+            ImGui::SetCursorPosY(textY); ImGui::Text("v="); ImGui::SameLine();
+            DrawInput("##in_opsp_v", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
+            ImGui::SameLine();
+            if (DrawButton("OK", false, 60.0f)) {
+                outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
+                hasAction = 4; currentOption = -1; isopenMenu = false;
+            }
+        }
+        else if (cur == 5) { // SPSP
+            if (DrawButton("Dijkstra", insertSubMode == 0, 80.0f)) {
+                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; }
+            }
+            ImGui::SameLine();
+            if (DrawButton("Bellman", insertSubMode == 1, 80.0f)) {
+                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; }
             }
             ImGui::SameLine(0, 15.0f);
             ImGui::SetCursorPosY(textY); ImGui::Text("start="); ImGui::SameLine();

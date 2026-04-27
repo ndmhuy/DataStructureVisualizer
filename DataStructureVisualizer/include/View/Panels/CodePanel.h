@@ -18,6 +18,7 @@ private:
     int highlightedline = -1; // 0-based; -1 means no highlighted line.
     Theme theme = Theme::getDefaultTheme();
     float panelHeight = 400.0f; // Chiều cao cố định của Code Panel
+    bool showCode = true;
 
 public:
     CodePanel() = default;
@@ -29,6 +30,9 @@ public:
     void clearCode();
     void resize(const sf::RenderWindow& window);
     void render(const sf::RenderWindow& window);
+
+    bool isShowingCode() const { return showCode; }
+    void toggleShowCode() { showCode = !showCode; }
 };
 
 #endif // CODEPANEL_H

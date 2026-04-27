@@ -158,44 +158,48 @@ const std::vector<std::string> PseudocodeManager::GraphDijkstraCode = {
     "function dijkstra(G, s):",        // Line 0
     "  dist = [inf, ..., inf]",        // Line 1
     "  prev = [null, ..., null]",      // Line 2
-    "  dist[s] = 0",                   // Line 3
-    "  pq = empty priority queue",     // Line 4
-    "  pq.insert((s, 0))",             // Line 5
-    "  while pq is not empty:",        // Line 6
-    "    u, d = pq.poll()",            // Line 7
-    "    if dist[u] < d: continue",    // Line 8
-    "    for e in G[u]:",              // Line 9
-    "      v, w = e.to, e.cost",       // Line 10
-    "      if d + w < dist[v]:",       // Line 11
-    "        dist[v] = d + w",         // Line 12
-    "        prev[v] = u",             // Line 13
-    "        pq.insert((v, dist[v]))", // Line 14
-    "  return dist, prev"              // Line 15
+    "  if any edge weight < 0: return error", // Line 3
+    "  dist[s] = 0",                   // Line 4
+    "  pq = empty priority queue",     // Line 5
+    "  pq.insert((s, 0))",             // Line 6
+    "  while pq is not empty:",        // Line 7
+    "    u, d = pq.poll()",            // Line 8
+    "    if dist[u] < d: continue",    // Line 9
+    "    for e in G[u]:",              // Line 10
+    "      v, w = e.to, e.cost",       // Line 11
+    "      if d + w < dist[v]:",       // Line 12
+    "        dist[v] = d + w",         // Line 13
+    "        prev[v] = u",             // Line 14
+    "        pq.insert((v, dist[v]))", // Line 15
+    "  return dist, prev"              // Line 16
 };
 
 const std::vector<std::string> PseudocodeManager::GraphAStarCode = {
     "function astar(G, s, tgt):",         // Line 0
     "  gCost = [inf, ..., inf]",          // Line 1
-    "  fCost = [inf, ..., inf]",          // Line 2
-    "  prev = [null, ..., null]",         // Line 3
-    "  gCost[s] = 0",                     // Line 4
-    "  fCost[s] = h(s, tgt)",             // Line 5
-    "  pq.insert((s, fCost[s]))",         // Line 6
-    "  while pq is not empty:",           // Line 7
-    "    u, f = pq.poll()",               // Line 8
-    "    if u == tgt:",                   // Line 9
-    "      return gCost[tgt], prev",      // Line 10
-    "    if gCost[u] < f - h(u, tgt):",   // Line 11
-    "      continue",                     // Line 12
-    "    for e in G[u]:",                 // Line 13
-    "      v, w = e.to, e.cost",          // Line 14
-    "      tentG = gCost[u] + w",         // Line 15
-    "      if tentG < gCost[v]:",         // Line 16
-    "        gCost[v] = tentG",           // Line 17
-    "        fCost[v] = tentG+h(v, tgt)", // Line 18
-    "        prev[v] = u",                // Line 19
-    "        pq.insert((v, fCost[v]))",   // Line 20
-    "  return inf, null"                  // Line 21
+    "  hCost = [inf, ..., inf]",          // Line 2
+    "  fCost = [inf, ..., inf]",          // Line 3
+    "  if any edge weight < 0: return error", // Line 4
+    "  prev = [null, ..., null]",         // Line 5
+    "  gCost[s] = 0",                     // Line 6
+    "  hCost[s] = h(s, tgt)",             // Line 7
+    "  fCost[s] = gCost[s] + hCost[s]",   // Line 8
+    "  pq.insert((s, fCost[s], gCost[s]))", // Line 9
+    "  while pq is not empty:",           // Line 10
+    "    u, f, g = pq.poll()",            // Line 11
+    "    if u == tgt:",                   // Line 12
+    "      return getPath(prev, tgt)",    // Line 13
+    "    if g > gCost[u]: continue",      // Line 14
+    "    for e in G[u]:",                 // Line 15
+    "      v, w = e.to, e.cost",          // Line 16
+    "      tentG = g + w",                // Line 17
+    "      if tentG < gCost[v]:",         // Line 18
+    "        gCost[v] = tentG",           // Line 19
+    "        hCost[v] = h(v, tgt)",       // Line 20
+    "        fCost[v] = gCost[v] + hCost[v]", // Line 21
+    "        prev[v] = u",                // Line 22
+    "        pq.insert((v, fCost[v], gCost[v]))", // Line 23
+    "  return inf, null"                  // Line 24
 };
 
 const std::vector<std::string> PseudocodeManager::GraphBellmanFordCode = {
