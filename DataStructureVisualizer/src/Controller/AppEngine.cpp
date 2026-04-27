@@ -706,10 +706,10 @@ void AppEngine::handleDataActionRequest() {
                 }
                 case 6: { // 6. APSP
                     if (mode == 0) {
-                        directedgraph->runJohnson(timeline);
+                        directedgraph->runFloydWarshall(timeline);
                         handled = true;
                     } else if (mode == 1) {
-                        directedgraph->runFloydWarshall(timeline);
+                        directedgraph->runJohnson(timeline);
                         handled = true;
                     }
                     break;
@@ -798,10 +798,10 @@ void AppEngine::handleDataActionRequest() {
                 }
                 case 6: { // 6. APSP
                     if (mode == 0) {
-                        undirectedgraph->runJohnson(timeline);
+                        undirectedgraph->runFloydWarshall(timeline);
                         handled = true;
                     } else if (mode == 1) {
-                        undirectedgraph->runFloydWarshall(timeline);
+                        undirectedgraph->runJohnson(timeline);
                         handled = true;
                     }
                     break;
