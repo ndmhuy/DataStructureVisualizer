@@ -39,6 +39,9 @@ class IGraphStructure : public IVisualizable {
 
     virtual void initialize(const std::vector<Edge>& startingEdges, Timeline& timeline) = 0;
 
+    void setLayoutConfig(const LayoutConfig& config) { layoutConfig = config; }
+    const LayoutConfig& getLayoutConfig() const { return layoutConfig; }
+
     void runDAGShortestPath(size_t startVertex, Timeline& timeline);
     void runDijkstra(size_t startVertex, Timeline& timeline);
     virtual void runAStar(size_t startVertex, size_t targetVertex, Timeline& timeline);

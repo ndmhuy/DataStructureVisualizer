@@ -182,8 +182,21 @@ void IGraphStructure::runDijkstra(size_t startVertex, Timeline& timeline) {
     std::vector<size_t> previousVertices(vertexCount, std::numeric_limits<size_t>::max());
 
     if (startVertex >= vertexCount) {
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload(), distances, previousVertices, {}), 15, "Start vertex is out of range. Dijkstra's algorithm not defined.");
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload(), distances, previousVertices, {}), 16, "Start vertex is out of range. Dijkstra's algorithm not defined.");
         return;
+    }
+
+    for (const auto& edge : getEdges()) {
+        if (edge.weight < 0) {
+            addPayloadFrame(
+                timeline,
+                SingleSourcePayload(makeGraphPayload({edge.from, edge.to}, {edge}), distances, previousVertices, {}),
+                3,
+                "Dijkstra requires non-negative weights. Found edge " +
+                    std::to_string(edge.from) + " -> " + std::to_string(edge.to) +
+                    " with weight " + std::to_string(edge.weight) + ".");
+            return;
+        }
     }
 
     distances[startVertex] = 0;
@@ -211,18 +224,18 @@ void IGraphStructure::runDijkstra(size_t startVertex, Timeline& timeline) {
             continue;
         }
 
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex}), distances, previousVertices, getSnapshot()), 7,
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex}), distances, previousVertices, getSnapshot()), 8,
             "Dequeued vertex " + std::to_string(vertex) + " with distance " + std::to_string(dist));
 
         for (const auto& edge : getEdgesFromVertex(vertex)) {
-            addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex, edge.to}, {edge}), distances, previousVertices, getSnapshot()), 9,
+            addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex, edge.to}, {edge}), distances, previousVertices, getSnapshot()), 10,
                 "Checking edge to " + std::to_string(edge.to) + " with weight " + std::to_string(edge.weight));
 
             if (distances[vertex] != INF && dist + edge.weight < distances[edge.to]) {
                 distances[edge.to] = dist + edge.weight;
                 previousVertices[edge.to] = vertex;
                 pq.emplace(distances[edge.to], edge.to);
-                addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({edge.to}, {edge}), distances, previousVertices, getSnapshot()), 12,
+                addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({edge.to}, {edge}), distances, previousVertices, getSnapshot()), 13,
                     "Relaxed edge. New distance to " + std::to_string(edge.to) + " is " + std::to_string(distances[edge.to]));
             }
         }
@@ -239,14 +252,27 @@ void IGraphStructure::runDijkstra(size_t startVertex, Timeline& timeline) {
             }
         }
     }
-    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, pathTreeEdges), distances, previousVertices, getSnapshot()), 15, "Dijkstra's Algorithm complete. Highlighted shortest path tree.");
+    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, pathTreeEdges), distances, previousVertices, getSnapshot()), 16, "Dijkstra's Algorithm complete. Highlighted shortest path tree.");
 }
 
 void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline& timeline) {
     const int INF = std::numeric_limits<int>::max();
     if (startVertex >= vertexCount || targetVertex >= vertexCount) {
-        addPayloadFrame(timeline, AStarPayload(makeGraphPayload(), {}, {}, {}, {}, {}, targetVertex), 21, "Start or target vertex is out of range.");
+        addPayloadFrame(timeline, AStarPayload(makeGraphPayload(), {}, {}, {}, {}, {}, targetVertex), 24, "Start or target vertex is out of range.");
         return;
+    }
+
+    for (const auto& edge : getEdges()) {
+        if (edge.weight < 0) {
+            addPayloadFrame(
+                timeline,
+                AStarPayload(makeGraphPayload({edge.from, edge.to}, {edge}), {}, {}, {}, {}, {}, targetVertex),
+                4,
+                "A* requires non-negative weights in this implementation. Found edge " +
+                    std::to_string(edge.from) + " -> " + std::to_string(edge.to) +
+                    " with weight " + std::to_string(edge.weight) + ".");
+            return;
+        }
     }
 
     std::vector<Position> positions = generatePhysicsBasedLayout(layoutConfig);
@@ -257,10 +283,10 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
 
     gCosts[startVertex] = 0;
     hCosts[startVertex] = heuristic(startVertex, targetVertex, positions);
-    fCosts[startVertex] = hCosts[startVertex];
+    fCosts[startVertex] = gCosts[startVertex] + hCosts[startVertex];
 
     std::priority_queue<std::tuple<int, int, size_t>, std::vector<std::tuple<int, int, size_t>>, std::greater<>> pq;
-    pq.emplace(fCosts[startVertex], 0, startVertex);
+    pq.emplace(fCosts[startVertex], gCosts[startVertex], startVertex);
 
     auto getSnapshot = [&pq]() {
         auto pqCopy = pq;
@@ -283,7 +309,7 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
         auto [fScore, gScore, vertex] = pq.top();
         pq.pop();
 
-        addPayloadFrame(timeline, makePayload({vertex}), 8, "Visiting vertex " + std::to_string(vertex));
+        addPayloadFrame(timeline, makePayload({vertex}), 11, "Visiting vertex " + std::to_string(vertex));
 
         if (vertex == targetVertex) {
             std::vector<size_t> pathVertices;
@@ -302,16 +328,18 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
                 }
                 curr = prev;
             }
-            addPayloadFrame(timeline, makePayload(pathVertices, pathEdges), 10, "Target reached. Reconstructed path.");
+            addPayloadFrame(timeline, makePayload(pathVertices, pathEdges), 13, "Target reached. Reconstructed path.");
             return;
         }
 
         if (gScore > gCosts[vertex]) {
+            addPayloadFrame(timeline, makePayload({vertex}), 14,
+                "Skipping stale queue entry at vertex " + std::to_string(vertex) + ".");
             continue;
         }
 
         for (const auto& edge : getEdgesFromVertex(vertex)) {
-            addPayloadFrame(timeline, makePayload({vertex, edge.to}, {edge}), 13,
+            addPayloadFrame(timeline, makePayload({vertex, edge.to}, {edge}), 15,
                 "Checking edge from " + std::to_string(edge.from) + " to " + std::to_string(edge.to) + " with weight " + std::to_string(edge.weight));
 
             int tentativeGScore = gScore + edge.weight;
@@ -322,13 +350,13 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
                 previousVertices[edge.to] = vertex;
                 pq.emplace(fCosts[edge.to], gCosts[edge.to], edge.to);
 
-                addPayloadFrame(timeline, makePayload({edge.to}, {edge}), 17,
+                addPayloadFrame(timeline, makePayload({edge.to}, {edge}), 21,
                     "Relaxing edge to vertex " + std::to_string(edge.to) + ", new gCost " + std::to_string(gCosts[edge.to]) + ", new fCost " + std::to_string(fCosts[edge.to]));
             }
         }
     }
 
-    addPayloadFrame(timeline, makePayload(), 21, "A* Algorithm complete. Target unreachable.");
+    addPayloadFrame(timeline, makePayload(), 24, "A* Algorithm complete. Target unreachable.");
 }
 
 void IGraphStructure::runBellmanFord(size_t startVertex, Timeline& timeline) {
@@ -480,6 +508,20 @@ void IGraphStructure::runJohnson(Timeline& timeline) {
     for (const auto& edge : augmentedEdges) {
         if (edge.from < h.size() && edge.to < h.size() && h[edge.from] != INF && h[edge.from] + edge.weight < h[edge.to]) {
             addPayloadFrame(timeline, AllPairsPayload(makeGraphPayload({}, {}), {}, {}), 4, "Negative cycle detected by Bellman-Ford. Johnson's algorithm terminates.");
+            return;
+        }
+    }
+
+    for (const auto& edge : edges) {
+        Edge reweighted = reweightEdge(edge, h);
+        if (reweighted.weight < 0) {
+            addPayloadFrame(
+                timeline,
+                AllPairsPayload(makeGraphPayload({edge.from, edge.to}, {edge}), {}, {}),
+                8,
+                "Johnson reweighting produced a negative edge " +
+                    std::to_string(edge.from) + " -> " + std::to_string(edge.to) +
+                    " (w'=" + std::to_string(reweighted.weight) + "). Terminating for safety.");
             return;
         }
     }
