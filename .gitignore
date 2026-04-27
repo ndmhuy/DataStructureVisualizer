@@ -51,3 +51,8 @@ Icon
 # Ignore any user-generated text files during testing, 
 # but keep the required default data files in /resources
 *.log
+
+# Ignore ImGui local layout state
+DataStructureVisualizer/imgui.ini
+
+.cache/
