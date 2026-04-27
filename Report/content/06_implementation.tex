@@ -1,6 +1,52 @@
 % 06_implementation.tex
 \section{Implementation}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus.
+This section details the concrete implementation of the core components within the system architecture. It outlines the specific mechanisms used in the Controller and Model layers, focusing on application orchestration, playback state management, and the underlying data structures utilized for visualizations.
 
-Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus.
+\subsection{Controller Layer Implementation}
+
+The Controller layer acts as the nervous system of the application, bridging user interactions with underlying structural logic and managing the flow of time.
+
+\subsubsection{\texttt{AppEngine} (Application Orchestrator)}
+The \texttt{AppEngine} class encapsulates the primary SFML event loop and coordinates all subsystems. Its implementation handles several critical responsibilities:
+
+\begin{itemize}
+    \item \textbf{Input Event Processing}: The \texttt{AppEngine} captures standard SFML events. If an event is not consumed by the \texttt{UIManager} (e.g., Dear ImGui captures a click on a menu button), it falls back to the \texttt{Renderer}. This allows seamless interaction, such as dragging and dropping graph nodes directly on the canvas without triggering UI elements.
+    \item \textbf{View Manipulation (Zoom and Pan)}: To handle large data structures, \texttt{AppEngine} implements an interactive 2D camera system. Mouse scroll wheel events dynamically scale the \texttt{sf::View}, adjusting the zoom factor with clamped boundaries to prevent extreme scaling. Panning is implemented by tracking the mouse delta between \texttt{MouseButtonPressed} and \texttt{MouseMoved} events and shifting the \texttt{sf::View} center accordingly.
+    \item \textbf{Data Action Routing}: When a user requests an algorithm (e.g., Insert, Delete, Run A*), \texttt{AppEngine} queries the \texttt{UIManager} for the input parameters. It then resolves the required action to a specific \texttt{AlgorithmType}, retrieves the corresponding pseudocode via \texttt{PseudocodeManager}, and dispatches the command to the active \texttt{IVisualizable} instance. Once the Model generates a \texttt{Timeline}, it is immediately assigned to the \texttt{Playback} system.
+\end{itemize}
+
+\subsubsection{\texttt{Playback} (Timeline Management)}
+The \texttt{Playback} system provides VCR-like controls (Play, Pause, Step Forward, Step Backward) over the generated visualization states.
+Instead of calculating animations on the fly, the \texttt{Playback} class acts as an iterator over a fully populated \texttt{Timeline}. Its \texttt{update(float deltaTime)} method tracks an internal \texttt{timeAccumulator}. When the accumulator exceeds the \texttt{baseStepDuration} (modified by a \texttt{speedMultiplier}), the system advances to the next \texttt{Frame} in the timeline. This design guarantees deterministic animation and allows users to jump instantly to any step in the algorithm's execution without recalculating the model's state.
+
+\subsection{Model Layer Implementation}
+
+The Model layer houses the mathematical logic and the data payload generation mechanisms for the visualizer.
+
+\subsubsection{Singly Linked List}
+The \texttt{SinglyLinkedList} class implements the \texttt{IStandardStructure} interface. Internally, it manages a standard chain of \texttt{Node} pointers.
+\begin{itemize}
+    \item \textbf{Payload Generation}: Every modification or traversal step in an algorithm (like insertion or searching) records a \texttt{Frame}. The structure captures its current state into a \texttt{std::vector<int>} and creates a \texttt{LinkedListPayload}. It also attaches an array of highlighted indices.
+    \item \textbf{Algorithm Tracking}: For instance, during a search operation, the list iterates through its nodes. At each node, a \texttt{Frame} is generated with the current node's index highlighted and a descriptive message (e.g., "Comparing with node value X"). This provides the View with the exact context needed to highlight the corresponding visual node on the screen.
+\end{itemize}
+
+\subsubsection{Graph Structures (Adjacency List \& Adjacency Matrix)}
+Graphs are implemented using the \texttt{IGraphStructure} abstraction, with concrete variants for Adjacency Lists (optimizing sparse graphs) and Adjacency Matrices (optimizing dense graphs).
+\begin{itemize}
+    \item \textbf{Edge and Vertex Management}: Both variants support adding/removing vertices and directed/undirected edges with weights.
+    \item \textbf{Pathfinding Algorithms}: Implementations for algorithms such as Dijkstra, Bellman-Ford, and A* are provided. During execution, the graph maps its internal state (visited nodes, current paths, edge weights) into a generic \texttt{GraphPayload}. Nodes and edges that are actively being evaluated are tagged with highlight flags within the payload, allowing the \texttt{Renderer} to change their colors dynamically.
+\end{itemize}
+
+\subsubsection{Grid Graph (Pathfinding Grids)}
+The \texttt{GridGraph} structure simulates shortest-path algorithms (BFS, A*) on a 2D matrix, treating each cell as a node with implicit edges to its orthogonal and diagonal neighbors.
+\begin{itemize}
+    \item \textbf{State Mapping}: The grid is represented by an array of \texttt{CellState} enums (Empty, Wall, Start, End, Path, Visited).
+    \item \textbf{Algorithm Visualization}: When running A*, the algorithm maintains open and closed sets. At each expansion step, a \texttt{GridPayload} is generated. Cells in the open set are marked as 'Discovered', and the current shortest path is traced backward from the current node to the start node, marked as 'Path'. This allows users to visually comprehend the expanding frontier of the heuristic search.
+\end{itemize}
+
+\subsubsection{Heap and AVL Tree}
+\textit{Note: The detailed implementation of the Heap and AVL Tree structures, including their self-balancing logic and array-mapping visualization mechanics, is handled by other team members and is documented in their respective sections.}
+
+\subsection{View Layer Implementation}
+\textit{Note: The implementation of the UI components (Dear ImGui integration) and the underlying SFML rendering engine is documented in the subsequent View Layer section by the respective team members.}
