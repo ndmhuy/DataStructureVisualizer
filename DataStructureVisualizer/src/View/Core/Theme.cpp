@@ -41,7 +41,7 @@ Theme Theme::getDefaultTheme() {
 
     const std::string& assetsRoot = getAssetsRoot();
 
-    t.fontPath = assetsRoot + "/retro-pixel-thick.ttf";
+    t.fontPath = assetsRoot + "/FOT-RodinWanpaku Pro EB.otf";
     t.bgImagePath = assetsRoot + "/background.png";
     t.nodeImagePath = assetsRoot + "/node.png";
     t.arrayImagePath = assetsRoot + "/array.png";
