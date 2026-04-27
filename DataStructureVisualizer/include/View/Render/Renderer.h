@@ -72,10 +72,10 @@ public:
     void drawLineWithArrow(sf::Vector2f p1, sf::Vector2f size1, ShapeType type1,
                          sf::Vector2f p2, sf::Vector2f size2, ShapeType type2,
                          float thickness, float arrowSize = 12.0f,
-                         bool isHighlighted = false);
+                         bool isHighlighted = false, float offset = 0.0f);
     void drawLine(sf::Vector2f p1, sf::Vector2f size1, ShapeType type1,
                 sf::Vector2f p2, sf::Vector2f size2, ShapeType type2,
-                float thickness, bool isHighlighted = false);
+                float thickness, bool isHighlighted = false, float offset = 0.0f);
 
     void renderActiveState(const Frame* currentFrame);
 
