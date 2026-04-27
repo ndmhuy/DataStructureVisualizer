@@ -1038,32 +1038,74 @@ void Renderer::visit(const GridPayload& payload) {
     float startX = (winSize.x - gridWidth) / 2.0f;
     float startY = topPadding + (availableHeight - gridHeight) / 2.0f;
 
+    bool isDark = theme.codePanelBackgroundColor.r < 100; // Nhận diện Dark Mode
+
     for (size_t r = 0; r < rows; ++r) {
         for (size_t c = 0; c < cols; ++c) {
-            sf::RectangleShape cell(sf::Vector2f(cellSize - 2.0f, cellSize - 2.0f));
-            cell.setPosition({startX + c * cellSize + 1.0f, startY + r * cellSize + 1.0f});
-
             int state = grid[r][c];
-            bool isDark = theme.codePanelBackgroundColor.r < 100; // Nhận diện Dark Mode dựa vào màu theme
+            size_t cellId = r * 10000 + c; // Tạo ID định danh duy nhất cho mỗi ô Grid
+            NodeAnimState& anim = nodeAnimStates[cellId];
+            bool isCurrent = (payload.currentCell.first == r && payload.currentCell.second == c);
             
+            sf::Color targetColor;
             if (state == 0) { // Empty
-                cell.setFillColor(isDark ? sf::Color(60, 65, 75, 180) : sf::Color(220, 220, 230, 180));
+                targetColor = isDark ? sf::Color(60, 65, 75, 180) : sf::Color(220, 220, 230, 180);
             } else if (state == 1) { // Wall
-                cell.setFillColor(isDark ? sf::Color(200, 210, 220) : sf::Color(50, 50, 50));
+                targetColor = isDark ? sf::Color(200, 210, 220) : sf::Color(50, 50, 50);
             } else if (state == 2) { // Start
-                cell.setFillColor(theme.successColor); 
+                targetColor = theme.successColor; 
             } else if (state == 3) { // Target
-                cell.setFillColor(theme.highlightColor); 
+                targetColor = theme.highlightColor; 
             } else if (state == 4) { // Visited
-                cell.setFillColor(theme.visitedColor);
+                targetColor = theme.visitedColor;
             } else if (state == 5) { // Path
-                cell.setFillColor(theme.successColor);
+                targetColor = theme.successColor;
             }
 
-            if (payload.currentCell.first == r && payload.currentCell.second == c) {
+            // Khởi tạo màu lần đầu (tránh bị đen xì)
+            if (anim.colorR < 0.0f) {
+                anim.colorR = targetColor.r; anim.colorG = targetColor.g; anim.colorB = targetColor.b;
+                anim.scale = 0.0f; // Bắt đầu từ 0 để có hiệu ứng Pop-in lúc mới vẽ
+            }
+
+            // Pha màu mượt mà (Color Blending)
+            float lerpCol = 1.0f - std::exp(-15.0f * currentDeltaTime);
+            anim.colorR += (targetColor.r - anim.colorR) * lerpCol;
+            anim.colorG += (targetColor.g - anim.colorG) * lerpCol;
+            anim.colorB += (targetColor.b - anim.colorB) * lerpCol;
+
+            // Vật lý lò xo cho Scale (Spring Physics)
+            float targetScale = isCurrent ? 1.25f : 1.0f;
+            if (state == 1 && !isCurrent) targetScale = 0.85f; // Tường thụt vào một chút
+            else if ((state == 2 || state == 3 || state == 5) && !isCurrent) targetScale = 1.1f; // Các ô đặc biệt phình to
+            
+            float tension = 250.0f; float damp = 14.0f;
+            anim.velScale += (targetScale - anim.scale) * tension * currentDeltaTime;
+            anim.velScale *= std::exp(-damp * currentDeltaTime);
+            anim.scale += anim.velScale * currentDeltaTime;
+
+            // Vẽ ô Grid với Scale và Origin ở trung tâm
+            float currentCellSize = (cellSize - 2.0f) * anim.scale;
+            sf::RectangleShape cell(sf::Vector2f(currentCellSize, currentCellSize));
+            cell.setOrigin({currentCellSize / 2.0f, currentCellSize / 2.0f});
+            cell.setPosition({startX + c * cellSize + cellSize / 2.0f, startY + r * cellSize + cellSize / 2.0f});
+            
+            sf::Color currentColor(
+                static_cast<std::uint8_t>(anim.colorR),
+                static_cast<std::uint8_t>(anim.colorG),
+                static_cast<std::uint8_t>(anim.colorB),
+                targetColor.a // Giữ nguyên Alpha của target
+            );
+            cell.setFillColor(currentColor);
+
+            // Highlight viền
+            if (isCurrent) {
                 float pulse = std::sin(appTime * 15.0f) * 2.0f;
                 cell.setOutlineThickness(3.0f + pulse);
                 cell.setOutlineColor(theme.highlightColor); // Dùng màu highlight của Theme cho đồng bộ
+            } else if (state == 2 || state == 3 || state == 5) {
+                cell.setOutlineThickness(1.5f);
+                cell.setOutlineColor(theme.highlightColor);
             }
 
             window.getWindow().draw(cell);
