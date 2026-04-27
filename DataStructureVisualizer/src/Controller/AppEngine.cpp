@@ -155,21 +155,41 @@ StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
 }
 
 IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
+    sf::Vector2u winSize = window.getWindow().getSize();
+    LayoutConfig layoutConfig{};
+    layoutConfig.screenWidth = static_cast<float>(winSize.x);
+    layoutConfig.screenHeight = static_cast<float>(winSize.y);
+    float minDimension = std::min(layoutConfig.screenWidth, layoutConfig.screenHeight);
+    layoutConfig.padding = std::clamp(
+        minDimension * layoutConfig.layoutPaddingRatio,
+        layoutConfig.layoutPaddingMin,
+        layoutConfig.layoutPaddingMax);
+
     switch (structureType) {
         case StructureType::SinglyLinkedList:
-        return new SinglyLinkedList(LayoutConfig{});
+        return new SinglyLinkedList(layoutConfig);
         case StructureType::MinHeap:
-        return new MinHeap(LayoutConfig{});        
+        return new MinHeap(layoutConfig);
         case StructureType::MaxHeap:
-        return new MaxHeap(LayoutConfig{});          
+        return new MaxHeap(layoutConfig);
         case StructureType::AVLTree:
-        return new AVLTree(LayoutConfig{});
+        return new AVLTree(layoutConfig);
         case StructureType::AdjacencyList:
-        return new AdjacencyList(LayoutConfig{});
+        return new AdjacencyList(layoutConfig);
         case StructureType::AdjacencyMatrix:
-        return new AdjacencyMatrix(LayoutConfig{});
-        case StructureType::GridGraph:
-        return new GridGraph(9, 9);
+        return new AdjacencyMatrix(layoutConfig);
+        case StructureType::GridGraph: {
+        const int defaultRowsInt = std::clamp(
+            static_cast<int>(layoutConfig.screenHeight / layoutConfig.gridTargetCellPixels),
+            layoutConfig.gridDefaultRowsMin,
+            layoutConfig.gridDefaultRowsMax);
+        const float aspect = (winSize.y == 0) ? 1.0f : static_cast<float>(winSize.x) / static_cast<float>(winSize.y);
+        const int defaultColsInt = std::clamp(
+            static_cast<int>(defaultRowsInt * aspect),
+            layoutConfig.gridDefaultColsMin,
+            layoutConfig.gridDefaultColsMax);
+        return new GridGraph(static_cast<size_t>(defaultRowsInt), static_cast<size_t>(defaultColsInt));
+        }
         default:
         return nullptr;
     }
@@ -242,7 +262,10 @@ void AppEngine::handleDataActionRequest() {
     // New switch action
     if (activeStructureType == StructureType::SinglyLinkedList || activeStructureType == StructureType::AVLTree) {
         auto* standard = dynamic_cast<IStandardStructure*>(activeStructure);
-        if (!standard) return;
+        if (!standard) {
+            uiManager.resetInputAction();
+            return;
+        }
 
         switch (action) {
             case 1: { // 1. INIT
@@ -317,7 +340,10 @@ void AppEngine::handleDataActionRequest() {
     }
     else if (activeStructureType == StructureType::MinHeap || activeStructureType == StructureType::MaxHeap) {
         auto* heap = dynamic_cast<IHeapStructure*>(activeStructure);
-        if (!heap) return;
+        if (!heap) {
+            uiManager.resetInputAction();
+            return;
+        }
 
         switch (action) {
             case 1: { // 1. INIT
@@ -402,7 +428,10 @@ void AppEngine::handleDataActionRequest() {
     }
     else if (activeStructureType == StructureType::GridGraph) {
         auto* gridGraph = dynamic_cast<GridGraph*>(activeStructure);
-        if (!gridGraph) return;
+        if (!gridGraph) {
+            uiManager.resetInputAction();
+            return;
+        }
 
         switch (action) {
             case 1: { // 1. INIT
@@ -468,7 +497,10 @@ void AppEngine::handleDataActionRequest() {
     }
     else if (activeStructureType == StructureType::AdjacencyList || activeStructureType == StructureType::AdjacencyMatrix) {
         auto* graph = dynamic_cast<IGraphStructure*>(activeStructure);
-        if (!graph) return;
+        if (!graph) {
+            uiManager.resetInputAction();
+            return;
+        }
 
         switch (action) {
             case 1: { // 1. INIT
@@ -494,9 +526,9 @@ void AppEngine::handleDataActionRequest() {
                 break;
             }
             case 4: { // 4. OPSP
-                dataManager.inputFromConsoleNonNegative(input1);
+                dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
                 
-                if (dataManager.getData().size() >= 1) {
+                if (dataManager.getData().size() >= 2) {
                     graph->runAStar(dataManager.getData()[0], dataManager.getData()[1], timeline);
                     handled = true;
                 }
@@ -505,14 +537,15 @@ void AppEngine::handleDataActionRequest() {
             case 5: { // 5. SPSP
                 dataManager.inputFromConsoleNonNegative(input1);
                 if (!dataManager.getData().empty()) {
+                    size_t sourceVertex = static_cast<size_t>(dataManager.getData()[0]);
                     if (mode == 0) { // DAG
-                        graph->runDAGShortestPath(dataManager.getDataGraph()[0].from, timeline);
+                        graph->runDAGShortestPath(sourceVertex, timeline);
                         handled = true;
                     } else if (mode == 1) { // Dijkstra
-                        graph->runDijkstra(dataManager.getDataGraph()[0].from, timeline);
+                        graph->runDijkstra(sourceVertex, timeline);
                         handled = true;
                     } else if (mode == 2) { // BellmanFord
-                        graph->runBellmanFord(dataManager.getDataGraph()[0].from, timeline);
+                        graph->runBellmanFord(sourceVertex, timeline);
                         handled = true;
                     }
                 }
@@ -625,6 +658,18 @@ void AppEngine::processInput(const sf::Event& event) {
     if (const auto* resized = event.getIf<sf::Event::Resized>()) {
         sf::FloatRect visibleArea({0.f, 0.f}, {(float)resized->size.x, (float)resized->size.y});
         window.getWindow().setView(sf::View(visibleArea));
+
+        if (auto* graph = dynamic_cast<IGraphStructure*>(activeStructure)) {
+            LayoutConfig resizedConfig = graph->getLayoutConfig();
+            resizedConfig.screenWidth = static_cast<float>(resized->size.x);
+            resizedConfig.screenHeight = static_cast<float>(resized->size.y);
+            float minDimension = std::min(resizedConfig.screenWidth, resizedConfig.screenHeight);
+            resizedConfig.padding = std::clamp(
+                minDimension * resizedConfig.layoutPaddingRatio,
+                resizedConfig.layoutPaddingMin,
+                resizedConfig.layoutPaddingMax);
+            graph->setLayoutConfig(resizedConfig);
+        }
     }
         
     // Pass the event to Dear ImGui and your custom buttons
