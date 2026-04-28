@@ -10,7 +10,13 @@ std::string detectAssetsRoot() {
         "assets",
         "../assets",
         "../../assets",
-        "../../../assets"
+        "../../../assets",
+        "resources",
+        "../resources",
+        "../../resources",
+        "../../../resources",
+        "../DataStructureVisualizer/assets",
+        "../DataStructureVisualizer/resources"
     };
 
     for (const auto& candidate : candidates) {
