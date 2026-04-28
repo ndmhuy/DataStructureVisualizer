@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
+#include <filesystem>
 
 #include "View/UI/UIManager.h"
 #include "imgui_internal.h"
@@ -22,9 +23,16 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     // Load Custom Fonts cho UI typography
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->Clear();
-    ImFont* regularFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 18.0f); // Font thường
-    ImFont* titleFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 36.0f);   // Font tiêu đề to
-    if (!regularFont || !titleFont) {
+    
+    // Kiểm tra file font tồn tại để tránh ImGui crash (Assertion failed)
+    if (std::filesystem::exists(theme.fontPath)) {
+        ImFont* regularFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 18.0f); // Font thường
+        ImFont* titleFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 36.0f);   // Font tiêu đề to
+        if (!regularFont || !titleFont) {
+            io.Fonts->AddFontDefault();
+        }
+    } else {
+        std::cerr << "Warning: Font file not found at " << theme.fontPath << ". Using default ImGui font.\n";
         io.Fonts->AddFontDefault();
     }
     if (!ImGui::SFML::UpdateFontTexture()){
