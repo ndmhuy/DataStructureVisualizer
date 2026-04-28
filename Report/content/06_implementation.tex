@@ -20,6 +20,24 @@ The \texttt{AppEngine} class encapsulates the primary SFML event loop and coordi
 The \texttt{Playback} system provides VCR-like controls (Play, Pause, Step Forward, Step Backward) over the generated visualization states.
 Instead of calculating animations on the fly, the \texttt{Playback} class acts as an iterator over a fully populated \texttt{Timeline}. Its \texttt{update(float deltaTime)} method tracks an internal \texttt{timeAccumulator}. When the accumulator exceeds the \texttt{baseStepDuration} (modified by a \texttt{speedMultiplier}), the system advances to the next \texttt{Frame} in the timeline. This design guarantees deterministic animation and allows users to jump instantly to any step in the algorithm's execution without recalculating the model's state.
 
+\subsubsection{\texttt{DataManager} (Data Ingestion Logic)}
+The \texttt{DataManager} class acts as the system's primary gateway for data, responsible for parsing raw inputs into structured formats that the Model layer can consume. Its implementation focuses on flexibility across multiple input modalities.
+
+\begin{itemize}
+    \item \textbf{Input Parsing and Tokenization}: For console and file inputs, \texttt{DataManager} implements robust string parsing logic. Methods such as \texttt{inputFromConsole()} utilize \texttt{std::stringstream} to tokenize space-separated or comma-separated values, converting them into \texttt{std::vector<int>} or \texttt{Edge} objects while performing basic validation (e.g., ignoring non-numeric characters).
+    
+    \item \textbf{Randomization Engines}: The class provides a suite of randomizers (e.g., \texttt{randomDataPlanarGraph}, \texttt{randomDataDAG}). These are implemented using the C++ \texttt{<random>} library to ensure uniform distribution within user-defined constraints (min/max values, node density). For planar graphs, it incorporates coordinate generation logic to prevent nodes from overlapping during the initial layout phase.
+    
+    \item \textbf{Data Mapping and Distribution}: \texttt{DataManager} maintains specialized buffers for different structure types:
+    \begin{itemize}
+        \item \texttt{std::vector<int>} for linear structures (Heaps, Arrays) and trees.
+        \item \texttt{std::vector<Edge>} for general graphs, storing source, destination, and weights.
+        \item \texttt{std::vector<std::vector<int>>} for grid-based pathfinding algorithms.
+    \end{itemize}
+    
+    \item \textbf{Encapsulated Output}: To facilitate debugging and data persistence, the class implements \texttt{outputToFile()} and \texttt{outputToConsole()}. These methods serialize the current state of the input buffers back into human-readable formats, allowing users to save generated test cases for future sessions.
+\end{itemize}
+
 \subsection{Model Layer Implementation}
 
 The Model layer houses the mathematical logic and the data payload generation mechanisms for the visualizer.
