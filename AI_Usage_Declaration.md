@@ -15,7 +15,7 @@
   - Refined the academic tone of the project report and assisted with LaTeX formatting.
 
 ## Nguyễn Đức Huy (25125014)
-- **ChatGPT**:
+- **Gemini AI**:
   - Identified and resolved technical bugs within the codebase.
   - Verified the connection and data wiring between different system components.
   - Upgraded and refactored code for better performance and readability.

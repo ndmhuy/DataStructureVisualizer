@@ -15,7 +15,7 @@ The architecture is divided into three interconnected categories of components:
     \item \textbf{View}: Responsible for rendering the visual representation of the \texttt{Model}'s state. The \texttt{UIManager} handles modern graphical user interface elements via Dear ImGui, providing interactive menus and code panels. The \texttt{Renderer} utilizes SFML to draw graphical shapes based on the data contained in the current \texttt{Frame}.
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
     \resizebox{\textwidth}{!}{
 \begin{tikzpicture}[
@@ -82,15 +82,15 @@ The architecture is divided into three interconnected categories of components:
 % ================= Cross-Layer Connections =================
 
 % --- AppEngine Connections ---
-\draw[arrow, color=green!60!black] (AppEngine.south west) to[bend right=20] node[midway, left, xshift=-5pt, font=\scriptsize\sffamily] {updates} (UIManager.north east);
-\draw[arrow, color=green!60!black] (AppEngine.south east) to[bend left=20] node[midway, right, xshift=5pt, font=\scriptsize\sffamily] {routes actions} (Timeline.north west);
+\draw[arrow, color=green!60!black] (AppEngine.south west) to[bend right=20] node[midway, left, xshift=-5pt, font=\scriptsize\sffamily] {updates} (UIManager.north east |- ViewLayer.north);
+\draw[arrow, color=green!60!black] (AppEngine.south east) to[bend left=20] node[midway, right, xshift=5pt, font=\scriptsize\sffamily] {routes actions} (Timeline.north west |- ModelLayer.north);
 
 % --- Playback Connections ---
-\draw[arrow, color=green!60!black, dashed] (Playback.south) to[bend left=15] node[midway, right, font=\scriptsize\sffamily] {traverses} (Timeline.north east);
+\draw[arrow, color=green!60!black, dashed] (Playback.south) to[bend left=15] node[pos=0.35, right, xshift=2pt, font=\scriptsize\sffamily] {traverses} (Timeline.north east);
 
 % --- View to Model Connections ---
 % Renderer implements IPayloadVisitor
-\draw[inherit, color=red!60!black, dashed] (Renderer.south) -- ++(0,-0.8) -| (IPayloadVisitor.south) node[pos=0.25, above, font=\scriptsize\sffamily] {implements};
+\draw[inherit, color=red!60!black, dashed] (Renderer.south) -- ++(0,-1.3) -| (IPayloadVisitor.south) node[pos=0.25, below, font=\scriptsize\sffamily] {implements};
 % Renderer renders IPayload
 \draw[arrow, color=red!60!black] (Renderer.east) -- (IPayload.west) node[midway, above, font=\scriptsize\sffamily] {renders};
 % UIManager queries state of Timeline
@@ -120,7 +120,7 @@ Instead of immediately drawing the results of an algorithm, the models generate 
 \end{itemize}
 This design effectively isolates the algorithmic logic from the real-time rendering loop. It natively supports playback features such as pausing, rewinding, and fast-forwarding, simply by selecting a different \texttt{Frame} within the \texttt{Timeline}.
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
 \begin{tikzpicture}[
     % --- Node Styles ---
@@ -188,7 +188,7 @@ The pattern relies on two primary abstractions:
 
 When a \texttt{Frame} is rendered, the \texttt{Renderer} iterates through the \texttt{Frame}'s payload list and calls \texttt{payload->accept(*this)}. Through dynamic dispatch, the concrete payload's \texttt{accept} method is invoked. This method then immediately calls \texttt{visitor.visit(*this)}, effectively passing its strongly-typed self back to the \texttt{Renderer}.
 
-\begin{figure}[H]
+\begin{figure}[h!]
     \centering
 \begin{tikzpicture}[
     scale=0.8, transform shape,
