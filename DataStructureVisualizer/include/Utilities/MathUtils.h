@@ -8,6 +8,7 @@
 
 namespace MathUtils {
     // Random
+    // Returns a random integer in the inclusive range [min, max].
     inline int getRandomInRange(int min, int max) {
         if (min > max) std::swap(min, max);
 
@@ -19,17 +20,20 @@ namespace MathUtils {
     }
 
     // Geometry
+    // Returns the orientation of the ordered triplet (p, q, r).
     inline int orientation(Position p, Position q, Position r) {
         long long val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
         if (val == 0) return 0; 
         return (val > 0) ? 1 : 2;
     }
 
+    // Returns true when q lies on segment pr.
     inline bool onSegment(Position p, Position q, Position r) {
         return q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
             q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y);
     }
 
+    // Returns true if the two line segments intersect.
     inline bool doIntersect(Position p1, Position q1, Position p2, Position q2) {
         int o1 = orientation(p1, q1, p2);
         int o2 = orientation(p1, q1, q2);

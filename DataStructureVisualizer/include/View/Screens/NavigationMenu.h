@@ -47,15 +47,23 @@ private:
 public:
     NavigationMenu() = default;
     
+    // Initializes the navigation menu with the given theme.
     void init(const Theme& theme);
+    // Applies a theme to the menu.
     void applyTheme(const Theme& selectedTheme) { theme = selectedTheme; }
+    // Renders the navigation menu.
     void render(const sf::RenderWindow& window, const sf::Vector2u& actualWindowSize);
     
+    // Returns the selected data structure index.
     int getSelectedDS() const { return selectedDS; }
+    // Returns the current menu state.
     MenuState getCurrentState() const { return currentState; }
+    // Clears the selected data structure.
     void resetSelection() { selectedDS = -1; }
+    // Resets the current menu state.
     void resetState() { currentState = MenuState::Main; }
 
+    // Returns the item names for the current menu state.
     std::vector<std::string> getCurrentNames() const {
         if (currentState == MenuState::Heap) return heapNames;
         if (currentState == MenuState::ShortestPath) return spaNames;
@@ -64,6 +72,7 @@ public:
         return mainNames;
     }
 
+    // Returns the title for the current menu state.
     std::string getCurrentTitle() const {
         if (currentState == MenuState::Heap) return "SELECT HEAP TYPE";
         if (currentState == MenuState::ShortestPath) return "SELECT ENVIRONMENT";

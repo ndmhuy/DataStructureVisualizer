@@ -46,19 +46,32 @@ private:
 public:
     InputMenu() = default;
 
+    // Initializes the menu with the selected theme assets.
     bool init(const Theme& theme);
+    // Renders the input menu.
     void render(const sf::RenderWindow& window);
+    // Renders the mode-specific input form.
     void renderinputform(const sf::RenderWindow& window, int cur, ImVec2 currentbttnPos);
 
+    // Applies a theme to the menu.
     void applyTheme(const Theme& selectedTheme) { theme = selectedTheme; }
+    // Sets the active data structure index.
     void setDS(int DS) { currentDS=DS; }
+    // Returns the pending action identifier.
     int getAction() const { return hasAction; }
+    // Returns the current input mode.
     int getMode() const { return outMode; }
+    // Returns the first captured string.
     std::string getString1() const { return outString1; }
+    // Returns the second captured string.
     std::string getString2() const { return outString2; }
+    // Returns the third captured string.
     std::string getString3() const { return outString3; }
+    // Returns the fourth captured string.
     std::string getString4() const { return outString4; }
+    // Resets the pending action.
     void resetAction() { hasAction = 0; }
+    // Resets the input state.
     void resetState() {
         isopenMenu = false;
         currentOption = -1;

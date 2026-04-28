@@ -11,16 +11,22 @@ private:
 
 public:
     // Lifecycle and access.
-    Window(); // Initializes the window with a size, title, and sets the framerate limit.
+    // Initializes the window with a size, title, and framerate limit.
+    Window();
+    // Returns the underlying SFML window.
     sf::RenderWindow& getWindow();
 
     // Frame loop helpers.
-    void handleEvent(); // Polls for events (like closing the window).
-    void clear(const sf::Color& clearColor); // Clears the window screen with a specific color.
-    void display();     // Displays what has been rendered to the window.
+    // Polls and handles pending window events.
+    void handleEvent();
+    // Clears the window using the provided color.
+    void clear(const sf::Color& clearColor);
+    // Presents the rendered frame.
+    void display();
 
     // Window state.
-    bool isOpen() const; // Checks if the window is currently open.
+    // Returns whether the window is currently open.
+    bool isOpen() const;
 };
 
 #endif // WINDOW_H
