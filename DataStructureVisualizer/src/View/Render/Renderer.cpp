@@ -1100,7 +1100,8 @@ void Renderer::visit(const AllPairsPayload& payload) {
         float matrixHeight = (payload.distances.size() + 1) * cellH;
         
         float startX = static_cast<float>(winSize.x) - theme.codePanelWidth - theme.codePanelRightOffset + (theme.codePanelWidth - matrixWidth) / 2.0f;
-        float startY = static_cast<float>(winSize.y) - matrixHeight - 120.0f;
+        // Đẩy bảng xuống sát lề dưới (cách đáy 40px) để không đè lên Step Info
+        float startY = static_cast<float>(winSize.y) - matrixHeight - 40.0f;
         
         for (size_t j = 0; j < payload.distances[0].size(); ++j) {
             sf::Vector2f pos(startX + (j + 1) * cellW, startY);
