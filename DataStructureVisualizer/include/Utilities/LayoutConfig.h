@@ -32,6 +32,9 @@ struct LayoutConfig {
     float physicsInitialRadiusBase = 90.0f;
     float physicsInitialRadiusPerNode = 8.0f;
     float physicsOverlapNudge = 2.0f;
+    float overlapThreshold = 50.0f;  // Distance below which nodes are considered overlapping
+    float extremeRepulsionMultiplier = 10.0f;  // Multiplier for repulsion when overlapping
+    float gravityStrength = 0.02f;  // Strength of gravity pulling toward center
 };
 
 #endif // LAYOUTCONFIG_H

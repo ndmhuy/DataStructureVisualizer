@@ -4,6 +4,8 @@
 #include <cmath>
 #include <limits>
 #include <queue>
+#include <random>
+#include <set>
 #include <tuple>
 
 namespace {
@@ -28,25 +30,36 @@ std::vector<Position> IGraphStructure::generatePhysicsBasedLayout(const LayoutCo
         return positions;
     }
 
-    constexpr float pi = 3.14159265358979323846f;
+    // Use random number generation for initial positions
+    static std::mt19937 rng(std::random_device{}());
+    std::uniform_real_distribution<float> dist_x(config.padding, config.screenWidth - config.padding);
+    std::uniform_real_distribution<float> dist_y(config.padding, config.screenHeight - config.padding);
 
     float centerX = config.screenWidth / 2.0f;
     float centerY = config.screenHeight / 2.0f;
-    float initialRadius = std::min(
-        std::min(config.screenWidth, config.screenHeight) * 0.30f,
-        config.physicsInitialRadiusBase + config.physicsInitialRadiusPerNode * static_cast<float>(vertexCount));
+
+    // Random initial positions instead of circle
     for (size_t i = 0; i < vertexCount; ++i) {
-        float angle = static_cast<float>(i) * (2.0f * pi / static_cast<float>(vertexCount));
-        positions[i] = Position(centerX + initialRadius * std::cos(angle), centerY + initialRadius * std::sin(angle));
+        positions[i] = Position(dist_x(rng), dist_y(rng));
     }
 
     float area = config.screenWidth * config.screenHeight;
     float k = std::sqrt(area / static_cast<float>(vertexCount));
     float temperature = config.initialTemperature;
 
+    // Deduplicate edges: keep only unique edge pairs (u, v)
+    std::set<std::pair<size_t, size_t>> uniqueEdges;
+    for (const auto& edge : getEdges()) {
+        size_t u = std::min(edge.from, edge.to);
+        size_t v = std::max(edge.from, edge.to);
+        uniqueEdges.insert({u, v});
+    }
+
+    // Run 500 physics iterations
     for (int iter = 0; iter < config.physicsIterations; ++iter) {
         std::vector<Position> displacements(vertexCount, Position());
 
+        // Repulsive forces between all node pairs
         for (size_t v = 0; v < vertexCount; ++v) {
             for (size_t u = 0; u < vertexCount; ++u) {
                 if (v == u) {
@@ -55,43 +68,66 @@ std::vector<Position> IGraphStructure::generatePhysicsBasedLayout(const LayoutCo
 
                 float dist = Position::getDistance(positions[v], positions[u]);
                 if (dist <= 0.0001f) {
+                    // Extreme repulsion for overlapping nodes
+                    constexpr float pi = 3.14159265358979323846f;
                     if (v < u) {
                         float nudgeAngle = static_cast<float>((v * 37u + u * 17u) % 360u) * pi / 180.0f;
                         Position nudge(std::cos(nudgeAngle), std::sin(nudgeAngle));
-                        displacements[v] += nudge * config.physicsOverlapNudge;
-                        displacements[u] -= nudge * config.physicsOverlapNudge;
+                        displacements[v] += nudge * config.physicsOverlapNudge * config.extremeRepulsionMultiplier;
+                        displacements[u] -= nudge * config.physicsOverlapNudge * config.extremeRepulsionMultiplier;
                     }
                     continue;
                 }
 
-                float force = (k * k) / dist;
+                // Extreme repulsion for nodes closer than overlap threshold
+                float repulsionMultiplier = 1.0f;
+                if (dist < config.overlapThreshold) {
+                    repulsionMultiplier = config.extremeRepulsionMultiplier;
+                }
+
+                float force = (k * k) / dist * repulsionMultiplier;
                 displacements[v] += (positions[v] - positions[u]) * (force / dist);
             }
         }
 
-        for (const auto& edge : getEdges()) {
-            if (edge.from >= positions.size() || edge.to >= positions.size()) {
+        // Attractive forces for edges (using deduplicated edges)
+        for (const auto& edgePair : uniqueEdges) {
+            size_t from = edgePair.first;
+            size_t to = edgePair.second;
+
+            if (from >= positions.size() || to >= positions.size()) {
                 continue;
             }
 
-            float dist = Position::getDistance(positions[edge.from], positions[edge.to]);
+            float dist = Position::getDistance(positions[from], positions[to]);
             if (dist <= 0.0001f) {
                 continue;
             }
 
             float force = (dist * dist) / k;
-            Position direction = (positions[edge.to] - positions[edge.from]) * (force / dist);
-            displacements[edge.from] += direction;
-            displacements[edge.to] -= direction;
+            Position direction = (positions[to] - positions[from]) * (force / dist);
+            displacements[from] += direction;
+            displacements[to] -= direction;
         }
 
+        // Gravity toward center
         for (size_t v = 0; v < vertexCount; ++v) {
-            float dist = Position::getDistance(Position(), displacements[v]);
-            if (dist > 0.0f) {
-                float limitedDist = std::min(dist, temperature);
-                positions[v] += displacements[v] * (limitedDist / dist);
+            Position gravityVector = Position(centerX, centerY) - positions[v];
+            float gravityDist = Position::getDistance(Position(), gravityVector);
+            if (gravityDist > 0.0001f) {
+                displacements[v] += gravityVector * (config.gravityStrength / gravityDist);
+            }
+        }
+
+        // Update positions with temperature-limited displacement
+        for (size_t v = 0; v < vertexCount; ++v) {
+            float dispDist = Position::getDistance(Position(), displacements[v]);
+            if (dispDist > 0.0f) {
+                float limitedDist = std::min(dispDist, temperature);
+                positions[v] += displacements[v] * (limitedDist / dispDist);
             }
 
+            // Clamp to screen bounds
             positions[v].x = std::min(config.screenWidth - config.padding, std::max(config.padding, positions[v].x));
             positions[v].y = std::min(config.screenHeight - config.padding, std::max(config.padding, positions[v].y));
         }
@@ -103,9 +139,22 @@ std::vector<Position> IGraphStructure::generatePhysicsBasedLayout(const LayoutCo
 }
 
 GraphPayload IGraphStructure::makeGraphPayload(const std::vector<size_t>& highlightedVertices, const std::vector<Edge>& highlightedEdges, const std::vector<Position>& customPositions) const {
-    std::vector<Position> positions = (customPositions.size() == vertexCount)
-        ? customPositions
-        : generatePhysicsBasedLayout(layoutConfig);
+    std::vector<Position> positions;
+    
+    // Priority 1: Use custom positions if user has provided them (e.g., dragged nodes)
+    if (customPositions.size() == vertexCount) {
+        positions = customPositions;
+    }
+    // Priority 2: Use cached layout if valid
+    else if (layoutCacheValid && cachedLayout.size() == vertexCount) {
+        positions = cachedLayout;
+    }
+    // Priority 3: Generate layout once and cache it for future frames
+    else {
+        positions = generatePhysicsBasedLayout(layoutConfig);
+        cachedLayout = positions;
+        layoutCacheValid = true;
+    }
 
     return GraphPayload(getVertices(), getEdges(), highlightedVertices, highlightedEdges, positions);
 }
