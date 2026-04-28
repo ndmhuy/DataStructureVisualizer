@@ -34,6 +34,7 @@ class Theme {
     sf::Color accentColor;
     sf::Color visitedColor;
     sf::Color successColor;
+    sf::Color startNodeColor;
 
     // CodePanel theme values
     sf::Color codePanelBackgroundColor;

@@ -67,6 +67,7 @@ struct GraphPayload : public IPayload {
     std::vector<Edge> highlightedEdges;
     std::vector<size_t> visitedVertices;
     std::vector<size_t> successVertices;
+    std::vector<size_t> startVertices; // For special start node coloring
 
     GraphPayload() = default;
     GraphPayload(
@@ -76,8 +77,9 @@ struct GraphPayload : public IPayload {
         std::vector<Edge> highlightedEdges = {},
         std::vector<Position> positions = {},
         std::vector<size_t> visitedVertices = {},
-        std::vector<size_t> successVertices = {})
-        : vertices(std::move(vertices)), positions(std::move(positions)), edges(std::move(edges)), highlightedVertices(std::move(highlightedVertices)), highlightedEdges(std::move(highlightedEdges)), visitedVertices(std::move(visitedVertices)), successVertices(std::move(successVertices)) {}
+        std::vector<size_t> successVertices = {},
+        std::vector<size_t> startVertices = {})
+        : vertices(std::move(vertices)), positions(std::move(positions)), edges(std::move(edges)), highlightedVertices(std::move(highlightedVertices)), highlightedEdges(std::move(highlightedEdges)), visitedVertices(std::move(visitedVertices)), successVertices(std::move(successVertices)), startVertices(std::move(startVertices)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new GraphPayload(*this); }
@@ -85,17 +87,19 @@ struct GraphPayload : public IPayload {
 
 struct SingleSourcePayload : public IPayload {
     GraphPayload baseGraph;
+    size_t startVertex;
     std::vector<int> distances;
     std::vector<size_t> previousVertices; // For path reconstruction
     std::vector<std::pair<int, size_t>> priorityQueueSnapShot;
 
-    SingleSourcePayload() = default;
+    SingleSourcePayload() : startVertex(INVALID_INDEX) {}
     SingleSourcePayload(
         GraphPayload baseGraph,
+        size_t startVertex,
         std::vector<int> distances = {},
         std::vector<size_t> previousVertices = {},
         std::vector<std::pair<int, size_t>> priorityQueueSnapShot = {})
-        : baseGraph(std::move(baseGraph)), distances(std::move(distances)), previousVertices(std::move(previousVertices)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)) {}
+        : baseGraph(std::move(baseGraph)), startVertex(startVertex), distances(std::move(distances)), previousVertices(std::move(previousVertices)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new SingleSourcePayload(*this); }
@@ -103,6 +107,7 @@ struct SingleSourcePayload : public IPayload {
 
 struct AStarPayload : public IPayload {
     GraphPayload baseGraph;
+    size_t startVertex;
     std::vector<int> gCosts;
     std::vector<int> hCosts;
     std::vector<int> fCosts;
@@ -110,16 +115,17 @@ struct AStarPayload : public IPayload {
     std::vector<std::pair<int, size_t>> priorityQueueSnapShot;
     size_t targetVertex;
 
-    AStarPayload() : targetVertex(0) {}
+    AStarPayload() : startVertex(INVALID_INDEX), targetVertex(INVALID_INDEX) {}
     AStarPayload(
         GraphPayload baseGraph,
+        size_t startVertex,
         std::vector<int> gCosts = {},
         std::vector<int> hCosts = {},
         std::vector<int> fCosts = {},
         std::vector<size_t> previousVertices = {},
         std::vector<std::pair<int, size_t>> priorityQueueSnapShot = {},
-        size_t targetVertex = 0)
-        : baseGraph(std::move(baseGraph)), gCosts(std::move(gCosts)), hCosts(std::move(hCosts)), fCosts(std::move(fCosts)), previousVertices(std::move(previousVertices)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)), targetVertex(targetVertex) {}
+        size_t targetVertex = INVALID_INDEX)
+        : baseGraph(std::move(baseGraph)), startVertex(startVertex), gCosts(std::move(gCosts)), hCosts(std::move(hCosts)), fCosts(std::move(fCosts)), previousVertices(std::move(previousVertices)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)), targetVertex(targetVertex) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new AStarPayload(*this); }
