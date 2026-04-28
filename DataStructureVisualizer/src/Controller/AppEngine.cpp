@@ -53,7 +53,7 @@ AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action,
                 return AlgorithmType::GraphAStar;
             }
             if (action == 5) {
-                if (structureType == StructureType::AdjacencyList) {
+                if (structureType == StructureType::AdjacencyMatrix) {
                     if (mode == 0) {
                         return AlgorithmType::GraphDAGShortestPath;
                     }
@@ -169,7 +169,7 @@ StructureType AppEngine::mapMenuSelectionToStructureType(int selectedDS) {
     }
 }
 
-IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
+IVisualizable* AppEngine::resolveStructure(StructureType structureType, bool directed) {
     sf::Vector2u winSize = window.getWindow().getSize();
     LayoutConfig layoutConfig{};
     layoutConfig.screenWidth = static_cast<float>(winSize.x);
@@ -189,10 +189,10 @@ IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
         return new MaxHeap(layoutConfig);
         case StructureType::AVLTree:
         return new AVLTree(layoutConfig);
-        case StructureType::AdjacencyList:
-        return new AdjacencyList(layoutConfig);
         case StructureType::AdjacencyMatrix:
-        return new AdjacencyMatrix(layoutConfig);
+            return new AdjacencyMatrix(layoutConfig, directed);
+        case StructureType::AdjacencyList:
+            return new AdjacencyList(layoutConfig, directed);
         case StructureType::GridGraph: {
         const int defaultRowsInt = std::clamp(
             static_cast<int>(layoutConfig.screenHeight / layoutConfig.gridTargetCellPixels),
@@ -210,7 +210,7 @@ IVisualizable* AppEngine::resolveStructure(StructureType structureType) {
     }
 }
 
-void AppEngine::switchActiveStructure(StructureType structureType) {
+void AppEngine::switchActiveStructure(StructureType structureType, bool directed) {
     window.getWindow().setView(window.getWindow().getDefaultView());
 
     if (activeStructureType == structureType) {
@@ -223,7 +223,7 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
     }
     
     activeStructureType = structureType;
-    activeStructure = resolveStructure(structureType);
+    activeStructure = resolveStructure(structureType, directed);
     renderer.resetCustomPositions();
     renderer.resetAnimations();
     clearUndoHistory();
@@ -895,7 +895,8 @@ void AppEngine::handleStructureSwitchRequest() {
         return;
     }
     
-    switchActiveStructure(targetStructure);
+    const bool directed = (selectedDS == 5);
+    switchActiveStructure(targetStructure, directed);
     uiManager.setShowMainMenu(false);
 }
 
@@ -1072,7 +1073,7 @@ void AppEngine::update(sf::Time deltaTime) {
     
     if (uiManager.checkBackToMenuClicked()) {
         uiManager.reset();
-        switchActiveStructure(StructureType::None);
+        switchActiveStructure(StructureType::None, false);
     }
 
     if (uiManager.consumeThemeScaleRequest()) {

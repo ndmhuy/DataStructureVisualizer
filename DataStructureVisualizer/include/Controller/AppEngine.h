@@ -31,9 +31,9 @@ private:
   StructureType activeStructureType = StructureType::None;
 
   static StructureType mapMenuSelectionToStructureType(int selectedDS);
-  IVisualizable *resolveStructure(StructureType structureType);
+  IVisualizable *resolveStructure(StructureType structureType, bool directed);
   void handleStructureSwitchRequest();
-  void switchActiveStructure(StructureType structureType);
+  void switchActiveStructure(StructureType structureType, bool directed);
   void handleDataActionRequest();
 
 public:
