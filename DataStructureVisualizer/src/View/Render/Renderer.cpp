@@ -499,7 +499,7 @@ void Renderer::visit(const LinkedListPayload& payload) {
     }
     for (const auto& [targetId, label] : pointerLabels) {
         if (targetId < positions.size()) {
-            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Down, nodeSize.y, 0, 10.0f);
+            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Down, nodeSize.y, 0, 30.0f);
         }
     }
 
@@ -587,6 +587,14 @@ void Renderer::visit(const TreePayload& payload) {
         anim.scale += ((isHighlighted ? 1.2f : 1.0f) - anim.scale) * lerpScale;
         anim.highlightAlpha += ((isHighlighted ? 1.0f : 0.0f) - anim.highlightAlpha) * lerpScale;
         
+        bool isSuccess = std::find(payload.successNodes.begin(), payload.successNodes.end(), id) != payload.successNodes.end();
+        sf::Color targetColor = isSuccess ? theme.successColor : (isHighlighted ? theme.highlightColor : theme.nodeTintColor);
+        if (anim.colorR < 0.0f) { anim.colorR = targetColor.r; anim.colorG = targetColor.g; anim.colorB = targetColor.b; }
+        float lerpCol = 1.0f - std::exp(-10.0f * currentDeltaTime);
+        anim.colorR += (targetColor.r - anim.colorR) * lerpCol;
+        anim.colorG += (targetColor.g - anim.colorG) * lerpCol;
+        anim.colorB += (targetColor.b - anim.colorB) * lerpCol;
+        
         positions[id] = anim.pos;
     }
 
@@ -628,7 +636,7 @@ void Renderer::visit(const TreePayload& payload) {
     }
     for (const auto& [targetId, label] : pointerLabels) {
         if (positions.find(targetId) != positions.end()) {
-            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Up, nodeSize.y, 0, 10.0f);
+            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Up, nodeSize.y, 0, 30.0f);
         }
     }
 
