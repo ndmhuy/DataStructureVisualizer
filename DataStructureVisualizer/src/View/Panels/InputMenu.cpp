@@ -442,20 +442,12 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
         else if (cur == 4) DrawConfirm(5);
     } else if (currentDS == 5) { // DIRECTED GRAPH
         if (cur == 0) { // Init
-            if (DrawButton("Adj Matrix", insertSubMode == 0, 100.0f)) {
-                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; }
-            }
-            ImGui::SameLine();
-            if (DrawButton("Adj List", insertSubMode == 1, 100.0f)) {
-                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; }
-            }
-            ImGui::SameLine(0, 15.0f);
             DrawInput("##in_file", inputBuf1, sizeof(inputBuf1), 150.0f, nullptr);
             ImGui::SameLine();
             if (DrawButton("Browse", false, 60.0f)) fileDialog.Open();
             ImGui::SameLine();
             if (DrawButton("OK", false, 60.0f)) {
-                outMode = insertSubMode; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
+                outMode = 0; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
                 hasAction = 1; currentOption = -1; isopenMenu = false;
             }
         }
@@ -545,20 +537,12 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
         else if (cur == 7) DrawConfirm(7); // Clear
     } else if (currentDS == 6) { // UNDIRECTED GRAPH
         if (cur == 0) { // Init
-            if (DrawButton("Adj Matrix", insertSubMode == 0, 100.0f)) {
-                if (insertSubMode != 0) { insertSubMode = 0; inputBuf1[0] = '\0'; }
-            }
-            ImGui::SameLine();
-            if (DrawButton("Adj List", insertSubMode == 1, 100.0f)) {
-                if (insertSubMode != 1) { insertSubMode = 1; inputBuf1[0] = '\0'; }
-            }
-            ImGui::SameLine(0, 15.0f);
             DrawInput("##in_file", inputBuf1, sizeof(inputBuf1), 150.0f, nullptr);
             ImGui::SameLine();
             if (DrawButton("Browse", false, 60.0f)) fileDialog.Open();
             ImGui::SameLine();
             if (DrawButton("OK", false, 60.0f)) {
-                outMode = insertSubMode; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
+                outMode = 0; outString1 = inputBuf1; outString2 = ""; outString3 = ""; outString4 = "";
                 hasAction = 1; currentOption = -1; isopenMenu = false;
             }
         }
