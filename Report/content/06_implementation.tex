@@ -45,8 +45,23 @@ The \texttt{GridGraph} structure simulates shortest-path algorithms (BFS, A*) on
     \item \textbf{Algorithm Visualization}: When running A*, the algorithm maintains open and closed sets. At each expansion step, a \texttt{GridPayload} is generated. Cells in the open set are marked as 'Discovered', and the current shortest path is traced backward from the current node to the start node, marked as 'Path'. This allows users to visually comprehend the expanding frontier of the heuristic search.
 \end{itemize}
 
-\subsubsection{Heap and AVL Tree}
-\textit{Note: The detailed implementation of the Heap and AVL Tree structures, including their self-balancing logic and array-mapping visualization mechanics, is handled by other team members and is documented in their respective sections.}
+\subsubsection{Binary Heap}
+The \texttt{BinaryHeap} implementation provides a visualization of priority queue operations, utilizing a hybrid representation that bridges a logical complete binary tree with a physical contiguous array.
+
+\begin{itemize}
+    \item \textbf{Internal Representation}: The structure is managed via \texttt{std::vector<int> heapArray}. The parent-child relationships are calculated using zero-based indexing arithmetic: a node at index $i$ has children at $2i+1$ and $2i+2$, while its parent resides at $\lfloor(i-1)/2\rfloor$.
+    \item \textbf{Heapify Mechanics}: The core logic is encapsulated in \texttt{shiftUp} and \texttt{heapify} (shift-down) methods. During an \texttt{insert} or \texttt{remove} operation, every swap between elements triggers the generation of a new \texttt{Frame}. This allows the \texttt{Renderer} to animate the "bubbling" effect of elements moving through the levels of the tree.
+    \item \textbf{Polymorphic Comparison}: Through the \texttt{IHeapStructure} abstraction, the system supports both \texttt{MinHeap} and \texttt{MaxHeap}. The specific heap property is enforced by overriding the pure virtual \texttt{compare()} method, which determines the priority during the restoration of the heap invariant.
+\end{itemize}
+
+\subsubsection{AVL Tree (Self-Balancing BST)}
+The \texttt{AVLTree} implementation focuses on demonstrating the maintenance of the height-balance property ($|balance\_factor| \leq 1$) through recursive rotations.
+
+\begin{itemize}
+    \item \textbf{Recursive Balancing}: The structure uses a nested \texttt{Node} structure containing \texttt{height} and pointer-based child references. Following every \texttt{insert} or \texttt{remove} operation, the algorithm recursively traverses back to the root, updating heights and invoking the \texttt{balance()} method.
+    \item \textbf{Rotation Visualization}: The four types of rotations (Left, Right, Left-Right, and Right-Left) are decomposed into discrete steps. When a rotation occurs, the \texttt{AVLTree} generates a \texttt{TreePayload} that updates the parent-child pointers and node positions. The \texttt{Timeline} captures the transient states where the balance factor is violated, highlighting the specific nodes that trigger the rotation logic.
+    \item \textbf{Payload Mapping}: To facilitate rendering, the tree structure is flattened into a \texttt{TreePayload} containing \texttt{TreeNodeData} objects. Each node is assigned a unique ID and its current height, which the \texttt{Renderer} uses to compute the geometric layout on the 2D canvas, ensuring that subtrees do not overlap visually.
+\end{itemize}
 
 \subsection{View Layer Implementation}
 \textit{Note: The implementation of the UI components (Dear ImGui integration) and the underlying SFML rendering engine is documented in the subsequent View Layer section by the respective team members.}
