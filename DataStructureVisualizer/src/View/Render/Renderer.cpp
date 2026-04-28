@@ -1092,15 +1092,30 @@ void Renderer::visit(const AllPairsPayload& payload) {
     
     // Draw a small distance matrix if size is manageable
     if (payload.distances.size() <= 10 && !payload.distances.empty()) {
-        float startX = 20.0f;
-        float startY = 100.0f;
+        sf::Vector2u winSize = window.getWindow().getSize();
         float cellW = 40.0f;
         float cellH = 30.0f;
         
+        float matrixWidth = (payload.distances[0].size() + 1) * cellW;
+        float matrixHeight = (payload.distances.size() + 1) * cellH;
+        
+        float startX = static_cast<float>(winSize.x) - theme.codePanelWidth - theme.codePanelRightOffset + (theme.codePanelWidth - matrixWidth) / 2.0f;
+        float startY = static_cast<float>(winSize.y) - matrixHeight - 120.0f;
+        
+        for (size_t j = 0; j < payload.distances[0].size(); ++j) {
+            sf::Vector2f pos(startX + (j + 1) * cellW, startY);
+            std::string vName = (j < payload.baseGraph.vertices.size()) ? std::to_string(payload.baseGraph.vertices[j]) : std::to_string(j);
+            drawText(pos, vName, 14, theme.accentColor, TextPosition::TopLeft);
+        }
+
         for (size_t i = 0; i < payload.distances.size(); ++i) {
+            sf::Vector2f rowPos(startX, startY + (i + 1) * cellH);
+            std::string vName = (i < payload.baseGraph.vertices.size()) ? std::to_string(payload.baseGraph.vertices[i]) : std::to_string(i);
+            drawText(rowPos, vName, 14, theme.accentColor, TextPosition::TopLeft);
+
             for (size_t j = 0; j < payload.distances[i].size(); ++j) {
                 std::string distStr = (payload.distances[i][j] >= 1e9) ? "INF" : std::to_string(payload.distances[i][j]);
-                sf::Vector2f pos(startX + j * cellW, startY + i * cellH);
+                sf::Vector2f pos(startX + (j + 1) * cellW, startY + (i + 1) * cellH);
                 drawText(pos, distStr, 14, theme.textColor, TextPosition::TopLeft);
             }
         }
@@ -1122,21 +1137,26 @@ void Renderer::visit(const GridPayload& payload) {
     float topPadding = std::max(
         layoutDefaults.gridTopPaddingMin,
         static_cast<float>(winSize.y) * layoutDefaults.gridTopPaddingRatio);
-    float bottomPadding = std::max(
-        layoutDefaults.gridBottomPaddingMin,
-        static_cast<float>(winSize.y) * layoutDefaults.gridBottomPaddingRatio);
+
+    // Tính toán vùng không gian an toàn ở dưới cho các nút UI.
+    // Điểm cao nhất của nút = yRatio - bán kính (1/divisor). Cần tính cả vùng này cộng thêm padding.
+    float buttonTopRatio = theme.uiButtonsYRatio - (1.0f / theme.uiButtonRadiusYDivisor);
+    float buttonZoneHeight = static_cast<float>(winSize.y) * (1.0f - buttonTopRatio) + 40.0f;
+    float bottomPadding = std::max({buttonZoneHeight, layoutDefaults.gridBottomPaddingMin, static_cast<float>(winSize.y) * layoutDefaults.gridBottomPaddingRatio});
+    
+    // Space for row/column labels (indices)
+    float labelWidth = 30.0f;  // Space for row labels on left
+    float labelHeight = 25.0f; // Space for column labels on top
 
     float rightReserve = theme.codePanelWidth + theme.codePanelRightOffset + 16.0f;
-    float availableWidth = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.x) - rightReserve - 2.0f * horizontalPadding);
-    float availableHeight = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.y) - topPadding - bottomPadding);
+    
+    // Trừ thêm khoảng trống cho label để đảm bảo lưới cộng với label không vượt quá không gian an toàn
+    float availableWidth = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.x) - rightReserve - 2.0f * horizontalPadding - labelWidth);
+    float availableHeight = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.y) - topPadding - bottomPadding - labelHeight);
 
     float cellSize = std::min(availableWidth / cols, availableHeight / rows);
     float gridWidth = cols * cellSize;
     float gridHeight = rows * cellSize;
-
-    // Space for row/column labels (indices)
-    float labelWidth = 30.0f;  // Space for row labels on left
-    float labelHeight = 25.0f; // Space for column labels on top
     
     float startX = ((static_cast<float>(winSize.x) - rightReserve) - gridWidth) / 2.0f + labelWidth;
     float startY = topPadding + (availableHeight - gridHeight) / 2.0f + labelHeight;

@@ -16,7 +16,9 @@ std::string detectAssetsRoot() {
         "../../resources",
         "../../../resources",
         "../DataStructureVisualizer/assets",
-        "../DataStructureVisualizer/resources"
+        "../DataStructureVisualizer/resources",
+        "DataStructureVisualizer/assets",
+        "DataStructureVisualizer/resources"
     };
 
     for (const auto& candidate : candidates) {
