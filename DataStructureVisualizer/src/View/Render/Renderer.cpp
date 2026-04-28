@@ -381,7 +381,9 @@ void Renderer::visit(const LinkedListPayload& payload) {
     float totalWidth = payload.values.size() * (nodeSize.x + spacing) - spacing;
 
     sf::Vector2u winSize = window.getWindow().getSize();
-    float startX = (winSize.x - totalWidth) / 2.0f + nodeSize.x / 2.0f;
+    // Reserve right-side space for the CodePanel so lists don't overlap it.
+    float rightReserve = theme.codePanelWidth + theme.codePanelRightOffset + 16.0f;
+    float startX = ((static_cast<float>(winSize.x) - rightReserve) - totalWidth) / 2.0f + nodeSize.x / 2.0f;
     float startY = winSize.y / 2.0f;
 
     currentChildren.clear();
@@ -423,6 +425,8 @@ void Renderer::visit(const TreePayload& payload) {
         return;
     
     sf::Vector2u winSize = window.getWindow().getSize();
+    // Reserve right-side space for the CodePanel
+    float rightReserve = theme.codePanelWidth + theme.codePanelRightOffset + 16.0f;
     // Since this is new way we need to find the actual height
     size_t maxId = 0;
     for (const auto& node : nodes) {
@@ -435,8 +439,8 @@ void Renderer::visit(const TreePayload& payload) {
     std::map<size_t, sf::Vector2f> positions;
     sf::Vector2f nodeSize = getNodeSize();
 
-    // Adapt with window.size()
-    float startX = static_cast<float>(winSize.x) / 2.0f;
+    // Adapt with window.size() and shift center left to avoid CodePanel
+    float startX = (static_cast<float>(winSize.x) - rightReserve) / 2.0f;
     float startY = static_cast<float>(winSize.y) * 0.15f;
 
     float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.005f, nodeSize.x - 40.0f);
@@ -498,8 +502,9 @@ void Renderer::visit(const HeapPayload& payload) {
     std::vector<sf::Vector2f> positions(heapArray.size());
     sf::Vector2f nodeSize = getNodeSize();
 
-    // Adapt with window.size()
-    float startX = static_cast<float>(winSize.x) / 2.0f;
+        // Adapt with window.size() and shift center left to avoid CodePanel
+        float rightReserve = theme.codePanelWidth + theme.codePanelRightOffset + 16.0f;
+        float startX = (static_cast<float>(winSize.x) - rightReserve) / 2.0f;
     float startY = static_cast<float>(winSize.y) * 0.15f; 
 
     float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.005f, nodeSize.x - 40.0f);
@@ -565,7 +570,9 @@ void Renderer::visit(const GraphPayload& payload) {
     const auto& hIndices = payload.highlightedVertices;
 
     sf::Vector2u winSize = window.getWindow().getSize();
-    float cx = winSize.x / 2.0f;
+    // Reserve right-side space for CodePanel so graph centers don't overlap it
+    float rightReserve = theme.codePanelWidth + theme.codePanelRightOffset + 16.0f;
+    float cx = (static_cast<float>(winSize.x) - rightReserve) / 2.0f;
     float cy = winSize.y / 2.0f - 50.0f; 
     
     float radius = std::min(cx, cy) - 100.0f;
@@ -609,7 +616,7 @@ void Renderer::visit(const GraphPayload& payload) {
         const float bboxW = std::max(1.0f, maxX - minX);
         const float bboxH = std::max(1.0f, maxY - minY);
         const float margin = std::max(nodeSize.x, nodeSize.y) * 0.75f + 20.0f;
-        const float availableW = std::max(40.0f, static_cast<float>(winSize.x) - 2.0f * margin);
+        const float availableW = std::max(40.0f, static_cast<float>(winSize.x) - rightReserve - 2.0f * margin);
         const float availableH = std::max(40.0f, static_cast<float>(winSize.y) - 2.0f * margin);
 
         const float fitScale = std::min(1.0f, std::min(availableW / bboxW, availableH / bboxH));
@@ -619,7 +626,7 @@ void Renderer::visit(const GraphPayload& payload) {
 
         for (auto& [_, pos] : autoPositionsByVertexId) {
             pos = targetCenter + (pos - sourceCenter) * fitScale;
-            pos.x = std::clamp(pos.x, margin, static_cast<float>(winSize.x) - margin);
+            pos.x = std::clamp(pos.x, margin, static_cast<float>(winSize.x) - margin - rightReserve);
             pos.y = std::clamp(pos.y, margin, static_cast<float>(winSize.y) - margin);
         }
     }
@@ -770,14 +777,15 @@ void Renderer::visit(const GridPayload& payload) {
         layoutDefaults.gridBottomPaddingMin,
         static_cast<float>(winSize.y) * layoutDefaults.gridBottomPaddingRatio);
 
-    float availableWidth = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.x) - 2.0f * horizontalPadding);
+    float rightReserve = theme.codePanelWidth + theme.codePanelRightOffset + 16.0f;
+    float availableWidth = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.x) - rightReserve - 2.0f * horizontalPadding);
     float availableHeight = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.y) - topPadding - bottomPadding);
 
     float cellSize = std::min(availableWidth / cols, availableHeight / rows);
     float gridWidth = cols * cellSize;
     float gridHeight = rows * cellSize;
 
-    float startX = (winSize.x - gridWidth) / 2.0f;
+    float startX = ((static_cast<float>(winSize.x) - rightReserve) - gridWidth) / 2.0f;
     float startY = topPadding + (availableHeight - gridHeight) / 2.0f;
 
     for (size_t r = 0; r < rows; ++r) {

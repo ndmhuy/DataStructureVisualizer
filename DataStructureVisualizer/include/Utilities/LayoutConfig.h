@@ -26,7 +26,7 @@ struct LayoutConfig {
     float gridBottomPaddingMin = 40.0f;
     float gridViewportMinSize = 40.0f;
 
-    int physicsIterations = 300;
+    int physicsIterations = 500;
     float initialTemperature = 180.0f;
     float coolingFactor = 0.985f;
     float physicsInitialRadiusBase = 90.0f;
