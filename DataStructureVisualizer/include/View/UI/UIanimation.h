@@ -22,6 +22,10 @@ namespace UIanimation {
     // Nút bấm Particle (Bắn hạt ánh sáng nổ tung khi Click)
     bool ParticleButton(const char* label, const ImVec2& size_arg, ImVec4 colorNormal, ImVec4 colorHover, ImVec4 colorActive, sf::Sound* sound = nullptr);
 
+    // Thanh trượt (Slider) có hiệu ứng phình to, rung lắc khi kéo và giật nảy số liệu
+    // Thay thế trực tiếp cho ImGui::SliderFloat truyền thống
+    bool JuicySliderFloat(const char* label, float* v, float v_min, float v_max, const char* format, ImVec4 cNormal, ImVec4 cHover, ImVec4 cActive);
+
     // Khung Nền Hologram Viễn Tưởng (Tia quét Radar & Lưới điện)
     void DrawHoloBackground(const ImVec2& pMin, const ImVec2& pMax, ImVec4 baseColor);
 

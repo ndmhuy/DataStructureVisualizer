@@ -300,46 +300,46 @@ void UIManager::render(sf::RenderWindow& window) {
         float windowInnerWidth = ImGui::GetWindowSize().x;
         ImGui::SetCursorPosX((windowInnerWidth - sliderWidth) * 0.5f);
 
+        ImGui::Spacing(); // Thêm khoảng trống cho Label của Slider nhô lên ở trên
         ImGui::PushItemWidth(sliderWidth);
-        ImGui::SliderFloat("##speed", &speed, 0.1f, 10.0f, "Speed %.1fx");
+        // Thay thế bằng thanh trượt xịn xò đã thiết kế
+        UIanimation::JuicySliderFloat("##speed", &speed, 0.1f, 10.0f, "Speed %.1fx", btnColor, btnHover, btnHover);
         ImGui::PopItemWidth();
 
         ImGui::Spacing(); // Cách ra một đoạn
+        ImGui::Spacing(); // Cách ra thêm một chút để không đụng Slider
 
         // 2. CỤM NÚT NẰM DƯỚI (CENTERED)
-        // Dùng Group để gom 3 nút lại rồi đẩy cả Group vào giữa
+        ImVec2 btnSize(80.0f, 50.0f); // Thiết lập kích thước nút tĩnh (Vì ta đã bỏ Padding)
+        float groupWidth = btnSize.x * 3 + 40.0f; // 3 nút, 2 khoảng cách 20.0f
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - groupWidth) * 0.5f); // Căn giữa trước khi vẽ
+
         ImGui::BeginGroup();
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(40.0f, 40.0f)); 
 
             // Nút Backward
             ImGui::BeginDisabled(lastIsAtBeginning || lastIsPlaying); 
-            if (ImGui::Button(" |<< ")) { stepBackwardClicked = true; }
+            if (UIanimation::FloatButton(" |<< ", btnSize, btnColor, btnHover, btnHover, &clickSound)) { stepBackwardClicked = true; }
             ImGui::EndDisabled();
 
-            ImGui::SameLine(0, 15);
+            ImGui::SameLine(0, 20.0f);
 
             // Nút Play / Pause
             if (isshowingPlay) {
                 ImGui::BeginDisabled(lastIsAtEnd || lastIsEmpty);
-                if (ImGui::Button("  >  ")) { playClicked = true; }
+                if (UIanimation::FloatButton("  >  ", btnSize, btnColor, btnHover, btnHover, &clickSound)) { playClicked = true; }
                 ImGui::EndDisabled();
             } else {
-                if (ImGui::Button(" || ")) { pauseClicked = true; }
+                if (UIanimation::FloatButton(" || ", btnSize, btnColor, btnHover, btnHover, &clickSound)) { pauseClicked = true; }
             }
 
-            ImGui::SameLine(0, 15);
+            ImGui::SameLine(0, 20.0f);
 
             // Nút Forward
             ImGui::BeginDisabled(lastIsAtEnd || lastIsPlaying);
-            if (ImGui::Button(" >>| ")) { stepForwardClicked = true; }
+            if (UIanimation::FloatButton(" >>| ", btnSize, btnColor, btnHover, btnHover, &clickSound)) { stepForwardClicked = true; }
             ImGui::EndDisabled();
 
-            ImGui::PopStyleVar();
         ImGui::EndGroup();
-
-        // Căn giữa cái Group nút so với chiều rộng cửa sổ
-        float groupWidth = ImGui::GetItemRectSize().x;
-        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - groupWidth) * 0.5f);
 
         ImGui::End();
     }
