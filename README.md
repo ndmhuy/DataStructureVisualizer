@@ -6,6 +6,8 @@ Welcome to the CS163 Data Structure Visualizer! This project is an interactive t
 **Links:**
 * **Demo Video:** [Watch on YouTube](https://youtu.be/yeWcSl\_vmm8?si=3cRV\_46PZOY9nGyl)
 * **GitHub Repository:** [DataStructureVisualizer](https://github.com/ndmhuy/DataStructureVisualizer.git)
+* **Marking Link 1:** [Google Sheets](https://docs.google.com/spreadsheets/d/1LUOf2ghZPS7XZFOv3BseZurSNlruZG4B/edit?gid=623355065#gid=623355065)
+* **Marking Link 2:** [Google Sheets](https://docs.google.com/spreadsheets/d/1RSPTgHUg1bgCLG5kOZPGbZshFIRhyMVpxjx0V2vyMlo/edit?gid=747030814#gid=747030814)
 
 ---
 
