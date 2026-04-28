@@ -7,6 +7,7 @@ class Theme {
     private:
     Theme() = default;
     static std::string s_assetsRoot;
+    // Returns the resolved assets root for the current workspace.
     static const std::string& getAssetsRoot();
 
     public:
@@ -99,7 +100,9 @@ class Theme {
     float nodeScale = 1.0f;
     float arrayScale = 1.0f;
     
+    // Returns the default theme configuration.
     static Theme getDefaultTheme();
+    // Returns the dark theme configuration.
     static Theme getDarkTheme();
 };
 

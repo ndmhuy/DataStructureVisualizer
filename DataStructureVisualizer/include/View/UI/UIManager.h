@@ -57,36 +57,55 @@ private:
 public:
     UIManager() = default;
     // Setup and teardown.
-    bool init(sf::RenderWindow&, const Theme& theme); // Initial set up for ImGui + SFML
+    // Initializes ImGui, SFML, and UI widgets.
+    bool init(sf::RenderWindow&, const Theme& theme);
 
     // Event and layout handling.
-    void processEvent(sf::RenderWindow&, const sf::Event&); // Pass event from SFML to ImGui
+    // Routes an SFML event into the UI layer.
+    void processEvent(sf::RenderWindow&, const sf::Event&);
 
-    void resize(const sf::RenderWindow& window); // resize event
+    // Updates UI layout for a resize event.
+    void resize(const sf::RenderWindow& window);
 
     // Per-frame update and draw.
-    void update(sf::RenderWindow&, const sf::Time&); // Update UI status
+    // Updates UI state for the current frame.
+    void update(sf::RenderWindow&, const sf::Time&);
 
-    void render(sf::RenderWindow&); // draw UI
+    // Renders the UI layer.
+    void render(sf::RenderWindow&);
 
+    // Applies a theme to the UI.
     bool applyTheme(const Theme& selectedTheme);
+    // Consumes a pending theme toggle request.
     bool consumeThemeToggleRequest();
+    // Consumes a pending theme scaling request.
     bool consumeThemeScaleRequest();
 
-    void shutdown(); // shutdown ImGui
+    // Shuts down ImGui and related resources.
+    void shutdown();
 
     // --- Interact Navigation Menu ---
-    void reset(); // Khôi phục toàn bộ UI về trạng thái mặc định (Gọi khi Back to Menu)
-    int getSelectedDS(); // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: Directed Graph, 6: Undirected Graph
+    // Resets the UI to its default state.
+    void reset();
+    // Returns the selected data structure id.
+    int getSelectedDS();
     void resetDSSelection(); 
+    // Shows or hides the main menu.
     void setShowMainMenu(bool show);
+    // Returns whether the main menu is visible.
     bool isShowingMainMenu() const { return isMainMenu; }
+    // Returns the navigation menu state as an integer.
     int getNavMenuState() const { return static_cast<int>(navMenu.getCurrentState()); }
+    // Returns the current navigation menu entries.
     std::vector<std::string> getNavMenuNames() const { return navMenu.getCurrentNames(); }
+    // Returns the current navigation menu title.
     std::string getNavMenuTitle() const { return navMenu.getCurrentTitle(); }
-    bool checkBackToMenuClicked(); // check if User back to Main menu
+    // Returns whether the user clicked Back to Menu.
+    bool checkBackToMenuClicked();
 
+    // Returns whether the mouse is currently over UI elements.
     bool isMouseOverUI() const;
+    // Returns whether the UI is currently capturing keyboard input.
     bool isKeyboardCapturedByUI() const;
 
     // --- Interact InputMenu ---
@@ -135,34 +154,52 @@ public:
     6/APSP:
     7/Clear
 */
+    // Returns the current input action.
     int getInputAction() const;
+    // Returns the current input mode.
     int getInputMode() const; 
+    // Returns the first input field value.
     std::string getInputString1() const;
+    // Returns the second input field value.
     std::string getInputString2() const;
+    // Returns the third input field value.
     std::string getInputString3() const;
+    // Returns the fourth input field value.
     std::string getInputString4() const;
-    void resetInputAction(); //Call after done getAction
+    // Clears the pending input action.
+    void resetInputAction();
 
     // --- Interact CodePanel ---
-    void setCodePanelCode(std::vector<std::string>& code); //pass codes
-    void setCodePanelHighlightedLine(int line); //pass 0-indexed to highlight
-    void setCodePanelMessage(const std::string& msg); //pass message text
-    void clearCodePanel(); //Clean after done showing code
+    // Sets the code panel source listing.
+    void setCodePanelCode(std::vector<std::string>& code);
+    // Sets the highlighted code line.
+    void setCodePanelHighlightedLine(int line);
+    // Sets the code panel message.
+    void setCodePanelMessage(const std::string& msg);
+    // Clears the code panel contents.
+    void clearCodePanel();
     bool isShowingCode() const { return codePanel.isShowingCode(); }
 
     // --- Interact Buttons ---
     
+    // Returns whether the play button was clicked.
     bool checkPlayClicked();
+    // Returns whether the pause button was clicked.
     bool checkPauseClicked();
+    // Returns whether the step-forward button was clicked.
     bool checkStepForwardClicked();
+    // Returns whether the step-backward button was clicked.
     bool checkStepBackwardClicked();
     
+    // Synchronizes the playback controls with the current timeline state.
     void syncPlaybackUI(bool currentIsPlaying, bool isAtBeginning, bool isAtEnd, bool isEmpty);
 
 
     //-Interact with Slider
+    // Returns the current playback speed.
     float getSpeed() const;
-    void resetSpeed();// Call after finishing a DS
+    // Resets the playback speed to its default value.
+    void resetSpeed();
     
     
     const Theme& getTheme() const { return theme; }

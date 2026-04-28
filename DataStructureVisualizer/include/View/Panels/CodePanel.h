@@ -28,15 +28,24 @@ private:
 public:
     CodePanel() = default;
 
+    // Applies a theme to the panel.
     void applyTheme(const Theme& selectedTheme);
+    // Sets the code listing to display.
     void setCode(std::vector<std::string>& setcodes);
+    // Updates the highlighted line.
     void setHighlightedLine(int numline);
+    // Updates the visible message.
     void setMessage(const std::string& msg);
+    // Clears the current code listing.
     void clearCode();
+    // Resizes the panel for the current window.
     void resize(const sf::RenderWindow& window);
+    // Renders the panel.
     void render(const sf::RenderWindow& window);
 
+    // Returns whether code is currently shown.
     bool isShowingCode() const { return showCode; }
+    // Toggles code visibility.
     void toggleShowCode() { showCode = !showCode; }
 };
 
