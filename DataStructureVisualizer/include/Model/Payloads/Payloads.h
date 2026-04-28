@@ -8,15 +8,17 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <SFML/System/Vector2.hpp>
 
 struct LinkedListPayload : public IPayload {
     std::vector<int> values;
     std::vector<size_t> highlightedNodes;
     std::map<std::string, size_t> pointers; // e.g., {"head": 0, "tail": 4, "current": 2}
+    std::vector<size_t> successNodes;
 
     LinkedListPayload() = default;
-    LinkedListPayload(std::vector<int> values, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {})
-        : values(std::move(values)), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)) {}
+    LinkedListPayload(std::vector<int> values, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<size_t> successNodes = {})
+        : values(std::move(values)), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)), successNodes(std::move(successNodes)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new LinkedListPayload(*this); }
@@ -36,10 +38,11 @@ struct TreePayload : public IPayload {
     size_t rootId;
     std::vector<size_t> highlightedNodes;
     std::map<std::string, size_t> pointers; // e.g., {"current": 2}
+    std::vector<size_t> successNodes;
 
     TreePayload() : rootId(INVALID_INDEX) {}
-    TreePayload(std::vector<TreeNodeData> nodes, size_t rootId = INVALID_INDEX, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<Position> positions = {})
-        : nodes(std::move(nodes)), positions(std::move(positions)), rootId(rootId), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)) {}
+    TreePayload(std::vector<TreeNodeData> nodes, size_t rootId = INVALID_INDEX, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<Position> positions = {}, std::vector<size_t> successNodes = {})
+        : nodes(std::move(nodes)), positions(std::move(positions)), rootId(rootId), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)), successNodes(std::move(successNodes)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new TreePayload(*this); }
@@ -63,6 +66,9 @@ struct GraphPayload : public IPayload {
     std::vector<Edge> edges;
     std::vector<size_t> highlightedVertices;
     std::vector<Edge> highlightedEdges;
+    std::vector<size_t> visitedVertices;
+    std::vector<size_t> successVertices;
+    std::vector<size_t> startVertices; // For special start node coloring
 
     GraphPayload() = default;
     GraphPayload(
@@ -70,8 +76,11 @@ struct GraphPayload : public IPayload {
         std::vector<Edge> edges = {},
         std::vector<size_t> highlightedVertices = {},
         std::vector<Edge> highlightedEdges = {},
-        std::vector<Position> positions = {})
-        : vertices(std::move(vertices)), positions(std::move(positions)), edges(std::move(edges)), highlightedVertices(std::move(highlightedVertices)), highlightedEdges(std::move(highlightedEdges)) {}
+        std::vector<Position> positions = {},
+        std::vector<size_t> visitedVertices = {},
+        std::vector<size_t> successVertices = {},
+        std::vector<size_t> startVertices = {})
+        : vertices(std::move(vertices)), positions(std::move(positions)), edges(std::move(edges)), highlightedVertices(std::move(highlightedVertices)), highlightedEdges(std::move(highlightedEdges)), visitedVertices(std::move(visitedVertices)), successVertices(std::move(successVertices)), startVertices(std::move(startVertices)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new GraphPayload(*this); }
@@ -79,17 +88,19 @@ struct GraphPayload : public IPayload {
 
 struct SingleSourcePayload : public IPayload {
     GraphPayload baseGraph;
+    size_t startVertex;
     std::vector<int> distances;
     std::vector<size_t> previousVertices; // For path reconstruction
     std::vector<std::pair<int, size_t>> priorityQueueSnapShot;
 
-    SingleSourcePayload() = default;
+    SingleSourcePayload() : startVertex(INVALID_INDEX) {}
     SingleSourcePayload(
         GraphPayload baseGraph,
+        size_t startVertex,
         std::vector<int> distances = {},
         std::vector<size_t> previousVertices = {},
         std::vector<std::pair<int, size_t>> priorityQueueSnapShot = {})
-        : baseGraph(std::move(baseGraph)), distances(std::move(distances)), previousVertices(std::move(previousVertices)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)) {}
+        : baseGraph(std::move(baseGraph)), startVertex(startVertex), distances(std::move(distances)), previousVertices(std::move(previousVertices)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new SingleSourcePayload(*this); }
@@ -97,6 +108,7 @@ struct SingleSourcePayload : public IPayload {
 
 struct AStarPayload : public IPayload {
     GraphPayload baseGraph;
+    size_t startVertex;
     std::vector<int> gCosts;
     std::vector<int> hCosts;
     std::vector<int> fCosts;
@@ -104,16 +116,17 @@ struct AStarPayload : public IPayload {
     std::vector<std::pair<int, size_t>> priorityQueueSnapShot;
     size_t targetVertex;
 
-    AStarPayload() : targetVertex(0) {}
+    AStarPayload() : startVertex(INVALID_INDEX), targetVertex(INVALID_INDEX) {}
     AStarPayload(
         GraphPayload baseGraph,
+        size_t startVertex,
         std::vector<int> gCosts = {},
         std::vector<int> hCosts = {},
         std::vector<int> fCosts = {},
         std::vector<size_t> previousVertices = {},
         std::vector<std::pair<int, size_t>> priorityQueueSnapShot = {},
-        size_t targetVertex = 0)
-        : baseGraph(std::move(baseGraph)), gCosts(std::move(gCosts)), hCosts(std::move(hCosts)), fCosts(std::move(fCosts)), previousVertices(std::move(previousVertices)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)), targetVertex(targetVertex) {}
+        size_t targetVertex = INVALID_INDEX)
+        : baseGraph(std::move(baseGraph)), startVertex(startVertex), gCosts(std::move(gCosts)), hCosts(std::move(hCosts)), fCosts(std::move(fCosts)), previousVertices(std::move(previousVertices)), priorityQueueSnapShot(std::move(priorityQueueSnapShot)), targetVertex(targetVertex) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new AStarPayload(*this); }
@@ -149,6 +162,44 @@ struct GridPayload : public IPayload {
 
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new GridPayload(*this); }
+};
+
+struct MenuAnimPayload : public IPayload {
+    float time;
+    int menuState; // 0: Main, 1: Heap, 2: SPA, 3: Graph
+    bool isDarkMode;
+    sf::Vector2f winSize;
+    std::vector<std::string> buttonNames;
+    std::string title;
+
+    MenuAnimPayload() = default;
+    MenuAnimPayload(float time, int menuState, bool isDarkMode, sf::Vector2f winSize, std::vector<std::string> buttonNames, std::string title)
+        : time(time), menuState(menuState), isDarkMode(isDarkMode), winSize(winSize), buttonNames(std::move(buttonNames)), title(std::move(title)) {}
+        
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new MenuAnimPayload(*this); }
+};
+
+struct TopBarPayload : public IPayload {
+    bool isDarkMode;
+    bool isShowingCode;
+    sf::Vector2f winSize;
+    TopBarPayload() = default;
+    TopBarPayload(bool dark, bool showingCode, sf::Vector2f ws) : isDarkMode(dark), isShowingCode(showingCode), winSize(ws) {}
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new TopBarPayload(*this); }
+};
+
+struct DecorationPayload : public IPayload {
+    float time;
+    sf::Vector2f winSize;
+
+    DecorationPayload() = default;
+    DecorationPayload(float time, sf::Vector2f winSize)
+        : time(time), winSize(winSize) {}
+        
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new DecorationPayload(*this); }
 };
 
 #endif // PAYLOADS_H

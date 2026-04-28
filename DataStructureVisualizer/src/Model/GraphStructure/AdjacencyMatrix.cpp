@@ -7,6 +7,7 @@ AdjacencyMatrix::AdjacencyMatrix(const LayoutConfig& config, bool directed) : IG
 void AdjacencyMatrix::addVertex(Timeline* timeline) {
     resizeMatrix(vertexCount + 1);
     ++vertexCount;
+    invalidateLayoutCache();
 
     if (timeline) {
         timeline->addFrame(Frame(makeGraphPayload({vertexCount - 1}), 0, "Added vertex " + std::to_string(vertexCount - 1)));
@@ -41,6 +42,7 @@ void AdjacencyMatrix::addEdge(size_t from, size_t to, int weight, Timeline* time
     if (!isDirected) {
         matrix[to][from] = weight;
     }
+    invalidateLayoutCache();
 
     if (timeline) {
         timeline->addFrame(Frame(makeGraphPayload({from, to}, {Edge(from, to, weight)}), 0, "Added edge from " + std::to_string(from) + " to " + std::to_string(to)));
@@ -53,6 +55,7 @@ void AdjacencyMatrix::deleteEdge(size_t from, size_t to, Timeline* timeline) {
         if (!isDirected) {
             matrix[to][from] = 0;
         }
+        invalidateLayoutCache();
     }
 
     if (timeline) {
@@ -131,6 +134,7 @@ void AdjacencyMatrix::clear(Timeline& timeline) {
     timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Clearing Adjacency Matrix..."));
     matrix.clear();
     vertexCount = 0;
+    invalidateLayoutCache();
     timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Adjacency Matrix cleared."));
 }
 

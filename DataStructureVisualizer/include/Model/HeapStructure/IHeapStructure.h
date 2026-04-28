@@ -22,7 +22,7 @@ class IHeapStructure : public IVisualizable {
 
     void shiftUp(size_t i, Timeline& timeline);
     void fixNode(size_t i, Timeline& timeline);
-    void heapify(size_t n, size_t idx, Timeline& timeline);
+    void heapify(size_t n, size_t idx, Timeline* timeline);
 
     virtual bool compare(size_t idx1, size_t idx2) = 0;
 

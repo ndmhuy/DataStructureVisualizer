@@ -19,17 +19,22 @@ class Theme {
     std::string pauseIconPath;
     std::string stepForwardIconPath;
     std::string stepBackwardIconPath;
+    std::string clickSoundPath;
 
     sf::Color textColor;
     sf::Color nodeTintColor; // Use to change the color of node
     sf::Color arrayTintColor;
     sf::Color arrowColor;
     sf::Color windowClearColor;
+    sf::Color bgTintColor;
     unsigned int nodeTextBaseSize = 30;
     unsigned int arrayTextBaseSize = 30;
     float nodeTextVerticalOffset = 10.0f;
     sf::Color highlightColor;
     sf::Color accentColor;
+    sf::Color visitedColor;
+    sf::Color successColor;
+    sf::Color startNodeColor;
 
     // CodePanel theme values
     sf::Color codePanelBackgroundColor;

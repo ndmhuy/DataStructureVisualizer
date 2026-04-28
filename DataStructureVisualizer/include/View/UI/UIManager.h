@@ -2,6 +2,7 @@
 #define UIMANAGER_H
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <SFML/System/Clock.hpp>
 
 #include "imgui.h"
@@ -50,6 +51,9 @@ private:
     NavigationMenu navMenu;
     int currentDS=-1;
 
+    sf::SoundBuffer clickBuffer;
+    sf::Sound clickSound{clickBuffer};
+
 public:
     UIManager() = default;
     // Setup and teardown.
@@ -76,6 +80,10 @@ public:
     int getSelectedDS(); // -1: none, 0: SSL, 1: Min Heap, 2:Max Heap, 3: AVL Tree, 4: Grid, 5: Directed Graph, 6: Undirected Graph
     void resetDSSelection(); 
     void setShowMainMenu(bool show);
+    bool isShowingMainMenu() const { return isMainMenu; }
+    int getNavMenuState() const { return static_cast<int>(navMenu.getCurrentState()); }
+    std::vector<std::string> getNavMenuNames() const { return navMenu.getCurrentNames(); }
+    std::string getNavMenuTitle() const { return navMenu.getCurrentTitle(); }
     bool checkBackToMenuClicked(); // check if User back to Main menu
 
     bool isMouseOverUI() const;
@@ -140,6 +148,7 @@ public:
     void setCodePanelHighlightedLine(int line); //pass 0-indexed to highlight
     void setCodePanelMessage(const std::string& msg); //pass message text
     void clearCodePanel(); //Clean after done showing code
+    bool isShowingCode() const { return codePanel.isShowingCode(); }
 
     // --- Interact Buttons ---
     

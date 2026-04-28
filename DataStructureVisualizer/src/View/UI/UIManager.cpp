@@ -1,7 +1,13 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
+#include <filesystem>
 
 #include "View/UI/UIManager.h"
+#include "imgui_internal.h"
+#include "View/UI/UIanimation.h"
+
 
 bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     this->theme = theme;
@@ -17,9 +23,16 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     // Load Custom Fonts cho UI typography
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->Clear();
-    ImFont* regularFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 18.0f); // Font thường
-    ImFont* titleFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 36.0f);   // Font tiêu đề to
-    if (!regularFont || !titleFont) {
+    
+    // Kiểm tra file font tồn tại để tránh ImGui crash (Assertion failed)
+    if (std::filesystem::exists(theme.fontPath)) {
+        ImFont* regularFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 18.0f); // Font thường
+        ImFont* titleFont = io.Fonts->AddFontFromFileTTF(theme.fontPath.c_str(), 36.0f);   // Font tiêu đề to
+        if (!regularFont || !titleFont) {
+            io.Fonts->AddFontDefault();
+        }
+    } else {
+        std::cerr << "Warning: Font file not found at " << theme.fontPath << ". Using default ImGui font.\n";
         io.Fonts->AddFontDefault();
     }
     if (!ImGui::SFML::UpdateFontTexture()){
@@ -27,6 +40,24 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
         ImGui::SFML::Shutdown();
         return false;
     }
+
+    // --- MASSIVE UI STYLE OVERHAUL (CINEMATIC UX) ---
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowPadding = ImVec2(16.0f, 16.0f);
+    style.WindowRounding = 12.0f;
+    style.FramePadding = ImVec2(20.0f, 10.0f);
+    style.FrameRounding = 8.0f;
+    style.ItemSpacing = ImVec2(15.0f, 12.0f);
+    style.ItemInnerSpacing = ImVec2(12.0f, 8.0f);
+    style.ScrollbarSize = 14.0f;
+    style.ScrollbarRounding = 14.0f;
+    style.GrabMinSize = 16.0f;
+    style.GrabRounding = 8.0f;
+    style.WindowBorderSize = 0.0f; // Bỏ viền cứng, dùng bóng mờ đổ xuống
+    style.PopupBorderSize = 1.0f;
+    style.TabRounding = 8.0f;
+    style.AntiAliasedLines = true;
+    style.AntiAliasedFill = true;
 
     if (!play.init(theme.playIconPath, theme)) {
         std::cerr << "Warning: UIManager::init failed to load play icon from '"
@@ -57,6 +88,11 @@ bool UIManager::init(sf::RenderWindow& window, const Theme& theme) {
     codePanel.applyTheme(theme);
     slider.init(&speed,theme);
     navMenu.init(theme);
+
+    if (clickBuffer.loadFromFile(theme.clickSoundPath)) {
+        clickSound.setBuffer(clickBuffer);
+        clickSound.setVolume(60.0f);
+    }
 
     // setup size and position for buttons
     resize(window);
@@ -177,29 +213,24 @@ void UIManager::render(sf::RenderWindow& window) {
     ImVec4 textColor = ImVec4(theme.inputMenuTextColor.r/255.f, theme.inputMenuTextColor.g/255.f, theme.inputMenuTextColor.b/255.f, 1.0f);
 
     if (isMainMenu) {
-        navMenu.render(window);
+        navMenu.render(window, window.getSize());
 
         // Vẽ nút Theme đè lên góc phải của Main Menu
-        ImGui::SetNextWindowPos(ImVec2(winSize.x - 110.0f, 10.0f));
-        ImGui::SetNextWindowSize(ImVec2(100.0f, 50.0f));
+        ImGui::SetNextWindowPos(ImVec2(winSize.x - 120.0f, 10.0f));
+        ImGui::SetNextWindowSize(ImVec2(120.0f, 60.0f));
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
                                  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | 
                                  ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         ImGui::Begin("ThemeMenu", nullptr, flags);
         
-        ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnHover);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnHover);
-        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-        
-        if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
+        if (ImGui::InvisibleButton("ThemeBtn", ImVec2(100.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
+            clickSound.play();
         }
-        ImGui::PopStyleColor(4);
-        ImGui::PopStyleVar();
         ImGui::End();
+        ImGui::PopStyleVar();
 
     } else {
         ImGuiWindowFlags panelFlags = 
@@ -220,39 +251,33 @@ void UIManager::render(sf::RenderWindow& window) {
         
         ImGui::Begin("TopControlBar", nullptr, panelFlags);
         
-        ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, btnHover);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, btnHover);
-        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-        
-        ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
-        if (ImGui::Button("Home", ImVec2(80.0f, 35.0f))) {
+        ImGui::SetCursorScreenPos(ImVec2(10.0f, 10.0f));
+        if (ImGui::InvisibleButton("HomeBtn", ImVec2(80.0f, 35.0f))) {
             backToMenuClicked = true;
             isMainMenu = true;
             navMenu.resetState();
+            clickSound.play();
         }
 
-        ImGui::SameLine(0.0f, 30.0f);
+        ImGui::SetCursorScreenPos(ImVec2(120.0f, 10.0f));
         ImGui::SetNextItemWidth(120.0f);
         if (ImGui::SliderFloat("##ScaleApp", &theme.nodeScale, 0.3f, 2.0f, "Size %.1f")) {
             theme.arrayScale = theme.nodeScale;
             themeScaleChanged = true;
         }
         
-        ImGui::SameLine(0.0f, 20.0f);
-        if (ImGui::Button(isDarkMode ? "Light Mode" : "Dark Mode", ImVec2(90.0f, 35.0f))) {
+        ImGui::SetCursorScreenPos(ImVec2(270.0f, 10.0f));
+        if (ImGui::InvisibleButton("ThemeBtnTop", ImVec2(100.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
+            clickSound.play();
         }
         
-        ImGui::SameLine(0.0f, 20.0f);
-        if (ImGui::Button(codePanel.isShowingCode() ? "Hide Code" : "Show Code", ImVec2(90.0f, 35.0f))) {
+        ImGui::SetCursorScreenPos(ImVec2(390.0f, 10.0f));
+        if (ImGui::InvisibleButton("CodeBtnTop", ImVec2(90.0f, 35.0f))) {
             codePanel.toggleShowCode();
+            clickSound.play();
         }
-        
-        ImGui::PopStyleColor(4);
-        ImGui::PopStyleVar();
         ImGui::End();
 
         // Render Component

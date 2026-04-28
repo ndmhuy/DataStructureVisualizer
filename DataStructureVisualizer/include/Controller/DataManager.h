@@ -58,7 +58,7 @@ public:
 
     void randomDataPlanarGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight);
 
-    void randomDataDAG(int vertexCount, int edgeCount, int minWeight, int maxWeight);
+    void randomDataDAG(int vertexCount, int minWeight, int maxWeight);
 
     void randomDataGridGraph(size_t rows, size_t cols, int wallPercentage);
 

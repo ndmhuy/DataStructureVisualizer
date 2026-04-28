@@ -26,12 +26,15 @@ struct LayoutConfig {
     float gridBottomPaddingMin = 40.0f;
     float gridViewportMinSize = 40.0f;
 
-    int physicsIterations = 300;
+    int physicsIterations = 500;
     float initialTemperature = 180.0f;
     float coolingFactor = 0.985f;
     float physicsInitialRadiusBase = 90.0f;
     float physicsInitialRadiusPerNode = 8.0f;
     float physicsOverlapNudge = 2.0f;
+    float overlapThreshold = 50.0f;  // Distance below which nodes are considered overlapping
+    float extremeRepulsionMultiplier = 10.0f;  // Multiplier for repulsion when overlapping
+    float gravityStrength = 0.02f;  // Strength of gravity pulling toward center
 };
 
 #endif // LAYOUTCONFIG_H

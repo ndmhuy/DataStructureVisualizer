@@ -27,16 +27,16 @@ class AVLTree : public IStandardStructure {
     Node* root;
     // std::unordered_map<int, size_t> getNodeIndex; // value -> node id for highlighting
 
-    TreePayload makeTreePayload(const std::vector<size_t>& highlightedNodes = {}, const std::map<std::string, size_t>& pointers = {});
+    TreePayload makeTreePayload(const std::vector<size_t>& highlightedNodes = {}, const std::map<std::string, size_t>& pointers = {}, const std::vector<size_t>& successNodes = {});
     void deleteNodes(Node*& root);
 
-    Node* rotateRight(Node* root, Timeline& timeline, size_t id);
-    Node* rotateLeft(Node* root, Timeline& timeline, size_t id);
-    void balance(Node*& root, Timeline& timeline, size_t id);
+    Node* rotateRight(Node* root, Timeline* timeline, size_t id);
+    Node* rotateLeft(Node* root, Timeline* timeline, size_t id);
+    void balance(Node*& root, Timeline* timeline, size_t id);
 
     // Beta
-    bool initialInsert(int value, Node*& root, Timeline& timeline, size_t id);
-    bool initialRemove(int value, Node*& root, Timeline& timeline, size_t id);
+    bool initialInsert(int value, Node*& root, Timeline* timeline, size_t id);
+    bool initialRemove(int value, Node*& root, Timeline* timeline, size_t id);
 
     public:
     AVLTree();

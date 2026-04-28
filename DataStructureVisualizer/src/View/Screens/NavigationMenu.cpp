@@ -1,13 +1,24 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "View/Screens/NavigationMenu.h"
+#include "imgui_internal.h"
+#include "View/UI/UIanimation.h"
+#include <unordered_map>
+#include <cmath>
 
 void NavigationMenu::init(const Theme& theme) {
     this->theme = theme;
     selectedDS = -1;
     currentState = MenuState::Main;
+
+    if (clickBuffer.loadFromFile(theme.clickSoundPath)) {
+        clickSound.setBuffer(clickBuffer);
+        clickSound.setVolume(60.0f);
+    }
 }
 
-void NavigationMenu::render(const sf::RenderWindow& window) {
-    ImVec2 winSize = ImGui::GetIO().DisplaySize;
+void NavigationMenu::render(const sf::RenderWindow& window, const sf::Vector2u& actualWindowSize) {
+    // Sử dụng kích thước cửa sổ SFML thực tế để đảm bảo đồng bộ
+    ImVec2 winSize = ImVec2(static_cast<float>(actualWindowSize.x), static_cast<float>(actualWindowSize.y));
     
     // Thiết lập cửa sổ lấp đầy màn hình và ẩn thanh tiêu đề
     ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -18,24 +29,25 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
                              ImGuiWindowFlags_NoBackground | 
                              ImGuiWindowFlags_NoBringToFrontOnFocus; // Tránh che khuất các nút Global
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f)); // Loại bỏ đệm mặc định để đồng bộ toạ độ 1:1 với SFML
     ImGui::Begin("NavigationMenuScreen", nullptr, flags);
+    ImGui::PopStyleVar();
 
     // Áp dụng phong cách Flat Design và dùng màu của InputMenu cho tính đồng bộ
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(theme.inputMenuPrimaryColor.r/255.f, theme.inputMenuPrimaryColor.g/255.f, theme.inputMenuPrimaryColor.b/255.f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(theme.inputMenuAccentColor.r/255.f, theme.inputMenuAccentColor.g/255.f, theme.inputMenuAccentColor.b/255.f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(theme.inputMenuAccentColor.r/255.f, theme.inputMenuAccentColor.g/255.f, theme.inputMenuAccentColor.b/255.f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(theme.inputMenuTextColor.r/255.f, theme.inputMenuTextColor.g/255.f, theme.inputMenuTextColor.b/255.f, 1.0f));
+    
+    ImVec4 btnColor = ImVec4(theme.inputMenuPrimaryColor.r/255.f, theme.inputMenuPrimaryColor.g/255.f, theme.inputMenuPrimaryColor.b/255.f, 1.0f);
+    ImVec4 btnHover = ImVec4(theme.inputMenuAccentColor.r/255.f, theme.inputMenuAccentColor.g/255.f, theme.inputMenuAccentColor.b/255.f, 1.0f);
+    ImVec4 btnActive = ImVec4(theme.inputMenuAccentColor.r/255.f, theme.inputMenuAccentColor.g/255.f, theme.inputMenuAccentColor.b/255.f, 1.0f);
 
-    bool hasTitleFont = ImGui::GetIO().Fonts->Fonts.Size > 1;
-    if (hasTitleFont) {
-        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]); // Dùng font số 2 (size 36)
-    }
+    // --- ANIMATED CYBERPUNK BACKGROUND ---
+    UIanimation::DrawCyberpunkBackground(winSize, (float)ImGui::GetTime(), ImGui::GetMousePos(), btnColor, btnHover);
 
     // --- add back button ---
     if (currentState != MenuState::Main) {
-        ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
-        if (ImGui::Button("Back", ImVec2(80.0f, 35.0f))) {
+        ImGui::SetCursorScreenPos(ImVec2(10.0f, 10.0f));
+        if (ImGui::InvisibleButton("BackBtn", ImVec2(80.0f, 35.0f))) {
+            clickSound.play();
             if (currentState == MenuState::Heap) currentState = MenuState::Main;
             else if (currentState == MenuState::ShortestPath) currentState = MenuState::Main;
             else if (currentState == MenuState::GraphType) currentState = MenuState::ShortestPath;
@@ -43,26 +55,12 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
         }
     }
 
-    // --- Vẽ Tiêu đề (Nằm ở top-center) ---
-    std::string titleStr = "DATA STRUCTURE VISUALIZER";
-    if (currentState == MenuState::Heap) titleStr = "SELECT HEAP TYPE";
-    else if (currentState == MenuState::ShortestPath) titleStr = "SELECT ENVIRONMENT";
-    else if (currentState == MenuState::GraphType) titleStr = "SELECT GRAPH TYPE";
-    else if (currentState == MenuState::GraphRepr) titleStr = "SELECT GRAPH STRUCTURE";
-
-    const char* title = titleStr.c_str();
-    ImVec2 titleSize = ImGui::CalcTextSize(title);
-    ImGui::SetCursorPos(ImVec2((winSize.x - titleSize.x) * 0.5f, winSize.y * 0.25f));
-    ImGui::Text("%s", title);
-
-    if (hasTitleFont) {
-        ImGui::PopFont();
-    }
 
     // --- Vẽ Lưới Nút Bấm ---
     float btnWidth = 350.0f;
     float btnHeight = 80.0f;
-    float spacing = 30.0f;
+    float spacingX = 40.0f; 
+    float spacingY = 120.0f; // Tăng khoảng cách dọc để hình minh hoạ không bị nút che
     int cols = 2; 
     
     std::vector<std::string>* currentNames = &mainNames;
@@ -74,7 +72,7 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
     int totalItems = currentNames->size();
     int rows = (totalItems + cols - 1) / cols;
     
-    float startY = winSize.y * 0.45f;
+    float startY = winSize.y * 0.48f; // Cân đối lại không gian
 
     for (int i = 0; i < totalItems; ++i) {
         int row = i / cols;
@@ -82,10 +80,21 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
         
         // Tính toán để luôn tự động căn giữa các phần tử chưa lấp đầy dòng
         int itemsInThisRow = (row == rows - 1 && totalItems % cols != 0) ? (totalItems % cols) : cols;
-        float startX = (winSize.x - (itemsInThisRow * btnWidth + (itemsInThisRow - 1) * spacing)) * 0.5f;
+        float startX = (winSize.x - (itemsInThisRow * btnWidth + (itemsInThisRow - 1) * spacingX)) * 0.5f;
         
-        ImGui::SetCursorPos(ImVec2(startX + col * (btnWidth + spacing), startY + row * (btnHeight + spacing)));
-        if (ImGui::Button((*currentNames)[i].c_str(), ImVec2(btnWidth, btnHeight))) {
+        // Hiệu ứng trồi lên (Slide-up entrance) lần lượt từng dòng
+        static std::unordered_map<int, float> entranceAnim;
+        float dt = ImGui::GetIO().DeltaTime;
+        entranceAnim[i] = ImLerp(entranceAnim[i], 1.0f, dt * (10.0f - row * 2.0f));
+        
+        float yOffset = (1.0f - entranceAnim[i]) * 100.0f;
+        float alpha = entranceAnim[i];
+
+        ImGui::SetCursorScreenPos(ImVec2(startX + col * (btnWidth + spacingX), startY + row * (btnHeight + spacingY)));
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
+        
+        if (ImGui::InvisibleButton((*currentNames)[i].c_str(), ImVec2(btnWidth, btnHeight))) {
+            clickSound.play();
             if (currentState == MenuState::Main) {
                 if (i == 0) selectedDS = 0; // SLL
                 else if (i == 1) currentState = MenuState::Heap;
@@ -104,10 +113,11 @@ void NavigationMenu::render(const sf::RenderWindow& window) {
                 if (isDirectedGraph) selectedDS = 5; // Directed Graph
                 else selectedDS = 6; // Undirected Graph
             }
+            entranceAnim.clear(); // Reset anim cho màn sau
         }
+        ImGui::PopStyleVar();
     }
 
-    ImGui::PopStyleColor(4);
     ImGui::PopStyleVar();
     ImGui::End();
 }

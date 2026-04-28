@@ -4,6 +4,8 @@
 #include <cmath>
 #include <limits>
 #include <queue>
+#include <random>
+#include <set>
 #include <tuple>
 
 namespace {
@@ -28,25 +30,36 @@ std::vector<Position> IGraphStructure::generatePhysicsBasedLayout(const LayoutCo
         return positions;
     }
 
-    constexpr float pi = 3.14159265358979323846f;
+    // Use random number generation for initial positions
+    static std::mt19937 rng(std::random_device{}());
+    std::uniform_real_distribution<float> dist_x(config.padding, config.screenWidth - config.padding);
+    std::uniform_real_distribution<float> dist_y(config.padding, config.screenHeight - config.padding);
 
     float centerX = config.screenWidth / 2.0f;
     float centerY = config.screenHeight / 2.0f;
-    float initialRadius = std::min(
-        std::min(config.screenWidth, config.screenHeight) * 0.30f,
-        config.physicsInitialRadiusBase + config.physicsInitialRadiusPerNode * static_cast<float>(vertexCount));
+
+    // Random initial positions instead of circle
     for (size_t i = 0; i < vertexCount; ++i) {
-        float angle = static_cast<float>(i) * (2.0f * pi / static_cast<float>(vertexCount));
-        positions[i] = Position(centerX + initialRadius * std::cos(angle), centerY + initialRadius * std::sin(angle));
+        positions[i] = Position(dist_x(rng), dist_y(rng));
     }
 
     float area = config.screenWidth * config.screenHeight;
     float k = std::sqrt(area / static_cast<float>(vertexCount));
     float temperature = config.initialTemperature;
 
+    // Deduplicate edges: keep only unique edge pairs (u, v)
+    std::set<std::pair<size_t, size_t>> uniqueEdges;
+    for (const auto& edge : getEdges()) {
+        size_t u = std::min(edge.from, edge.to);
+        size_t v = std::max(edge.from, edge.to);
+        uniqueEdges.insert({u, v});
+    }
+
+    // Run 500 physics iterations
     for (int iter = 0; iter < config.physicsIterations; ++iter) {
         std::vector<Position> displacements(vertexCount, Position());
 
+        // Repulsive forces between all node pairs
         for (size_t v = 0; v < vertexCount; ++v) {
             for (size_t u = 0; u < vertexCount; ++u) {
                 if (v == u) {
@@ -55,43 +68,66 @@ std::vector<Position> IGraphStructure::generatePhysicsBasedLayout(const LayoutCo
 
                 float dist = Position::getDistance(positions[v], positions[u]);
                 if (dist <= 0.0001f) {
+                    // Extreme repulsion for overlapping nodes
+                    constexpr float pi = 3.14159265358979323846f;
                     if (v < u) {
                         float nudgeAngle = static_cast<float>((v * 37u + u * 17u) % 360u) * pi / 180.0f;
                         Position nudge(std::cos(nudgeAngle), std::sin(nudgeAngle));
-                        displacements[v] += nudge * config.physicsOverlapNudge;
-                        displacements[u] -= nudge * config.physicsOverlapNudge;
+                        displacements[v] += nudge * config.physicsOverlapNudge * config.extremeRepulsionMultiplier;
+                        displacements[u] -= nudge * config.physicsOverlapNudge * config.extremeRepulsionMultiplier;
                     }
                     continue;
                 }
 
-                float force = (k * k) / dist;
+                // Extreme repulsion for nodes closer than overlap threshold
+                float repulsionMultiplier = 1.0f;
+                if (dist < config.overlapThreshold) {
+                    repulsionMultiplier = config.extremeRepulsionMultiplier;
+                }
+
+                float force = (k * k) / dist * repulsionMultiplier;
                 displacements[v] += (positions[v] - positions[u]) * (force / dist);
             }
         }
 
-        for (const auto& edge : getEdges()) {
-            if (edge.from >= positions.size() || edge.to >= positions.size()) {
+        // Attractive forces for edges (using deduplicated edges)
+        for (const auto& edgePair : uniqueEdges) {
+            size_t from = edgePair.first;
+            size_t to = edgePair.second;
+
+            if (from >= positions.size() || to >= positions.size()) {
                 continue;
             }
 
-            float dist = Position::getDistance(positions[edge.from], positions[edge.to]);
+            float dist = Position::getDistance(positions[from], positions[to]);
             if (dist <= 0.0001f) {
                 continue;
             }
 
             float force = (dist * dist) / k;
-            Position direction = (positions[edge.to] - positions[edge.from]) * (force / dist);
-            displacements[edge.from] += direction;
-            displacements[edge.to] -= direction;
+            Position direction = (positions[to] - positions[from]) * (force / dist);
+            displacements[from] += direction;
+            displacements[to] -= direction;
         }
 
+        // Gravity toward center
         for (size_t v = 0; v < vertexCount; ++v) {
-            float dist = Position::getDistance(Position(), displacements[v]);
-            if (dist > 0.0f) {
-                float limitedDist = std::min(dist, temperature);
-                positions[v] += displacements[v] * (limitedDist / dist);
+            Position gravityVector = Position(centerX, centerY) - positions[v];
+            float gravityDist = Position::getDistance(Position(), gravityVector);
+            if (gravityDist > 0.0001f) {
+                displacements[v] += gravityVector * (config.gravityStrength / gravityDist);
+            }
+        }
+
+        // Update positions with temperature-limited displacement
+        for (size_t v = 0; v < vertexCount; ++v) {
+            float dispDist = Position::getDistance(Position(), displacements[v]);
+            if (dispDist > 0.0f) {
+                float limitedDist = std::min(dispDist, temperature);
+                positions[v] += displacements[v] * (limitedDist / dispDist);
             }
 
+            // Clamp to screen bounds
             positions[v].x = std::min(config.screenWidth - config.padding, std::max(config.padding, positions[v].x));
             positions[v].y = std::min(config.screenHeight - config.padding, std::max(config.padding, positions[v].y));
         }
@@ -103,9 +139,22 @@ std::vector<Position> IGraphStructure::generatePhysicsBasedLayout(const LayoutCo
 }
 
 GraphPayload IGraphStructure::makeGraphPayload(const std::vector<size_t>& highlightedVertices, const std::vector<Edge>& highlightedEdges, const std::vector<Position>& customPositions) const {
-    std::vector<Position> positions = (customPositions.size() == vertexCount)
-        ? customPositions
-        : generatePhysicsBasedLayout(layoutConfig);
+    std::vector<Position> positions;
+    
+    // Priority 1: Use custom positions if user has provided them (e.g., dragged nodes)
+    if (customPositions.size() == vertexCount) {
+        positions = customPositions;
+    }
+    // Priority 2: Use cached layout if valid
+    else if (layoutCacheValid && cachedLayout.size() == vertexCount) {
+        positions = cachedLayout;
+    }
+    // Priority 3: Generate layout once and cache it for future frames
+    else {
+        positions = generatePhysicsBasedLayout(layoutConfig);
+        cachedLayout = positions;
+        layoutCacheValid = true;
+    }
 
     return GraphPayload(getVertices(), getEdges(), highlightedVertices, highlightedEdges, positions);
 }
@@ -116,7 +165,7 @@ void IGraphStructure::runDAGShortestPath(size_t startVertex, Timeline& timeline)
     std::vector<size_t> previousVertices(vertexCount, std::numeric_limits<size_t>::max());
 
     if (startVertex >= vertexCount) {
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload(), distances, previousVertices, {}), 16, "Start vertex is out of range. DAG shortest path not defined.");
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload(), startVertex, distances, previousVertices, {}), 16, "Start vertex is out of range. DAG shortest path not defined.");
         return;
     }
 
@@ -136,7 +185,7 @@ void IGraphStructure::runDAGShortestPath(size_t startVertex, Timeline& timeline)
         }
     }
 
-    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({startVertex}), distances, previousVertices, {}), 0, "Running DAG shortest path...");
+    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({startVertex}), startVertex, distances, previousVertices, {}), 0, "Running DAG shortest path...");
 
     size_t processed = 0;
     while (!q.empty()) {
@@ -144,16 +193,16 @@ void IGraphStructure::runDAGShortestPath(size_t startVertex, Timeline& timeline)
         q.pop();
         ++processed;
 
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex}), distances, previousVertices, {}), 7, "Processing vertex " + std::to_string(vertex));
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex}), startVertex, distances, previousVertices, {}), 7, "Processing vertex " + std::to_string(vertex));
 
         for (const auto& edge : getEdgesFromVertex(vertex)) {
-            addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex, edge.to}, {edge}), distances, previousVertices, {}), 9,
+            addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex}, {edge}), startVertex, distances, previousVertices, {}), 9,
                 "Checking edge from " + std::to_string(edge.from) + " to " + std::to_string(edge.to));
 
             if (distances[vertex] != INF && distances[vertex] + edge.weight < distances[edge.to]) {
                 distances[edge.to] = distances[vertex] + edge.weight;
                 previousVertices[edge.to] = vertex;
-                addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({edge.to}, {edge}), distances, previousVertices, {}), 11,
+                addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex, edge.to}, {edge}), startVertex, distances, previousVertices, {}), 11,
                     "Relaxing edge to vertex " + std::to_string(edge.to) + ", new distance " + std::to_string(distances[edge.to]));
             }
 
@@ -167,7 +216,7 @@ void IGraphStructure::runDAGShortestPath(size_t startVertex, Timeline& timeline)
     }
 
     if (processed != vertexCount) {
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, {}), distances, previousVertices, {}), 16, "Graph contains a cycle. Shortest path not defined.");
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, {}), startVertex, distances, previousVertices, {}), 16, "Graph contains a cycle. Shortest path not defined.");
     } else {
         std::vector<Edge> pathTreeEdges;
         for (size_t v = 0; v < vertexCount; ++v) {
@@ -180,7 +229,7 @@ void IGraphStructure::runDAGShortestPath(size_t startVertex, Timeline& timeline)
                 }
             }
         }
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, pathTreeEdges), distances, previousVertices, {}), 16, "DAG Shortest Path complete. Highlighted shortest path tree.");
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, pathTreeEdges), startVertex, distances, previousVertices, {}), 16, "DAG Shortest Path complete. Highlighted shortest path tree.");
     }
 }
 
@@ -190,7 +239,7 @@ void IGraphStructure::runDijkstra(size_t startVertex, Timeline& timeline) {
     std::vector<size_t> previousVertices(vertexCount, std::numeric_limits<size_t>::max());
 
     if (startVertex >= vertexCount) {
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload(), distances, previousVertices, {}), 16, "Start vertex is out of range. Dijkstra's algorithm not defined.");
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload(), startVertex, distances, previousVertices, {}), 16, "Start vertex is out of range. Dijkstra's algorithm not defined.");
         return;
     }
 
@@ -198,7 +247,7 @@ void IGraphStructure::runDijkstra(size_t startVertex, Timeline& timeline) {
         if (edge.weight < 0) {
             addPayloadFrame(
                 timeline,
-                SingleSourcePayload(makeGraphPayload({edge.from, edge.to}, {edge}), distances, previousVertices, {}),
+                SingleSourcePayload(makeGraphPayload({edge.from, edge.to}, {edge}), startVertex, distances, previousVertices, {}),
                 3,
                 "Dijkstra requires non-negative weights. Found edge " +
                     std::to_string(edge.from) + " -> " + std::to_string(edge.to) +
@@ -222,7 +271,7 @@ void IGraphStructure::runDijkstra(size_t startVertex, Timeline& timeline) {
         return snapshot;
     };
 
-    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({startVertex}), distances, previousVertices, getSnapshot()), 0, "Running Dijkstra's Algorithm...");
+    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({startVertex}), startVertex, distances, previousVertices, getSnapshot()), 0, "Running Dijkstra's Algorithm...");
 
     while (!pq.empty()) {
         auto [dist, vertex] = pq.top();
@@ -232,18 +281,18 @@ void IGraphStructure::runDijkstra(size_t startVertex, Timeline& timeline) {
             continue;
         }
 
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex}), distances, previousVertices, getSnapshot()), 8,
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex}), startVertex, distances, previousVertices, getSnapshot()), 8,
             "Dequeued vertex " + std::to_string(vertex) + " with distance " + std::to_string(dist));
 
         for (const auto& edge : getEdgesFromVertex(vertex)) {
-            addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex, edge.to}, {edge}), distances, previousVertices, getSnapshot()), 10,
+            addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex}, {edge}), startVertex, distances, previousVertices, getSnapshot()), 10,
                 "Checking edge to " + std::to_string(edge.to) + " with weight " + std::to_string(edge.weight));
 
             if (distances[vertex] != INF && dist + edge.weight < distances[edge.to]) {
                 distances[edge.to] = dist + edge.weight;
                 previousVertices[edge.to] = vertex;
                 pq.emplace(distances[edge.to], edge.to);
-                addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({edge.to}, {edge}), distances, previousVertices, getSnapshot()), 13,
+                addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({vertex, edge.to}, {edge}), startVertex, distances, previousVertices, getSnapshot()), 13,
                     "Relaxed edge. New distance to " + std::to_string(edge.to) + " is " + std::to_string(distances[edge.to]));
             }
         }
@@ -260,13 +309,13 @@ void IGraphStructure::runDijkstra(size_t startVertex, Timeline& timeline) {
             }
         }
     }
-    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, pathTreeEdges), distances, previousVertices, getSnapshot()), 16, "Dijkstra's Algorithm complete. Highlighted shortest path tree.");
+    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, pathTreeEdges), startVertex, distances, previousVertices, {}), 16, "Dijkstra's Algorithm complete. Highlighted shortest path tree.");
 }
 
 void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline& timeline) {
     const int INF = std::numeric_limits<int>::max();
     if (startVertex >= vertexCount || targetVertex >= vertexCount) {
-        addPayloadFrame(timeline, AStarPayload(makeGraphPayload(), {}, {}, {}, {}, {}, targetVertex), 24, "Start or target vertex is out of range.");
+        addPayloadFrame(timeline, AStarPayload(makeGraphPayload(), startVertex, {}, {}, {}, {}, {}, targetVertex), 24, "Start or target vertex is out of range.");
         return;
     }
 
@@ -274,7 +323,7 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
         if (edge.weight < 0) {
             addPayloadFrame(
                 timeline,
-                AStarPayload(makeGraphPayload({edge.from, edge.to}, {edge}), {}, {}, {}, {}, {}, targetVertex),
+                AStarPayload(makeGraphPayload({edge.from, edge.to}, {edge}), startVertex, {}, {}, {}, {}, {}, targetVertex),
                 4,
                 "A* requires non-negative weights in this implementation. Found edge " +
                     std::to_string(edge.from) + " -> " + std::to_string(edge.to) +
@@ -283,7 +332,7 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
         }
     }
 
-    std::vector<Position> positions = generatePhysicsBasedLayout(layoutConfig);
+    std::vector<Position> positions = makeGraphPayload().positions;
     std::vector<int> gCosts(vertexCount, INF);
     std::vector<int> hCosts(vertexCount, INF);
     std::vector<int> fCosts(vertexCount, INF);
@@ -308,7 +357,7 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
     };
 
     auto makePayload = [&](const std::vector<size_t>& highlightedVertices = {}, const std::vector<Edge>& highlightedEdges = {}) {
-        return AStarPayload(makeGraphPayload(highlightedVertices, highlightedEdges, positions), gCosts, hCosts, fCosts, previousVertices, getSnapshot(), targetVertex);
+        return AStarPayload(makeGraphPayload(highlightedVertices, highlightedEdges, positions), startVertex, gCosts, hCosts, fCosts, previousVertices, getSnapshot(), targetVertex);
     };
 
     addPayloadFrame(timeline, makePayload({startVertex}), 0, "Running A* Algorithm...");
@@ -336,18 +385,19 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
                 }
                 curr = prev;
             }
+            pq = decltype(pq)(); // Xoá sạch hàng đợi để tắt màu Vàng của các đỉnh Frontier
             addPayloadFrame(timeline, makePayload(pathVertices, pathEdges), 13, "Target reached. Reconstructed path.");
             return;
         }
 
         if (gScore > gCosts[vertex]) {
-            addPayloadFrame(timeline, makePayload({vertex}), 14,
+            addPayloadFrame(timeline, makePayload({}), 14,
                 "Skipping stale queue entry at vertex " + std::to_string(vertex) + ".");
             continue;
         }
 
         for (const auto& edge : getEdgesFromVertex(vertex)) {
-            addPayloadFrame(timeline, makePayload({vertex, edge.to}, {edge}), 15,
+            addPayloadFrame(timeline, makePayload({vertex}, {edge}), 15,
                 "Checking edge from " + std::to_string(edge.from) + " to " + std::to_string(edge.to) + " with weight " + std::to_string(edge.weight));
 
             int tentativeGScore = gScore + edge.weight;
@@ -358,12 +408,13 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
                 previousVertices[edge.to] = vertex;
                 pq.emplace(fCosts[edge.to], gCosts[edge.to], edge.to);
 
-                addPayloadFrame(timeline, makePayload({edge.to}, {edge}), 21,
+                addPayloadFrame(timeline, makePayload({vertex, edge.to}, {edge}), 21,
                     "Relaxing edge to vertex " + std::to_string(edge.to) + ", new gCost " + std::to_string(gCosts[edge.to]) + ", new fCost " + std::to_string(fCosts[edge.to]));
             }
         }
     }
 
+    pq = decltype(pq)(); // Xoá sạch hàng đợi để tắt màu Vàng của các đỉnh Frontier
     addPayloadFrame(timeline, makePayload(), 24, "A* Algorithm complete. Target unreachable.");
 }
 
@@ -375,21 +426,21 @@ void IGraphStructure::runBellmanFord(size_t startVertex, Timeline& timeline) {
     std::vector<size_t> previousVertices(vertexCount, std::numeric_limits<size_t>::max());
 
     if (startVertex >= vertexCount) {
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload(), distances, previousVertices, {}), 14, "Start vertex is out of range. Bellman-Ford not defined.");
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload(), startVertex, distances, previousVertices, {}), 14, "Start vertex is out of range. Bellman-Ford not defined.");
         return;
     }
 
     distances[startVertex] = 0;
 
-    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({startVertex}), distances, previousVertices, {}), 0, "Running Bellman-Ford Algorithm...");
+    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({startVertex}), startVertex, distances, previousVertices, {}), 0, "Running Bellman-Ford Algorithm...");
 
     for (size_t i = 0; i < vertexCount - 1; ++i) {
-        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, {}), distances, previousVertices, {}), 3, "Relaxing all edges...");
+        addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, {}), startVertex, distances, previousVertices, {}), 3, "Relaxing all edges...");
         for (const auto& edge : getEdges()) {
             if (distances[edge.from] != INF && distances[edge.from] + edge.weight < distances[edge.to]) {
                 distances[edge.to] = distances[edge.from] + edge.weight;
                 previousVertices[edge.to] = edge.from;
-                addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({edge.from, edge.to}, {edge}), distances, previousVertices, {}), 5,
+                addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({edge.from}, {edge}), startVertex, distances, previousVertices, {}), 5,
                     "Considering edge from " + std::to_string(edge.from) + " to " + std::to_string(edge.to));
             }
         }
@@ -400,7 +451,7 @@ void IGraphStructure::runBellmanFord(size_t startVertex, Timeline& timeline) {
         if (distances[edge.from] != INF && distances[edge.from] + edge.weight < distances[edge.to]) {
             distances[edge.to] = NEG_INF;
             negativeCycleVertices.push(edge.to);
-            addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({edge.to}, {edge}), distances, previousVertices, {}), 10,
+            addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({edge.to}, {edge}), startVertex, distances, previousVertices, {}), 10,
                 "Negative cycle detected involving vertex " + std::to_string(edge.to));
         }
     }
@@ -428,7 +479,7 @@ void IGraphStructure::runBellmanFord(size_t startVertex, Timeline& timeline) {
             }
         }
     }
-    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, pathTreeEdges), distances, previousVertices, {}), 14, "Bellman-Ford Algorithm complete. Highlighted valid shortest path tree.");
+    addPayloadFrame(timeline, SingleSourcePayload(makeGraphPayload({}, pathTreeEdges), startVertex, distances, previousVertices, {}), 14, "Bellman-Ford Algorithm complete. Highlighted valid shortest path tree.");
 }
 
 void IGraphStructure::runFloydWarshall(Timeline& timeline) {

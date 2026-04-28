@@ -16,6 +16,10 @@ private:
     float radius; // Radius of the circle shapes below.
 
     bool isDragging;
+    bool isHovered = false;
+    float animScale = 1.0f;
+    float textScale = 1.0f;
+    float lastSpeed = -1.0f;
 
     sf::RectangleShape track;
     sf::CircleShape semiCircle1; // Faked rounded edges.
