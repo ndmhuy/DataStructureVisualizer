@@ -76,8 +76,64 @@ After a successful build, the executable will be generated inside the `build/` d
 ## Input Format (File I/O)
 The visualizer allows importing initial states for data structures via text files. 
 
-*General Format Guidelines:*
-* **Graphs:** Adjacency matrix representation. The first line specifies the number of vertices $V$. The following $V$ lines contain $V$ space-separated integers representing the edge weights (with `0` typically representing no edge).
-* **Arrays / Lists / Heaps / Trees:** Comma-separated or space-separated integer values on a single line (e.g., `10, 25, 5, 14, 30`).
+The application uses the DataManager class to handle data ingestion. It supports three main modalities: *File I/O*, *Direct Console Input*, and *Random Generation*.
 
-*(Note: Specific formatting requirements depend on the data structure being loaded. See the `/resources/` or `/TestFiles/` folder for example text file templates.)*
+### 1. Linear Structures & Trees
+Used for: Static Arrays, Linked Lists, Heaps, BST, and AVL Trees.
+
+* *Format:* A single line of integers separated by spaces or commas.
+* *Methods:* inputFromFile, inputFromConsole, inputFromStream.
+* *Example:*
+    
+text
+    15, 10, 25, 5, 12, 20, 30
+    
+
+### 2. General Graphs
+Used for: Directed/Undirected and Weighted Graphs.
+
+* *Format:* Adjacency Matrix representation.
+    * *Line 1:* An integer $V$ (number of vertices).
+    * *Next $V$ lines:* $V$ integers each, representing edge weights (use 0 for no edge).
+* *Methods:* inputFromFileGraph, inputFromConsoleGraph.
+* *Example (3-vertex graph):*
+    
+text
+    3
+    0 5 0
+    0 0 10
+    5 0 0
+    
+
+### 3. Grid Graphs (Pathfinding)
+Used for: A and Dijkstra algorithms on 2D Grids.*
+
+* *Format:*
+    * *Line 1:* Two integers $R$ and $C$ (Rows and Columns).
+    * *Following $R$ lines:* $C$ binary integers (0 for walkable path, 1 for wall/obstacle).
+* *Methods:* inputFromFileGridGraph, inputFromConsoleGridGraph.
+* *Example:*
+    
+text
+    4 4
+    0 0 1 0
+    1 0 1 0
+    0 0 0 0
+    0 1 0 0
+    
+
+### 4. Synthetic Data (Randomizers)
+The DataManager provides built-in engines to generate test cases directly from the UI:
+
+* *Standard Random:* randomData(n, min, max) for basic arrays/trees.
+* *Planar Graph:* randomDataPlanarGraph() generates graphs with pre-calculated coordinates to ensure visual clarity.
+* *DAG:* randomDataDAG() specifically generates Directed Acyclic Graphs for topological sort visualizations.
+* *Maze/Grid:* randomDataGridGraph() generates 2D grids with a configurable wallPercentage.
+
+---
+
+## Technical Notes
+* *Validation:* The system uses inputFromConsoleNonNegative to filter out invalid inputs before processing.
+* *Efficiency:* Before any new ingestion, data.clear() is invoked to ensure memory safety and prevent data leakage between sessions.
+
+*(Note: Specific formatting requirements depend on the data structure being loaded. See the /resources/ or /TestFiles/ folder for example text file templates.)*
