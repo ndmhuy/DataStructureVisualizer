@@ -866,8 +866,10 @@ void Renderer::visit(const GraphPayload& payload) {
 
         bool isVisited = std::find(payload.visitedVertices.begin(), payload.visitedVertices.end(), vertexId) != payload.visitedVertices.end();
         bool isSuccess = std::find(payload.successVertices.begin(), payload.successVertices.end(), vertexId) != payload.successVertices.end();
+        bool isStart = std::find(payload.startVertices.begin(), payload.startVertices.end(), vertexId) != payload.startVertices.end();
         sf::Color targetColor = theme.nodeTintColor;
-        if (isSuccess) targetColor = theme.successColor; else if (highlighted) targetColor = theme.highlightColor; else if (isVisited) targetColor = theme.visitedColor;
+        if (isStart) targetColor = theme.startNodeColor;
+        else if (isSuccess) targetColor = theme.successColor; else if (highlighted) targetColor = theme.highlightColor; else if (isVisited) targetColor = theme.visitedColor;
         if (anim.colorR < 0.0f) { anim.colorR = targetColor.r; anim.colorG = targetColor.g; anim.colorB = targetColor.b; }
         float lerpCol = 1.0f - std::exp(-10.0f * currentDeltaTime);
         anim.colorR += (targetColor.r - anim.colorR) * lerpCol;
@@ -966,7 +968,36 @@ void Renderer::visit(const GraphPayload& payload) {
 }
 
 void Renderer::visit(const SingleSourcePayload& payload) {
-    visit(payload.baseGraph);
+    GraphPayload enrichedGraph = payload.baseGraph;
+    if (payload.startVertex != INVALID_INDEX) {
+        enrichedGraph.startVertices.push_back(payload.startVertex);
+    }
+    
+    // Đưa thuật toán tô màu Xám vào cho Node đã duyệt qua
+    for (size_t i = 0; i < payload.distances.size(); ++i) {
+        if (payload.distances[i] < 1e9) {
+            bool inQueue = false;
+            for (const auto& item : payload.priorityQueueSnapShot) {
+                if (item.second == i) {
+                    inQueue = true;
+                    break;
+                }
+            }
+            // Chỉ chuyển sang màu xám khi Node đã được lấy ra khỏi hàng đợi
+            if (!inQueue && i != payload.startVertex) {
+                enrichedGraph.visitedVertices.push_back(i);
+            }
+        }
+    }
+    
+    // Các Node đang trong hàng đợi (có thể đi tới / frontier) được tô màu nổi bật (Vàng)
+    for (const auto& item : payload.priorityQueueSnapShot) {
+        if (std::find(enrichedGraph.highlightedVertices.begin(), enrichedGraph.highlightedVertices.end(), item.second) == enrichedGraph.highlightedVertices.end()) {
+            enrichedGraph.highlightedVertices.push_back(item.second);
+        }
+    }
+
+    visit(enrichedGraph);
     
     sf::Vector2f nodeSize = getNodeSize();
     for (size_t i = 0; i < payload.baseGraph.vertices.size(); ++i) {
@@ -994,6 +1025,7 @@ void Renderer::visit(const SingleSourcePayload& payload) {
 void Renderer::visit(const AStarPayload& payload) {
     // Tự động phân tích Mảng kết quả A* để gán Đích đến (Xanh lá) và Đã duyệt (Xám)
     GraphPayload enrichedGraph = payload.baseGraph;
+    enrichedGraph.startVertices.push_back(payload.startVertex);
     for (size_t i = 0; i < payload.gCosts.size(); ++i) {
         if (payload.gCosts[i] < 1e9) {
             bool inQueue = false;
@@ -1003,18 +1035,28 @@ void Renderer::visit(const AStarPayload& payload) {
                     break;
                 }
             }
-            if (!inQueue) enrichedGraph.visitedVertices.push_back(i);
+            if (!inQueue && i != payload.startVertex) enrichedGraph.visitedVertices.push_back(i);
         }
     }
-    enrichedGraph.successVertices.push_back(payload.targetVertex);
-    if (payload.targetVertex < payload.gCosts.size() && payload.gCosts[payload.targetVertex] < 1e9) {
-        size_t curr = payload.targetVertex;
-        while(curr != INVALID_INDEX && curr < payload.previousVertices.size() && payload.previousVertices[curr] != INVALID_INDEX) {
-            enrichedGraph.successVertices.push_back(curr);
-            enrichedGraph.highlightedEdges.push_back({payload.previousVertices[curr], curr, 0});
-            curr = payload.previousVertices[curr];
+
+    // Các Node đang trong hàng đợi (có thể đi tới / frontier) được tô màu nổi bật (Vàng)
+    for (const auto& item : payload.priorityQueueSnapShot) {
+        if (std::find(enrichedGraph.highlightedVertices.begin(), enrichedGraph.highlightedVertices.end(), item.second) == enrichedGraph.highlightedVertices.end()) {
+            enrichedGraph.highlightedVertices.push_back(item.second);
         }
-        if (curr != INVALID_INDEX) enrichedGraph.successVertices.push_back(curr);
+    }
+
+    if (payload.targetVertex != INVALID_INDEX) {
+        enrichedGraph.successVertices.push_back(payload.targetVertex);
+        if (payload.targetVertex < payload.gCosts.size() && payload.gCosts[payload.targetVertex] < 1e9) {
+            size_t curr = payload.targetVertex;
+            while(curr != INVALID_INDEX && curr < payload.previousVertices.size() && payload.previousVertices[curr] != INVALID_INDEX) {
+                enrichedGraph.successVertices.push_back(curr);
+                enrichedGraph.highlightedEdges.push_back({payload.previousVertices[curr], curr, 0});
+                curr = payload.previousVertices[curr];
+            }
+            if (curr != INVALID_INDEX) enrichedGraph.successVertices.push_back(curr);
+        }
     }
     visit(enrichedGraph);
     
