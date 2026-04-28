@@ -37,6 +37,35 @@ AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action,
                 return AlgorithmType::SinglyLinkedListUpdate;
             }
             break;
+        case StructureType::MinHeap:
+        case StructureType::MaxHeap:
+            if (action == 2) {
+                return AlgorithmType::HeapInsert;
+            }
+            if (action == 5) {
+                return AlgorithmType::HeapSearch;
+            }
+            if (action == 6) {
+                return AlgorithmType::HeapRemove;
+            }
+            if (action == 7) {
+                return AlgorithmType::HeapUpdate;
+            }
+            break;
+        case StructureType::AVLTree:
+            if (action == 2) {
+                return AlgorithmType::AVLTreeInsert;
+            }
+            if (action == 3) {
+                return AlgorithmType::AVLTreeSearch;
+            }
+            if (action == 4) {
+                return AlgorithmType::AVLTreeRemove;
+            }
+            if (action == 5) {
+                return AlgorithmType::AVLTreeUpdate;
+            }
+            break;
         case StructureType::GridGraph:
             if (action == 4) {
                 if (mode == 0) {
