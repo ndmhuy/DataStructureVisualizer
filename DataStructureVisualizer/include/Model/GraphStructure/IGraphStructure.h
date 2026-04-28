@@ -11,6 +11,8 @@ class IGraphStructure : public IVisualizable {
     protected:
     size_t vertexCount;
     LayoutConfig layoutConfig;
+    mutable std::vector<Position> cachedLayout;  // Cache generated layout to avoid regenerating each frame
+    mutable bool layoutCacheValid = false;  // Flag to track if cache is current
 
     IGraphStructure(const LayoutConfig& config = LayoutConfig()) : vertexCount(0), layoutConfig(config) {}
 
@@ -38,6 +40,12 @@ class IGraphStructure : public IVisualizable {
     virtual std::vector<Edge> getEdgesFromVertex(size_t vertex) const = 0;
 
     virtual void initialize(const std::vector<Edge>& startingEdges, Timeline& timeline) = 0;
+
+    void setLayoutConfig(const LayoutConfig& config) { layoutConfig = config; }
+    const LayoutConfig& getLayoutConfig() const { return layoutConfig; }
+    
+    // Invalidate cached layout when graph structure changes
+    void invalidateLayoutCache() const { layoutCacheValid = false; }
 
     void runDAGShortestPath(size_t startVertex, Timeline& timeline);
     void runDijkstra(size_t startVertex, Timeline& timeline);

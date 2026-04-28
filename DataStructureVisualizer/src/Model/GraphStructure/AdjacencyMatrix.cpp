@@ -7,6 +7,7 @@ AdjacencyMatrix::AdjacencyMatrix(const LayoutConfig& config, bool directed) : IG
 void AdjacencyMatrix::addVertex(Timeline* timeline) {
     resizeMatrix(vertexCount + 1);
     ++vertexCount;
+    invalidateLayoutCache();
 
     if (timeline) {
         timeline->addFrame(Frame(makeGraphPayload({vertexCount - 1}), 0, "Added vertex " + std::to_string(vertexCount - 1)));
@@ -25,14 +26,26 @@ bool AdjacencyMatrix::isValidVertex(size_t vertex) const {
 }
 
 void AdjacencyMatrix::addEdge(size_t from, size_t to, int weight, Timeline* timeline) {
+    size_t previousVertexCount = vertexCount;
     if (from >= vertexCount || to >= vertexCount) {
         resizeMatrix(std::max(from, to) + 1);
         vertexCount = matrix.size();
     }
 
+    if (timeline && vertexCount > previousVertexCount) {
+        for (size_t vertex = previousVertexCount; vertex < vertexCount; ++vertex) {
+            timeline->addFrame(Frame(makeGraphPayload({vertex}), 0, "Added vertex " + std::to_string(vertex) + " while creating edge"));
+        }
+    }
+
     matrix[from][to] = weight;
     if (!isDirected) {
         matrix[to][from] = weight;
+    }
+    invalidateLayoutCache();
+
+    if (timeline) {
+        timeline->addFrame(Frame(makeGraphPayload({from, to}, {Edge(from, to, weight)}), 0, "Added edge from " + std::to_string(from) + " to " + std::to_string(to)));
     }
 }
 
@@ -42,6 +55,7 @@ void AdjacencyMatrix::deleteEdge(size_t from, size_t to, Timeline* timeline) {
         if (!isDirected) {
             matrix[to][from] = 0;
         }
+        invalidateLayoutCache();
     }
 
     if (timeline) {
@@ -120,6 +134,7 @@ void AdjacencyMatrix::clear(Timeline& timeline) {
     timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Clearing Adjacency Matrix..."));
     matrix.clear();
     vertexCount = 0;
+    invalidateLayoutCache();
     timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Adjacency Matrix cleared."));
 }
 

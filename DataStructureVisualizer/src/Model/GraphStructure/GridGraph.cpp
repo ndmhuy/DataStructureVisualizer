@@ -2,11 +2,23 @@
 #include <limits>
 #include <queue>
 
+void GridGraph::resetAlgorithmStates(Timeline& timeline) {
+    for (size_t r = 0; r < rows; ++r) {
+        for (size_t c = 0; c < cols; ++c) {
+            if (grid[r][c] != static_cast<int>(CellState::Wall))
+                grid[r][c] = static_cast<int>(CellState::Empty);
+
+        }
+    }
+    timeline.addFrame(Frame(GridPayload(grid), 0, "Reset grid to clear previous algorithm states"));
+}
+
 GridGraph::GridGraph(size_t r, size_t c) : rows(r), cols(c) {
     grid.resize(rows, std::vector<int>(cols, static_cast<int>(CellState::Empty)));
 }
 
 void GridGraph::clear(Timeline& timeline) {
+    resetAlgorithmStates(timeline);
     for (size_t r = 0; r < rows; ++r) {
         for (size_t c = 0; c < cols; ++c) {
             grid[r][c] = static_cast<int>(CellState::Empty);
@@ -39,20 +51,30 @@ void GridGraph::initializeFromData(const std::vector<std::vector<int>>& startGri
 }
 
 void GridGraph::setCellState(size_t r, size_t c, CellState state, Timeline& timeline) {
-    if (r < rows && c < cols) {
-        grid[r][c] = static_cast<int>(state);
-        timeline.addFrame(Frame(GridPayload(grid, {r, c}), 0, "Set cell (" + std::to_string(r) + ", " + std::to_string(c) + ") to state " + std::to_string(static_cast<int>(state))));
+    resetAlgorithmStates(timeline);
+    if (!isValidCell(r, c)) {
+        timeline.addFrame(Frame(GridPayload(grid), 0, "Attempted to set cell (" + std::to_string(r) + ", " + std::to_string(c) + ") to state " + std::to_string(static_cast<int>(state)) + " but it was out of bounds"));
+        return;
     }
+    
+    grid[r][c] = static_cast<int>(state);
+    timeline.addFrame(Frame(GridPayload(grid, {r, c}), 0, "Set cell (" + std::to_string(r) + ", " + std::to_string(c) + ") to state " + std::to_string(static_cast<int>(state))));
 }
 
 CellState GridGraph::getCellState(size_t r, size_t c) const {
-    if (r < rows && c < cols) {
+    if (isValidCell(r, c)) {
         return static_cast<CellState>(grid[r][c]);
     }
     return CellState::Empty;
 }
 
 void GridGraph::runBFSShortestPath(std::pair<size_t, size_t> start, std::pair<size_t, size_t> target, Timeline& timeline) {
+    resetAlgorithmStates(timeline);
+
+    if (!isValidCell(start.first, start.second) || !isValidCell(target.first, target.second)) {
+        timeline.addFrame(Frame(GridPayload(grid), 0, "Invalid start or target position for BFS"));
+        return;
+    }
     const int INF = std::numeric_limits<int>::max();
 
     std::vector<std::vector<bool>> visited(rows, std::vector<bool>(cols, false));
@@ -91,11 +113,11 @@ void GridGraph::runBFSShortestPath(std::pair<size_t, size_t> start, std::pair<si
 
             timeline.addFrame(Frame(GridPayload(grid, {newRow, newCol}), 15, "Checking neighbor cell (" + std::to_string(newRow) + ", " + std::to_string(newCol) + ")"));
 
-            if (newRow < rows && newCol < cols && !visited[newRow][newCol] && grid[newRow][newCol] != static_cast<int>(CellState::Wall)) {
+            if (isValidCell(newRow, newCol) && !visited[newRow][newCol] && grid[newRow][newCol] != static_cast<int>(CellState::Wall)) {
                 visited[newRow][newCol] = true;
                 previous[newRow][newCol] = {r, c};
                 q.push({newRow, newCol});
-                grid[newRow][newCol] = static_cast<int>(CellState::Visited);
+                grid[newRow][newCol] = grid[newRow][newCol] != static_cast<int>(CellState::Target) ? static_cast<int>(CellState::Visited) : grid[newRow][newCol];
                 timeline.addFrame(Frame(GridPayload(grid, {newRow, newCol}), 19, "Enqueued cell (" + std::to_string(newRow) + ", " + std::to_string(newCol) + ") for visiting"));
             }
         }
@@ -105,6 +127,13 @@ void GridGraph::runBFSShortestPath(std::pair<size_t, size_t> start, std::pair<si
 }
 
 void GridGraph::runAStar(std::pair<size_t, size_t> start, std::pair<size_t, size_t> target, Timeline& timeline) {
+    resetAlgorithmStates(timeline);
+
+    if (!isValidCell(start.first, start.second) || !isValidCell(target.first, target.second)) {
+    timeline.addFrame(Frame(GridPayload(grid), 0, "Invalid start or target position for A*"));
+    return;
+    }
+
     const int INF = std::numeric_limits<int>::max();
 
     auto manhattan = [](std::pair<size_t, size_t> a, std::pair<size_t, size_t> b) {
@@ -164,7 +193,7 @@ void GridGraph::runAStar(std::pair<size_t, size_t> start, std::pair<size_t, size
             size_t newRow = r + dir.first;
             size_t newCol = c + dir.second;
 
-            if (newRow < rows && newCol < cols && grid[newRow][newCol] != static_cast<int>(CellState::Wall)) {
+            if (isValidCell(newRow, newCol) && grid[newRow][newCol] != static_cast<int>(CellState::Wall)) {
                 timeline.addFrame(Frame(GridPayload(grid, {newRow, newCol}), 14, "for dir in dirs - Checking neighbor (" + std::to_string(newRow) + ", " + std::to_string(newCol) + ")"));
                 timeline.addFrame(Frame(GridPayload(grid, {newRow, newCol}), 15, "v = u + dir"));
                 timeline.addFrame(Frame(GridPayload(grid, {newRow, newCol}), 16, "if valid(v) and v != Wall"));

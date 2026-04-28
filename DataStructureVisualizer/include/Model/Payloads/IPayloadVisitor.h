@@ -10,6 +10,9 @@ struct SingleSourcePayload;
 struct AStarPayload;
 struct AllPairsPayload;
 struct GridPayload;
+struct MenuAnimPayload;
+struct DecorationPayload;
+struct TopBarPayload;
 class IPayloadVisitor {
 public:
     virtual ~IPayloadVisitor() = default;
@@ -22,6 +25,9 @@ public:
     virtual void visit(const AStarPayload& payload) = 0;
     virtual void visit(const AllPairsPayload& payload) = 0;
     virtual void visit(const GridPayload& payload) = 0;
+    virtual void visit(const MenuAnimPayload& payload) = 0;
+    virtual void visit(const DecorationPayload& payload) = 0;
+    virtual void visit(const TopBarPayload& payload) = 0;
 };
 
 #endif // IPAYLOADVISITOR_H

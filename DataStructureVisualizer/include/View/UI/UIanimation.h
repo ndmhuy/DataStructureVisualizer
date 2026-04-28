@@ -1,0 +1,32 @@
+#ifndef UI_ANIMATION_H
+#define UI_ANIMATION_H
+
+#include "imgui.h"
+#include <SFML/Audio.hpp>
+
+namespace UIanimation {
+    // Hàm nội suy màu mượt mà
+    ImVec4 LerpColor(const ImVec4& a, const ImVec4& b, float t);
+
+    // Nút bấm nổi (Floating Button) có hiệu ứng Scale & Nhịp đập Pulsing Glow
+    // Dùng cho Main Menu & Top Bar
+    bool FloatButton(const char* label, const ImVec2& size_arg, ImVec4 colorNormal, ImVec4 colorHover, ImVec4 colorActive, sf::Sound* sound = nullptr);
+
+    // Nút bấm dạng Cyberpunk (Có vạch trượt Accent và 4 góc Tech Corners)
+    // Dùng cho Input Panel
+    bool CyberButton(const char* label, const ImVec2& size_arg, ImVec4 colorNormal, ImVec4 colorHover, ImVec4 colorActive, sf::Sound* sound = nullptr);
+
+    // Nút bấm Glitch (Nhiễu sóng kênh màu RGB) phong cách Hacker
+    bool GlitchButton(const char* label, const ImVec2& size_arg, ImVec4 colorNormal, ImVec4 colorHover, ImVec4 colorActive, sf::Sound* sound = nullptr);
+
+    // Nút bấm Particle (Bắn hạt ánh sáng nổ tung khi Click)
+    bool ParticleButton(const char* label, const ImVec2& size_arg, ImVec4 colorNormal, ImVec4 colorHover, ImVec4 colorActive, sf::Sound* sound = nullptr);
+
+    // Khung Nền Hologram Viễn Tưởng (Tia quét Radar & Lưới điện)
+    void DrawHoloBackground(const ImVec2& pMin, const ImVec2& pMax, ImVec4 baseColor);
+
+    // Khung Nền Cyberpunk (Matrix Rain & 3D Grid) dùng cho Main Menu
+    void DrawCyberpunkBackground(const ImVec2& winSize, float time, const ImVec2& mousePos, ImVec4 baseColor, ImVec4 hoverColor);
+}
+
+#endif // UI_ANIMATION_H

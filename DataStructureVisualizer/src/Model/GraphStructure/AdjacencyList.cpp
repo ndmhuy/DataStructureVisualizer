@@ -7,6 +7,7 @@ AdjacencyList::AdjacencyList(const LayoutConfig& config, bool directed) : IGraph
 void AdjacencyList::addVertex(Timeline* timeline) {
     adjacencyList[vertexCount];
     ++vertexCount;
+    invalidateLayoutCache();
 
     if (timeline) {
         timeline->addFrame(Frame(makeGraphPayload({vertexCount - 1}), 0, "Added vertex " + std::to_string(vertexCount - 1)));
@@ -14,8 +15,20 @@ void AdjacencyList::addVertex(Timeline* timeline) {
 }
 
 void AdjacencyList::addEdge(size_t from, size_t to, int weight, Timeline* timeline) {
+    bool createdFrom = adjacencyList.find(from) == adjacencyList.end();
+    bool createdTo = adjacencyList.find(to) == adjacencyList.end();
+
     adjacencyList[from];
     adjacencyList[to];
+
+    if (timeline) {
+        if (createdFrom) {
+            timeline->addFrame(Frame(makeGraphPayload({from}), 0, "Added vertex " + std::to_string(from) + " while creating edge"));
+        }
+        if (createdTo && to != from) {
+            timeline->addFrame(Frame(makeGraphPayload({to}), 0, "Added vertex " + std::to_string(to) + " while creating edge"));
+        }
+    }
     
     if (!hasEdge(from, to)) {
         adjacencyList[from].emplace_back(to, weight);
@@ -40,6 +53,7 @@ void AdjacencyList::addEdge(size_t from, size_t to, int weight, Timeline* timeli
             }
         }
     }
+    invalidateLayoutCache();
     vertexCount = adjacencyList.size();
 
     if (timeline) {
@@ -53,6 +67,7 @@ void AdjacencyList::deleteEdge(size_t from, size_t to, Timeline* timeline) {
         if (!isDirected) {
             adjacencyList[to].remove_if([from](const GraphNode& node) { return node.vertex == from;});
         }
+        invalidateLayoutCache();
     }
 
     if (timeline) {
@@ -131,6 +146,7 @@ void AdjacencyList::clear(Timeline& timeline) {
     timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Clearing Adjacency List..."));
     adjacencyList.clear();
     vertexCount = 0;
+    invalidateLayoutCache();
     timeline.addFrame(Frame(makeGraphPayload({}, {}), 0, "Adjacency List cleared..."));
 }
 

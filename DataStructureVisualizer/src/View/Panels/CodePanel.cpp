@@ -1,4 +1,5 @@
 #include "View/Panels/CodePanel.h"
+#include "imgui_internal.h"
 #include <algorithm>
 
 void CodePanel::applyTheme(const Theme& selectedTheme){
@@ -13,8 +14,18 @@ void CodePanel::setHighlightedLine(int line){
     highlightedline = line;
 }
 
+void CodePanel::setMessage(const std::string& msg) {
+    currentMessage = msg;
+}
+
 void CodePanel::clearCode(){
     highlightedline = -1;
+    previousHighlightedLine = -1;
+    isAutoScrolling = false;
+    targetScrollY = 0.0f;
+    animHighlightY = 0.0f;
+    animHighlightAlpha = 0.0f;
+    currentMessage.clear();
     listofCodes.clear();
 }
 
@@ -25,7 +36,7 @@ void CodePanel::resize(const sf::RenderWindow& window) {
 }
 
 void CodePanel::render(const sf::RenderWindow& window){
-    if (listofCodes.empty()) return; // Don't draw anything if there's no code
+    if (listofCodes.empty() && currentMessage.empty()) return; // Chỉ ẩn nếu CẢ code và message đều trống
 
     // 1. Lấy kích thước và màu sắc từ Theme
     float panelWidth = theme.codePanelWidth;
@@ -61,21 +72,24 @@ void CodePanel::render(const sf::RenderWindow& window){
         theme.codePanelHighlightColor.b,
         theme.codePanelHighlightColor.a
     );
-    
+    float rounding = theme.codePanelRounding;
+    float borderThickness = theme.codePanelBorderThickness;
 
     // 2. Position the panel at the TOP RIGHT of the screen
     float windowX = window.getSize().x;
-    ImGui::SetNextWindowPos(
-        ImVec2(windowX - panelWidth - theme.codePanelRightOffset, theme.codePanelTopOffset),
-        ImGuiCond_Always
-    );
-    ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight));
 
     // 3. Remove default ImGui window styling
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | 
                              ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                              ImGuiWindowFlags_NoBringToFrontOnFocus;
     
+    // --- RENDER CODE PANEL (Chỉ vẽ khi có mã giả) ---
+    if (!listofCodes.empty() && showCode) {
+        ImGui::SetNextWindowPos(
+        ImVec2(windowX - panelWidth - theme.codePanelRightOffset, theme.codePanelTopOffset),
+        ImGuiCond_Always
+    );
+    ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight));
     ImGui::Begin("CustomCodePanel", nullptr, flags);
 
     // --- START CUSTOM DRAWING ---
@@ -83,9 +97,6 @@ void CodePanel::render(const sf::RenderWindow& window){
     ImVec2 p = ImGui::GetWindowPos();   
     ImVec2 s = ImGui::GetWindowSize();  
     
-    float rounding = theme.codePanelRounding;
-    float borderThickness = theme.codePanelBorderThickness;
-
     // Layer 1: Main Background
     draw_list->AddRectFilled(p, ImVec2(p.x + s.x, p.y + s.y), bgColor, rounding);
 
@@ -119,10 +130,69 @@ void CodePanel::render(const sf::RenderWindow& window){
     
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, theme.codePanelLineSpacing));
 
+    // --- HIGH-END UI UX: Animated Highlight Glider & Auto-Scroll ---
+    float dt = ImGui::GetIO().DeltaTime;
+    float lineHeight = ImGui::GetTextLineHeight();
+    float itemHeight = lineHeight + theme.codePanelLineSpacing;
+
+    // Tính toán cuộn (Scroll) khi dòng highlight thay đổi
+    if (highlightedline != previousHighlightedLine) {
+        if (highlightedline >= 0) {
+            float lineY = padding + highlightedline * itemHeight;
+            targetScrollY = lineY - ImGui::GetWindowHeight() * 0.5f + itemHeight * 0.5f;
+            isAutoScrolling = true;
+        }
+        previousHighlightedLine = highlightedline;
+    }
+
+    // Cuộn mượt (Smooth Scrolling) theo chiều dọc
+    if (isAutoScrolling) {
+        float currentScroll = ImGui::GetScrollY();
+        float maxScroll = ImGui::GetScrollMaxY();
+        if (maxScroll > 0.0f) {
+            float clampedTarget = std::clamp(targetScrollY, 0.0f, maxScroll);
+            if (std::abs(currentScroll - clampedTarget) > 1.0f) {
+                ImGui::SetScrollY(ImLerp(currentScroll, clampedTarget, dt * 12.0f));
+            } else {
+                isAutoScrolling = false;
+            }
+        } else {
+            isAutoScrolling = false;
+        }
+    }
+
+    if (highlightedline >= 0 && highlightedline < listofCodes.size()) {
+        float targetY = highlightedline * itemHeight; // Loại bỏ padding vì cpos đã bao gồm padding, tránh double offset
+        // Snap tới vị trí mới nếu khoảng cách quá lớn, ngược lại thì di chuyển mượt (Lerp)
+        if (std::abs(animHighlightY - targetY) > 200.0f || animHighlightAlpha < 0.1f) {
+            animHighlightY = targetY;
+        } else {
+            animHighlightY = ImLerp(animHighlightY, targetY, dt * 15.0f);
+        }
+        animHighlightAlpha = ImLerp(animHighlightAlpha, 1.0f, dt * 10.0f);
+    } else {
+        animHighlightAlpha = ImLerp(animHighlightAlpha, 0.0f, dt * 10.0f);
+    }
+
+    // Vẽ hộp sáng bao quanh code (Highlight Glider)
+    if (animHighlightAlpha > 0.01f) {
+        ImVec2 cpos = ImGui::GetCursorScreenPos();
+        ImVec2 pMin = ImVec2(cpos.x - 5.0f, cpos.y + animHighlightY - 2.0f);
+        ImVec2 pMax = ImVec2(cpos.x + ImGui::GetContentRegionAvail().x + 5.0f, pMin.y + lineHeight + 4.0f);
+        
+        ImVec4 hlVec4 = ImGui::ColorConvertU32ToFloat4(highlightColor);
+        ImU32 glowColor = ImGui::GetColorU32(ImVec4(hlVec4.x, hlVec4.y, hlVec4.z, animHighlightAlpha * 0.3f));
+        ImU32 solidColor = ImGui::GetColorU32(ImVec4(hlVec4.x, hlVec4.y, hlVec4.z, animHighlightAlpha * 0.8f));
+
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        dl->AddRectFilled(pMin, pMax, glowColor, 4.0f);
+        dl->AddRect(pMin, pMax, solidColor, 4.0f, 0, 1.5f);
+    }
+
     for (size_t i = 0; i < listofCodes.size(); ++i) {
         if (static_cast<int>(i) == highlightedline) {
             ImGui::PushStyleColor(ImGuiCol_Text, highlightColor);
-            ImGui::Text("-> %s", listofCodes[i].c_str());
+            ImGui::Text("   %s", listofCodes[i].c_str()); // Bỏ dấu -> cứng nhắc đi
             ImGui::PopStyleColor();
         } else {
             ImGui::PushStyleColor(ImGuiCol_Text, textColor);
@@ -136,4 +206,31 @@ void CodePanel::render(const sf::RenderWindow& window){
     ImGui::PopStyleColor(); // Pop transparent child background
 
     ImGui::End();
+    }
+
+    if (!currentMessage.empty()) {
+        float msgY = (listofCodes.empty() || !showCode) ? theme.codePanelTopOffset : (theme.codePanelTopOffset + panelHeight + 15.0f);
+        ImGui::SetNextWindowPos(ImVec2(windowX - panelWidth - theme.codePanelRightOffset, msgY), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(panelWidth, 0)); 
+
+        ImGuiWindowFlags msgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
+                                    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                                    ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
+        ImGui::PushStyleColor(ImGuiCol_Border, borderColor);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, borderThickness);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, rounding);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding, padding));
+
+        ImGui::Begin("MessagePanel", nullptr, msgFlags);
+        
+        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+        ImGui::TextWrapped("Step info: %s", currentMessage.c_str());
+        ImGui::PopStyleColor();
+
+        ImGui::End();
+        ImGui::PopStyleVar(3);
+        ImGui::PopStyleColor(2);
+    }
 }

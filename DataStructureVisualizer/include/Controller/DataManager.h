@@ -49,7 +49,7 @@ public:
 
     const std::vector<std::vector<int>>& getDataGridGraph() const;
 
-    const std::unordered_map<int, Position>& getNodePositions() const;
+    const std::vector<Position>& getNodePositions() const;
 
     // Data randomizer
     void randomData(int n, int minValue, int maxValue);
@@ -58,13 +58,15 @@ public:
 
     void randomDataPlanarGraph(int n, int minValue, int maxValue, float screenWidth, float screenHeight);
 
+    void randomDataDAG(int vertexCount, int minWeight, int maxWeight);
+
     void randomDataGridGraph(size_t rows, size_t cols, int wallPercentage);
 
 private:
     std::vector<int> data;
     std::vector<Edge> dataGraph; // Edge vector: {u, v, w}
     std::vector<std::vector<int>> dataGridGraph;
-    std::unordered_map<int, Position> nodePositions;
+    std::vector<Position> nodePositions;
 };
 
 #endif
