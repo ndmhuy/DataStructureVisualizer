@@ -56,3 +56,20 @@ Icon
 DataStructureVisualizer/imgui.ini
 
 .cache/
+
+# ==========================================
+# LaTeX Junk
+# ==========================================
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+*.toc
+*.lof
+*.lot
+*.dvi
+*.bcf
+*.run.xml
