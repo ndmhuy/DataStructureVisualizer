@@ -25,7 +25,7 @@ private:
 
     std::vector<std::string> mainNames = {
         "Singly Linked List", "Heap", 
-        "AVL tree", "Shortest Path Algorithm"
+        "AVL Tree", "Shortest Path Algorithm"
     };
     std::vector<std::string> heapNames = {
         "Min Heap", "Max Heap"

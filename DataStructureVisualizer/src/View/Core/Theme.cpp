@@ -11,6 +11,7 @@ std::string detectAssetsRoot() {
         "../assets",
         "../../assets",
         "../../../assets",
+        "DataStructureVisualizer/assets",
         "resources",
         "../resources",
         "../../resources",
