@@ -20,6 +20,11 @@ void CodePanel::setMessage(const std::string& msg) {
 
 void CodePanel::clearCode(){
     highlightedline = -1;
+    previousHighlightedLine = -1;
+    isAutoScrolling = false;
+    targetScrollY = 0.0f;
+    animHighlightY = 0.0f;
+    animHighlightAlpha = 0.0f;
     currentMessage.clear();
     listofCodes.clear();
 }
@@ -125,13 +130,39 @@ void CodePanel::render(const sf::RenderWindow& window){
     
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, theme.codePanelLineSpacing));
 
-    // --- HIGH-END UI UX: Animated Highlight Glider ---
-    static float animHighlightY = 0.0f;
-    static float animHighlightAlpha = 0.0f;
+    // --- HIGH-END UI UX: Animated Highlight Glider & Auto-Scroll ---
     float dt = ImGui::GetIO().DeltaTime;
+    float lineHeight = ImGui::GetTextLineHeight();
+    float itemHeight = lineHeight + theme.codePanelLineSpacing;
+
+    // Tính toán cuộn (Scroll) khi dòng highlight thay đổi
+    if (highlightedline != previousHighlightedLine) {
+        if (highlightedline >= 0) {
+            float lineY = padding + highlightedline * itemHeight;
+            targetScrollY = lineY - ImGui::GetWindowHeight() * 0.5f + itemHeight * 0.5f;
+            isAutoScrolling = true;
+        }
+        previousHighlightedLine = highlightedline;
+    }
+
+    // Cuộn mượt (Smooth Scrolling) theo chiều dọc
+    if (isAutoScrolling) {
+        float currentScroll = ImGui::GetScrollY();
+        float maxScroll = ImGui::GetScrollMaxY();
+        if (maxScroll > 0.0f) {
+            float clampedTarget = std::clamp(targetScrollY, 0.0f, maxScroll);
+            if (std::abs(currentScroll - clampedTarget) > 1.0f) {
+                ImGui::SetScrollY(ImLerp(currentScroll, clampedTarget, dt * 12.0f));
+            } else {
+                isAutoScrolling = false;
+            }
+        } else {
+            isAutoScrolling = false;
+        }
+    }
 
     if (highlightedline >= 0 && highlightedline < listofCodes.size()) {
-        float targetY = padding + highlightedline * (ImGui::GetTextLineHeight() + theme.codePanelLineSpacing);
+        float targetY = highlightedline * itemHeight; // Loại bỏ padding vì cpos đã bao gồm padding, tránh double offset
         // Snap tới vị trí mới nếu khoảng cách quá lớn, ngược lại thì di chuyển mượt (Lerp)
         if (std::abs(animHighlightY - targetY) > 200.0f || animHighlightAlpha < 0.1f) {
             animHighlightY = targetY;
@@ -147,7 +178,7 @@ void CodePanel::render(const sf::RenderWindow& window){
     if (animHighlightAlpha > 0.01f) {
         ImVec2 cpos = ImGui::GetCursorScreenPos();
         ImVec2 pMin = ImVec2(cpos.x - 5.0f, cpos.y + animHighlightY - 2.0f);
-        ImVec2 pMax = ImVec2(cpos.x + ImGui::GetContentRegionAvail().x + 5.0f, pMin.y + ImGui::GetTextLineHeight() + 4.0f);
+        ImVec2 pMax = ImVec2(cpos.x + ImGui::GetContentRegionAvail().x + 5.0f, pMin.y + lineHeight + 4.0f);
         
         ImVec4 hlVec4 = ImGui::ColorConvertU32ToFloat4(highlightColor);
         ImU32 glowColor = ImGui::GetColorU32(ImVec4(hlVec4.x, hlVec4.y, hlVec4.z, animHighlightAlpha * 0.3f));
