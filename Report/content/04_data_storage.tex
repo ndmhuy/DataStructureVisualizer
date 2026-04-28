@@ -1,31 +1,18 @@
-% 04_data_storage.tex
 \section{Data Storage}
 
-\subsection{Data Storage and Input Management}
-The system employs a decoupled approach to data management, distinguishing between transient input buffers and persistent structural representations. This logic is primarily orchestrated by the \texttt{DataManager} class.
+\subsection{Data Life-cycle and Storage Architecture}
+The system distinguishes between two primary forms of data: \textit{Transient Input Data} and \textit{Structural State Data}. This separation ensures that the raw input remains immutable while the visualization undergoes complex transformations.
 
-\subsubsection{\texttt{DataManager} (The Ingestion Hub)}
-The \texttt{DataManager} serves as a centralized utility for data ingestion and preprocessing. It does not maintain the long-term state of a data structure but rather prepares the "raw" data required to initialize or modify one.
-
+\subsubsection{Transient Input Storage}
+Before a data structure is constructed, raw values are stored in centralized buffers managed by the \texttt{DataManager}. 
 \begin{itemize}
-    \item \textbf{Transient Storage}: Internally, the class utilizes several \texttt{std::vector} containers to hold different types of raw inputs: \texttt{data} (for linear structures and trees), \texttt{dataGraph} (a collection of \texttt{Edge} objects), and \texttt{dataGridGraph} (a 2D matrix for pathfinding).
-    \item \textbf{Input Modalities}: The implementation supports three primary input streams:
-        \begin{itemize}
-            \item \textbf{File I/O}: Methods like \texttt{inputFromFile()} parse external text files, ensuring data persistence across sessions.
-            \item \textbf{Random Generation}: A suite of randomizers
-            
-            (e.g., \texttt{randomDataDAG}, \texttt{randomDataPlanarGraph}) generates synthetically valid test cases with configurable constraints (min/max values, density).
-            \item \textbf{Manual Console Input}: Direct user input is captured via string parsing in 
-            
-            \texttt{inputFromConsole()}.
-        \end{itemize}
-    \item \textbf{Reset Policy}: To ensure consistency, the \texttt{DataManager} follows a "clear-on-action" policy. Before any new data is ingested, existing buffers are cleared (e.g., \texttt{data.clear()}), preventing data leakage between unrelated visualization steps.
+    \item \textbf{Schema Consistency}: Whether the data originates from a \texttt{.txt} file, a random generator, or manual console input, it is normalized into standard containers (\texttt{std::vector}).
+    \item \textbf{Buffer Management}: The system follows a "Clear-on-Load" strategy. Each new ingestion command triggers a memory reset of the transient buffers to prevent data leakage between unrelated visualization sessions.
 \end{itemize}
 
-\subsubsection{Structure-Specific Persistence}
-Once the \texttt{DataManager} has prepared the raw input, the data is passed to a specific \texttt{IVisualizable} object (such as \texttt{AVLTree} or \texttt{MaxHeap}). 
-
+\subsubsection{Persistent Structural Representation}
+Once the "Build" command is issued, the Model layer (e.g., \texttt{AVLTree}, \texttt{Graph}) takes ownership of the transient data and converts it into a persistent representation:
 \begin{itemize}
-    \item \textbf{Data Ownership}: Upon initialization, the concrete data structure class takes ownership of the data and converts it into its own internal format (e.g., a pointer-based tree of \texttt{Node} objects or a heap-ordered \texttt{std::vector}).
-    \item \textbf{State Preservation}: While the \texttt{DataManager} may reset for the next user interaction, the Model layer retains the current state of the structure to facilitate frame-by-frame playback and incremental updates (Insertion/Deletion) until the user explicitly switches the active structure via the \texttt{AppEngine}.
+    \item \textbf{Node-Link Persistence}: Trees and Graphs are stored as pointer-based structures or adjacency lists, where each node maintains its own state (value, color, position).
+    \item \textbf{Historical State Buffer}: As the algorithm progresses, the system does not overwrite the current state but stores "Snapshots" (Payloads) in the \texttt{Timeline}. This allows the storage to represent the data not just in its current form, but across its entire execution history.
 \end{itemize}

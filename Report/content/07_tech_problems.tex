@@ -8,3 +8,66 @@
 
 \subsection{Playback State Desynchronization}
 \textbf{Problem:} The timeline navigation allows users to rapidly click "Step Forward" or manipulate the speed slider. However, spamming these controls could cause the UI state to desynchronize from the actual \texttt{Timeline} state managed by the \texttt{AppEngine}, occasionally leading to out-of-bounds frame access or conflicting button states (e.g., both Play and Pause appearing active simultaneously).
+
+\textbf{Solution:} We enforced a strict unidirectional state flow. The \texttt{Playback} controller acts as the single source of truth for the active frame index. UI buttons no longer manipulate the timeline directly; instead, they send state-change requests to the \texttt{AppEngine}, which processes them sequentially. Boundary clamping was also implemented inside the \texttt{Timeline} class to prevent out-of-bounds indices.
+
+\subsection{Refactoring IDataStructure into IVisualizable and Sub-interfaces}
+\textbf{Problem:} Initially, the project relied on a single, monolithic \texttt{IDataStructure} interface. As the project scaled to support complex types like Graphs and Heaps alongside simple Arrays and Lists, this base interface became bloated. Standardizing functions across all data types forced structures to implement irrelevant methods (e.g., a Linked List having to implement graph-specific \texttt{addEdge} methods), violating the Interface Segregation Principle.
+
+\textbf{Solution:} We executed a major architectural refactoring by deprecating \texttt{IDataStructure} and introducing a lightweight base interface called \texttt{IVisualizable}. From this base, we branched out into three highly specialized sub-interfaces:
+\begin{itemize}
+    \item \texttt{IStandardStructure}: For linear and basic structures (Lists, Arrays) requiring standard \texttt{insert}/\texttt{remove} operations.
+    \item \texttt{IHeapStructure}: Dedicated to array-backed tree operations like \texttt{buildHeap()} and \texttt{heapify()}.
+    \item \texttt{IGraphStructure}: Specifically tailored for handling \texttt{addVertex()}, \texttt{addEdge()}, and pathfinding matrices.
+\end{itemize}
+This separation of concerns drastically improved code maintainability and ensured that each data structure only implements the methods it strictly needs.
+
+\subsection{State Encapsulation Leaks}
+\textbf{Problem:} The \texttt{Frame} and \texttt{Timeline} classes originally exposed their internal states. This led to unintended side effects where external algorithmic functions could accidentally modify historical data.
+
+\textbf{Solution:} We enforced strict encapsulation by moving internal states to private member variables and exposing only \texttt{const} getters and controlled setters, ensuring the integrity of the algorithm timelines.
+
+\subsection{Integer Overflow and Memory Safety}
+\textbf{Problem:} Using standard \texttt{int} types for array indices and graph sizes caused overflow risks and compiler compatibility warnings, particularly when interacting with the standard library's \texttt{std::vector}.
+
+\textbf{Solution:} We conducted a codebase-wide refactoring to strictly enforce the use of \texttt{size\_t} for all array loops, node IDs, and pointers. We also introduced designated sentinel values (e.g., \texttt{GlobalConst::INVALID\_INDEX}) to represent null pointers safely.
+
+\subsection{ImGui-SFML Lifecycle Assertions}
+\textbf{Problem:} During the application exit sequence, the program occasionally crashed or threw assertions due to improper teardown orders between the SFML Window and ImGui contexts.
+
+\textbf{Solution:} We restructured the \texttt{AppEngine} main loop and \texttt{UIManager} to guarantee that \texttt{ImGui::SFML::Shutdown()} is called precisely after the final render cycle and before the SFML window is destroyed.
+
+\subsection{Visualizing Array-Backed Heaps as Trees}
+\textbf{Problem:} The Binary Heap data structure is backed by a 1D Array in memory, making it challenging to render dynamically as a 2D binary tree without nodes overlapping.
+
+\textbf{Solution:} We developed a coordinate calculation algorithm using logarithmic math to recursively map 1D array indices ($2i+1$ for left child, $2i+2$ for right child) into visually appealing, non-overlapping 2D tree layouts.
+
+\subsection{Invalid Formats in File Input}
+\textbf{Problem:} Reading user-input or external files via \texttt{std::stringstream} was fragile. It would stall or crash when encountering garbage string values, negative numbers, or trailing spaces.
+
+\textbf{Solution:} We implemented strong guard functions in the \texttt{DataManager}. By checking \texttt{fail()} flags and applying conditional parsing logic, the system now safely catches invalid inputs and returns graceful UI warnings instead of crashing.
+
+\subsection{Tracking State in Recursive Algorithms}
+\textbf{Problem:} Algorithms that rely heavily on recursion (such as AVL Tree balancing algorithms) made it exceptionally difficult to inject \texttt{timeline.addFrame()} snapshots without breaking the clean recursive flow or accumulating massive call stacks.
+
+\textbf{Solution:} We explored passing state arguments down the recursion tree and extracting states via Breadth-First Search (BFS), ultimately finding a balance where rendering frames could be cleanly captured immediately after specific tree rotations.
+
+\subsection{Asset Path Resolution in Production}
+\textbf{Problem:} Assets (fonts, images) loaded via relative paths failed when the application was executed from different directory depths (e.g., inside an IDE vs. a deployed executable).
+
+\textbf{Solution:} We engineered a robust asset root resolution function inside the \texttt{Theme} configuration that dynamically determines the runtime execution path and prepends it to all resource loading calls.
+
+\subsection{Circular Dependencies in Frame Payload}
+\textbf{Problem:} When expanding the \texttt{Frame} class to handle complex graphs, the \texttt{Edge} and \texttt{Node} structures were initially nested in ways that caused circular dependencies between the Model and rendering payloads.
+
+\textbf{Solution:} We refactored the architecture to extract the \texttt{Edge} struct and other payload definitions outside of the \texttt{Frame} class. We adopted the Visitor Design Pattern for payload rendering, completely decoupling the Model state from the SFML drawing logic.
+
+\subsection{UI Component Hardcoding and Consistency}
+\textbf{Problem:} Early implementations of the UI components (Buttons, Sliders, Input Menus, Code Panels) relied heavily on hardcoded dimensions, positions, and colors. This made the UI fragile, visually inconsistent, and incredibly difficult to update across different views.
+
+\textbf{Solution:} We executed a massive syntax refactoring across all view components, centralizing all stylistic configurations into a single \texttt{Theme} class. Components now query this single source of truth for colors and layout parameters, ensuring strict consistency and easy maintainability.
+
+\subsection{Payload Type-Checking Overhead}
+\textbf{Problem:} The initial rendering pipeline relied on extensive type-checking (e.g., using \texttt{dynamic\_cast}) to determine whether a payload was an array, a graph, or a list before drawing it. This violated the Open-Closed Principle and resulted in messy, unmaintainable conditional logic in the \texttt{Renderer}.
+
+\textbf{Solution:} We refactored the rendering system to implement the \textbf{Visitor Design Pattern}. The \texttt{Renderer} now acts as an \texttt{IPayloadVisitor}, allowing each payload type to natively accept the renderer and invoke its specific drawing function, eliminating the need for runtime type checks.

@@ -20,6 +20,24 @@ The \texttt{AppEngine} class encapsulates the primary SFML event loop and coordi
 The \texttt{Playback} system provides VCR-like controls (Play, Pause, Step Forward, Step Backward) over the generated visualization states.
 Instead of calculating animations on the fly, the \texttt{Playback} class acts as an iterator over a fully populated \texttt{Timeline}. Its \texttt{update(float deltaTime)} method tracks an internal \texttt{timeAccumulator}. When the accumulator exceeds the \texttt{baseStepDuration} (modified by a \texttt{speedMultiplier}), the system advances to the next \texttt{Frame} in the timeline. This design guarantees deterministic animation and allows users to jump instantly to any step in the algorithm's execution without recalculating the model's state.
 
+\subsubsection{\texttt{DataManager} (Data Ingestion Logic)}
+The \texttt{DataManager} class acts as the system's primary gateway for data, responsible for parsing raw inputs into structured formats that the Model layer can consume. Its implementation focuses on flexibility across multiple input modalities.
+
+\begin{itemize}
+    \item \textbf{Input Parsing and Tokenization}: For console and file inputs, \texttt{DataManager} implements robust string parsing logic. Methods such as \texttt{inputFromConsole()} utilize \texttt{std::stringstream} to tokenize space-separated or comma-separated values, converting them into \texttt{std::vector<int>} or \texttt{Edge} objects while performing basic validation (e.g., ignoring non-numeric characters).
+    
+    \item \textbf{Randomization Engines}: The class provides a suite of randomizers (e.g., \texttt{randomDataPlanarGraph}, \texttt{randomDataDAG}). These are implemented using the C++ \texttt{<random>} library to ensure uniform distribution within user-defined constraints (min/max values, node density). For planar graphs, it incorporates coordinate generation logic to prevent nodes from overlapping during the initial layout phase.
+    
+    \item \textbf{Data Mapping and Distribution}: \texttt{DataManager} maintains specialized buffers for different structure types:
+    \begin{itemize}
+        \item \texttt{std::vector<int>} for linear structures (Heaps, Arrays) and trees.
+        \item \texttt{std::vector<Edge>} for general graphs, storing source, destination, and weights.
+        \item \texttt{std::vector<std::vector<int>>} for grid-based pathfinding algorithms.
+    \end{itemize}
+    
+    \item \textbf{Encapsulated Output}: To facilitate debugging and data persistence, the class implements \texttt{outputToFile()} and \texttt{outputToConsole()}. These methods serialize the current state of the input buffers back into human-readable formats, allowing users to save generated test cases for future sessions.
+\end{itemize}
+
 \subsection{Model Layer Implementation}
 
 The Model layer houses the mathematical logic and the data payload generation mechanisms for the visualizer.
@@ -86,4 +104,149 @@ To enhance the user experience, the system avoids static styling by implementing
 \begin{itemize}
     \item \textbf{On-the-fly Customization}: The \texttt{Theme} structure holds global configurations for colors, typography, and asset paths, enabling seamless toggling between Dark and Light modes without requiring an application restart.
     \item \textbf{Advanced ImGui Widgets}: Moving beyond default ImGui components, the \texttt{UIanimation} namespace introduces custom, mathematically interpolated widgets. Functions such as \texttt{JuicySliderFloat()} and \texttt{CyberButton()} utilize linear interpolation (Lerp) to create smooth scaling, pulsing glows, and dynamic color transitions, providing a highly polished, modern interface.
+\end{itemize}
+
+\subsection{Animation System}
+
+The animation system in the project is designed to be completely frame-independent, relying heavily on the \texttt{DeltaTime} ($\Delta t$) parameter. Instead of abruptly changing states, all transitions regarding coordinates, scale, and colors are computed via continuous mathematical functions, yielding a highly fluid visual experience (Game Feel).
+
+The system is divided into four main components: Mathematical Foundations, Data Structure Animations, UI Animations, and Cinematic Menu Decorations.
+
+\subsubsection{Mathematical Foundations}
+
+\paragraph{Non-linear Interpolation (Exponential Decay Lerp)} 
+To ensure objects move smoothly to their targets without stuttering upon sudden direction changes, the project employs an interpolation formula with an exponentially decaying weight rather than a traditional linear Lerp:
+
+\begin{equation} 
+    V_{current} = V_{current} + (V_{target} - V_{current}) \times \left(1 - e^{-k \cdot \Delta t}\right) 
+\end{equation}
+
+Where: 
+\begin{itemize} 
+    \item $V_{current}$: The current value (position, scale, RGB color). 
+    \item $V_{target}$: The target value. 
+    \item $k$: The convergence rate constant (e.g., $k = 15.0$ for translation, $k = 10.0$ for color transition). 
+    \item $\Delta t$: The elapsed time between two frames. 
+\end{itemize}
+
+\paragraph{Sinusoidal Waves for Continuous Motion} 
+Continuous oscillating effects, such as pulsing glows, floating motions, and glitch noises, are driven by trigonometric functions based on real-time (\texttt{appTime}):
+
+\begin{equation} 
+    y = A \cdot \sin(\omega \cdot t + \phi) 
+\end{equation} 
+Where $A$ is the amplitude, $\omega$ is the angular frequency, and $\phi$ is the initial phase (often dependent on the object's \texttt{index} to create a cascading delay effect).
+
+\subsubsection{Data Structure Animations} 
+The rendering process does not fetch mathematical coordinates directly. Instead, each node is managed by an isolated state structure \texttt{NodeAnimState}:
+
+\begin{lstlisting}[language=C++, caption={Animation State Management Structure}, label={lst:node_anim}] 
+struct NodeAnimState { 
+    sf::Vector2f pos; 
+    float scale = 0.0f; 
+    float highlightAlpha = 0.0f; 
+    sf::Vector2f velPos = {0.0f, 0.0f}; // For Graph physics 
+    float velScale = 0.0f; 
+    float colorR = -1.0f, colorG = 0.0f, colorB = 0.0f; 
+}; 
+\end{lstlisting}
+
+\paragraph{Curved Paths in Trees and Heaps} 
+When elements in an AVL Tree or Heap swap positions, moving them in a straight line causes visual overlap and clutter. The project resolves this by adding a perpendicular vector to the trajectory when the distance is significant:
+
+\begin{lstlisting}[language=C++, caption={Curved Trajectory Algorithm}] 
+sf::Vector2f diff = targetPos - anim.pos; 
+if (std::abs(diff.x) > 1.0f || std::abs(diff.y) > 1.0f) { 
+    sf::Vector2f perp(-diff.y, diff.x); // Perpendicular vector 
+    anim.pos += (diff + perp * 0.3f) * lerpPos; // 0.3f is the curve factor 
+} else { 
+    anim.pos += diff * lerpPos; // Linear convergence when close 
+} 
+\end{lstlisting}
+
+\paragraph{Spring-Damper Physics for Graphs} 
+For graph structures, nodes require a realistic bouncing effect upon appearance or interaction. A physical model of tension and damping is applied:
+
+\begin{equation} 
+    \vec{v}_{new} = \left( \vec{v}_{old} + (\vec{P}_{target} - \vec{P}_{current}) \cdot \text{tension} \cdot \Delta t \right) \cdot e^{-\text{damp} \cdot \Delta t} 
+\end{equation}
+
+\begin{lstlisting}[language=C++] 
+float tension = 200.0f; float damp = 12.0f; 
+anim.velPos += (targetPos - anim.pos) * tension * currentDeltaTime; 
+anim.velPos *= std::exp(-damp * currentDeltaTime); 
+anim.pos += anim.velPos * currentDeltaTime; 
+\end{lstlisting}
+
+\subsubsection{UI Animations} 
+The default ImGui interface is extremely static. To create a "Cyberpunk" aesthetic, the static library is overridden via the \texttt{UIanimation} namespace, tracking Hover and Active states independently using \texttt{ImGuiID}.
+
+\paragraph{Particle System for Buttons} 
+When interacting with buttons (e.g., Play/Pause), a burst of light particles is emitted. The system manages particle lists tied to the button's ID. Upon clicking, the algorithm spawns $15 \sim 25$ particles radiating outward at random angles:
+
+\begin{lstlisting}[language=C++, caption={Particle Physics Update}] 
+for (size_t i = 0; i < plist.size(); ) { 
+    plist[i].pos += plist[i].vel * dt; // Calculate velocity 
+    plist[i].vel.y += 200.0f * dt;     // Apply gravity 
+    plist[i].alpha -= dt * 1.5f;       // Fade out 
+    
+    if (plist[i].alpha <= 0.0f) { 
+        plist.erase(plist.begin() + i); // Erase dead particles 
+    } else { 
+        // Render particle and glowing trail 
+        draw_list->AddCircleFilled(plist[i].pos, plist[i].size, pCol); 
+        draw_list->AddLine(plist[i].pos,  
+            plist[i].pos - ImVec2(plist[i].vel.x * 0.05f, plist[i].vel.y * 0.05f),  
+            trailCol, plist[i].size); 
+        ++i; 
+    } 
+} 
+\end{lstlisting}
+
+\paragraph{Glitch Effect (RGB Split \& Noise)} 
+For hacker-styled buttons (\texttt{Glitch Button}), the system overdraws the original text with Red and Cyan channels. They are offset by a displacement calculated from combined sine and cosine functions to simulate random noise:
+
+\begin{lstlisting}[language=C++] 
+float time = (float)ImGui::GetTime(); 
+float noise = std::sin(time * 45.0f) * std::cos(time * 15.0f); 
+bool isGlitching = (hovered && noise > 0.5f); 
+
+if (isGlitching) { 
+    float offsetStr = 3.0f * noise; 
+    // Red channel skewed right 
+    draw_list->AddText(text_pos + ImVec2(offsetStr, 0), IM_COL32(255, 50, 50, 200), label); 
+    // Cyan channel skewed left and down 
+    draw_list->AddText(text_pos + ImVec2(-offsetStr, offsetStr * 0.5f), IM_COL32(50, 255, 255, 200), label); 
+} 
+\end{lstlisting}
+
+\paragraph{Interactive Juicy Slider} 
+The playback speed slider bypasses the internal ImGui behavior to calculate exact mouse coordinates, preventing crashes. Its animations include: 
+\begin{itemize} 
+    \item \textbf{Track Expansion:} The thickness of the track increases upon hovering. 
+    \item \textbf{Shake Effect:} While dragging, the slider knob vibrates rapidly across the X and Y axes to simulate physical friction. 
+    \item \textbf{Text Bump:} Whenever the speed value changes, the text string pops up abruptly and smoothly settles down via the \texttt{bumpAnim} variable. 
+\end{itemize}
+
+\subsubsection{Main Menu Cinematic Decorations} 
+The background of the Main Menu incorporates highly intricate decorative animations programmed directly in SFML to maximize user immersion. These are rendered within the \texttt{DecorationPayload} and \texttt{MenuAnimPayload}.
+
+\paragraph{Interactive Hexagon Web \& Matrix Rain} 
+A honeycomb grid covers the screen. The algorithm checks the Euclidean distance from each hexagon to the mouse cursor. If the distance is within the \texttt{lightRadius}, its Alpha multiplier increases, creating a "light chasing the mouse" effect.
+
+\begin{equation} 
+    \alpha_{mouse} = 1.0 - \left( \frac{\sqrt{dx^2 + dy^2}}{R_{light}} \right) 
+\end{equation} 
+Simultaneously, Matrix data streams fall vertically, utilizing \texttt{std::fmod} to endlessly wrap coordinates around the screen dimensions.
+
+\paragraph{Geometric Data Structure Emulations} 
+The renderer continuously draws conceptual representations of data structures in the background, complementing the visual theme: 
+\begin{itemize} 
+    \item \textbf{Floating Binary Tree:} A binary tree sways back and forth using an \texttt{sf::Transform} matrix rotated by $\sin(\text{time} \cdot 0.5) \cdot 5.0^\circ$. 
+    \item \textbf{Complete Graph ($K_5$):} $5$ nodes are arranged in a circle using parametric equations $(R\cos\theta, R\sin\theta)$ and are fully interconnected, while the entire graph continuously rotates. 
+    \item \textbf{Wavy Linked List:} Nodes follow a horizontal sine wave path $\sin(\text{time} \cdot 3.0 + i \cdot 1.5)$. Small "data packets" travel along the edges between nodes, simulating data transfer. 
+    \item \textbf{3D Isometric Matrix:} A 2D grid of squares is projected into 3D isometric space by first scaling the Y-axis by $0.6$ and then rotating the entire structure by $45^\circ$. 
+    \item \textbf{Sorting Histogram:} Bar heights fluctuate using overlapping sine and cosine waves, combined with a moving "scanline" highlight effect derived from modulo operations on the bar index. 
+    \item \textbf{Neural Network:} Connections between layers light up dynamically. The signal strength is calculated as $\sin(\text{time} \cdot 6.0 - \text{layer} \cdot 1.5 + n_1 \cdot 0.5 + n_2 \cdot 0.5)$. Edges with a signal $> 0.85$ are highlighted intensely. 
+    \item \textbf{Central Quantum Core:} Nested elliptical orbits rotate at different speeds. A central hexagon counter-rotates, surrounded by a pulsing holographic HUD and moving barcode data streams that mimic complex processing. 
 \end{itemize}
