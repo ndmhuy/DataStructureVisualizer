@@ -8,15 +8,17 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <SFML/System/Vector2.hpp>
 
 struct LinkedListPayload : public IPayload {
     std::vector<int> values;
     std::vector<size_t> highlightedNodes;
     std::map<std::string, size_t> pointers; // e.g., {"head": 0, "tail": 4, "current": 2}
+    std::vector<size_t> successNodes;
 
     LinkedListPayload() = default;
-    LinkedListPayload(std::vector<int> values, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {})
-        : values(std::move(values)), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)) {}
+    LinkedListPayload(std::vector<int> values, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<size_t> successNodes = {})
+        : values(std::move(values)), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)), successNodes(std::move(successNodes)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new LinkedListPayload(*this); }
@@ -63,6 +65,8 @@ struct GraphPayload : public IPayload {
     std::vector<Edge> edges;
     std::vector<size_t> highlightedVertices;
     std::vector<Edge> highlightedEdges;
+    std::vector<size_t> visitedVertices;
+    std::vector<size_t> successVertices;
 
     GraphPayload() = default;
     GraphPayload(
@@ -70,8 +74,10 @@ struct GraphPayload : public IPayload {
         std::vector<Edge> edges = {},
         std::vector<size_t> highlightedVertices = {},
         std::vector<Edge> highlightedEdges = {},
-        std::vector<Position> positions = {})
-        : vertices(std::move(vertices)), positions(std::move(positions)), edges(std::move(edges)), highlightedVertices(std::move(highlightedVertices)), highlightedEdges(std::move(highlightedEdges)) {}
+        std::vector<Position> positions = {},
+        std::vector<size_t> visitedVertices = {},
+        std::vector<size_t> successVertices = {})
+        : vertices(std::move(vertices)), positions(std::move(positions)), edges(std::move(edges)), highlightedVertices(std::move(highlightedVertices)), highlightedEdges(std::move(highlightedEdges)), visitedVertices(std::move(visitedVertices)), successVertices(std::move(successVertices)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new GraphPayload(*this); }
@@ -149,6 +155,44 @@ struct GridPayload : public IPayload {
 
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new GridPayload(*this); }
+};
+
+struct MenuAnimPayload : public IPayload {
+    float time;
+    int menuState; // 0: Main, 1: Heap, 2: SPA, 3: Graph
+    bool isDarkMode;
+    sf::Vector2f winSize;
+    std::vector<std::string> buttonNames;
+    std::string title;
+
+    MenuAnimPayload() = default;
+    MenuAnimPayload(float time, int menuState, bool isDarkMode, sf::Vector2f winSize, std::vector<std::string> buttonNames, std::string title)
+        : time(time), menuState(menuState), isDarkMode(isDarkMode), winSize(winSize), buttonNames(std::move(buttonNames)), title(std::move(title)) {}
+        
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new MenuAnimPayload(*this); }
+};
+
+struct TopBarPayload : public IPayload {
+    bool isDarkMode;
+    bool isShowingCode;
+    sf::Vector2f winSize;
+    TopBarPayload() = default;
+    TopBarPayload(bool dark, bool showingCode, sf::Vector2f ws) : isDarkMode(dark), isShowingCode(showingCode), winSize(ws) {}
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new TopBarPayload(*this); }
+};
+
+struct DecorationPayload : public IPayload {
+    float time;
+    sf::Vector2f winSize;
+
+    DecorationPayload() = default;
+    DecorationPayload(float time, sf::Vector2f winSize)
+        : time(time), winSize(winSize) {}
+        
+    void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
+    IPayload* clone() const override { return new DecorationPayload(*this); }
 };
 
 #endif // PAYLOADS_H

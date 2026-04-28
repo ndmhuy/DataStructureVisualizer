@@ -90,7 +90,7 @@ void SinglyLinkedList::remove(int value, Timeline& timeline) {
     while (current->next) {
         timeline.addFrame(Frame(LinkedListPayload(currentState, {index, index + 1}), 7, "Checking if next node is " + std::to_string(current->next->value)));
         if (current->next->value == value) {
-            timeline.addFrame(Frame(LinkedListPayload(currentState, {index + 1}), 8, "Target found! Unlinking node..."));
+            timeline.addFrame(Frame(LinkedListPayload(currentState, {index + 1}, {{"Target", index + 1}}, {index + 1}), 8, "Target found! Unlinking node..."));
 
             Node* nodeToRemove = current->next;
             current->next = current->next->next;
@@ -115,7 +115,7 @@ void SinglyLinkedList::search(int value, Timeline& timeline) {
     while (current) {
         timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 3, "Comparing with node value " + std::to_string(current->value)));
         if (current->value == value) {
-            timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 4, "Value found at index " + std::to_string(index)));
+            timeline.addFrame(Frame(LinkedListPayload(currentState, {index}, {{"Found!", index}}, {index}), 4, "Value found at index " + std::to_string(index)));
             return;
         }
         current = current->next;
@@ -135,7 +135,7 @@ void SinglyLinkedList::update(int oldValue, int newValue, Timeline& timeline) {
         timeline.addFrame(Frame(LinkedListPayload(currentState, {index}), 3, "Comparing with node value " + std::to_string(current->value)));
         if (current->value == oldValue) {
             current->value = newValue;
-            timeline.addFrame(Frame(LinkedListPayload(toVector(), {index}), 4, "Updated this index's value to " + std::to_string(newValue)));
+            timeline.addFrame(Frame(LinkedListPayload(toVector(), {index}, {{"Updated", index}}, {index}), 4, "Updated this index's value to " + std::to_string(newValue)));
             return;
         }
         current = current->next;

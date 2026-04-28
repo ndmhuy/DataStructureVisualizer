@@ -210,6 +210,7 @@ void AppEngine::switchActiveStructure(StructureType structureType) {
     activeStructureType = structureType;
     activeStructure = resolveStructure(structureType);
     renderer.resetCustomPositions();
+    renderer.resetAnimations();
     clearUndoHistory();
 
     isInitialState = true;
@@ -1046,6 +1047,10 @@ void AppEngine::processInput(const sf::Event& event) {
 }
                 
 void AppEngine::update(sf::Time deltaTime) {
+    appTime += deltaTime.asSeconds();
+        renderer.updateAnimations(deltaTime.asSeconds());
+
+
     uiManager.update(window.getWindow(), deltaTime);
     handleStructureSwitchRequest();
     handleDataActionRequest();
@@ -1073,6 +1078,7 @@ void AppEngine::update(sf::Time deltaTime) {
             << std::endl;
         }
         uiManager.resize(window.getWindow());
+        renderer.reloadBackground();
     }
     
     playbackController.setSpeed(uiManager.getSpeed());
@@ -1111,6 +1117,26 @@ void AppEngine::render() {
     if (currentFrame) {
         renderer.renderActiveState(currentFrame);
     }
+
+    if (uiManager.isShowingMainMenu()) {
+        // Vẽ Background trang trí 4 góc bằng các cấu trúc dữ liệu (Chỉ hiển thị ở Main Menu)
+        DecorationPayload decPayload(appTime, sf::Vector2f(window.getWindow().getSize()));
+        renderer.visit(decPayload);
+
+        MenuAnimPayload menuPayload(
+            appTime, 
+            uiManager.getNavMenuState(), 
+            isDarkMode, 
+            sf::Vector2f(window.getWindow().getSize()), 
+            uiManager.getNavMenuNames(), 
+            uiManager.getNavMenuTitle()
+        );
+        renderer.visit(menuPayload);
+    } else {
+        TopBarPayload tbPayload(isDarkMode, uiManager.isShowingCode(), sf::Vector2f(window.getWindow().getSize()));
+        renderer.visit(tbPayload);
+    }
+
     sf::View currentView = window.getWindow().getView();
     window.getWindow().setView(window.getWindow().getDefaultView());
 

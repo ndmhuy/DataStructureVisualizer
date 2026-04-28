@@ -32,6 +32,17 @@ enum class TextPositionMode {
     BottomLeft, // Corner position (requires objSize, padding)
     BottomRight // Corner position (requires objSize, padding)
 };
+
+struct NodeAnimState {
+    sf::Vector2f pos;
+    float scale = 0.0f;
+    float highlightAlpha = 0.0f;
+    sf::Vector2f velPos = {0.0f, 0.0f};
+    float velScale = 0.0f;
+    float colorR = -1.0f; // -1 signifies uninitialized
+    float colorG = 0.0f;
+    float colorB = 0.0f;
+};
 enum class ShapeType { Circle, Rectangle };
 
 class Renderer : public IPayloadVisitor {
@@ -53,18 +64,24 @@ private:
     sf::Vector2f dragOffset;
     sf::Sprite bgSprite;
 
+    std::map<size_t, NodeAnimState> nodeAnimStates;
+    float currentDeltaTime = 0.0f;
+    float appTime = 0.0f;
+
 public:
     Renderer(Window& m_window, const Theme& m_theme);
 
+    void updateAnimations(float dt);
+    void resetAnimations();
+
     // Asset lifecycle and scene background.
     bool loadAssets();
+    void reloadBackground();
     void drawBackground();
 
     // Node and array element rendering.
-    void drawImageNode(sf::Vector2f pos, const std::string& text,
-                     bool isHighlighted = false);
-    void drawArrayCell(sf::Vector2f pos, const std::string& text,
-                     bool isHighlighted = false);
+    void drawImageNode(sf::Vector2f pos, const std::string& text, float scaleMultiplier, sf::Color nodeColor, float pulseAlpha = 0.0f);
+    void drawArrayCell(sf::Vector2f pos, const std::string& text, float scaleMultiplier, sf::Color cellColor, float pulseAlpha = 0.0f);
 
     // Edge/connector rendering helpers.
     sf::Vector2f getBoundaryPoint(sf::Vector2f center, sf::Vector2f size,
@@ -88,6 +105,9 @@ public:
     void visit(const AStarPayload& payload) override;
     void visit(const AllPairsPayload& payload) override;
     void visit(const GridPayload& payload) override;
+    void visit(const MenuAnimPayload& payload) override;
+    void visit(const DecorationPayload& payload) override;
+    void visit(const TopBarPayload& payload) override;
 
     // Texture-based size queries.
     sf::Vector2f getNodeSize() const;  // in main.cpp have to use to access nodeW

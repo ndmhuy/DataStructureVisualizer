@@ -23,6 +23,7 @@ private:
     UIManager uiManager;
     DataManager dataManager;
     Playback playbackController;
+    float appTime = 0.0f;
     
     int currentDS = -1; // -1: none, 0: SLL, 1: MinHeap, 2: MaxHeap, 3: AVL, 4: SPAGrid, 5: SPAMatrix, 6: SPAList
 
