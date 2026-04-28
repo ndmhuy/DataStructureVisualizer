@@ -1016,7 +1016,10 @@ void Renderer::visit(const SingleSourcePayload& payload) {
         }
 
         if (vertexId < payload.distances.size()) {
-            std::string distStr = (payload.distances[vertexId] >= 1e9) ? "INF" : std::to_string(payload.distances[vertexId]);
+            std::string distStr;
+            if (payload.distances[vertexId] >= 1e9) distStr = "INF";
+            else if (payload.distances[vertexId] <= -1e9) distStr = "-INF";
+            else distStr = std::to_string(payload.distances[vertexId]);   
             drawTextPositioned(pos, "d: " + distStr, 14, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
         }
     }
@@ -1114,7 +1117,11 @@ void Renderer::visit(const AllPairsPayload& payload) {
             drawText(rowPos, vName, 14, theme.accentColor, TextPosition::TopLeft);
 
             for (size_t j = 0; j < payload.distances[i].size(); ++j) {
-                std::string distStr = (payload.distances[i][j] >= 1e9) ? "INF" : std::to_string(payload.distances[i][j]);
+                std::string distStr;
+                if (payload.distances[i][j] >= 1e9) distStr = "INF";
+                else if (payload.distances[i][j] <= -1e9) distStr = "-INF";
+                else distStr = std::to_string(payload.distances[i][j]);
+                
                 sf::Vector2f pos(startX + (j + 1) * cellW, startY + (i + 1) * cellH);
                 drawText(pos, distStr, 14, theme.textColor, TextPosition::TopLeft);
             }
