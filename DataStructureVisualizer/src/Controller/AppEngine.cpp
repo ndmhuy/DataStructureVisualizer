@@ -758,14 +758,13 @@ void AppEngine::handleDataActionRequest() {
                 case 8: { // 8. RANDOM
                     dataManager.inputFromConsole(input1 + " " + input2);
                     if (dataManager.getData().size() >= 2) {
-                        int vCount = MathUtils::getRandomInRange(3, 20);
+                        int vCount = MathUtils::getRandomInRange(3, 10);
                         
                         int minWeight = dataManager.getData()[0];
                         int maxWeight = dataManager.getData()[1];
 
                         if (mode == 0) {
-                            int eCount = MathUtils::getRandomInRange(0, 190);
-                            dataManager.randomDataDAG(vCount, eCount, minWeight, maxWeight);
+                            dataManager.randomDataDAG(vCount, minWeight, maxWeight);
                         }
                         else if (mode == 1) {
                             sf::Vector2u winSize = window.getWindow().getSize();
@@ -854,7 +853,7 @@ void AppEngine::handleDataActionRequest() {
                 case 8: { // 8. RANDOM
                     dataManager.inputFromConsole(input1 + " " + input2);
                     if (dataManager.getData().size() >= 2) {
-                        int vCount = MathUtils::getRandomInRange(3, 20);
+                        int vCount = MathUtils::getRandomInRange(3, 10);
                         
                         int minWeight = dataManager.getData()[0];
                         int maxWeight = dataManager.getData()[1];
