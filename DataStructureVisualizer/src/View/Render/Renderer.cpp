@@ -1084,10 +1084,31 @@ void Renderer::visit(const GridPayload& payload) {
     float gridWidth = cols * cellSize;
     float gridHeight = rows * cellSize;
 
-    float startX = ((static_cast<float>(winSize.x) - rightReserve) - gridWidth) / 2.0f;
-    float startY = topPadding + (availableHeight - gridHeight) / 2.0f;
+    // Space for row/column labels (indices)
+    float labelWidth = 30.0f;  // Space for row labels on left
+    float labelHeight = 25.0f; // Space for column labels on top
+    
+    float startX = ((static_cast<float>(winSize.x) - rightReserve) - gridWidth) / 2.0f + labelWidth;
+    float startY = topPadding + (availableHeight - gridHeight) / 2.0f + labelHeight;
 
     bool isDark = theme.codePanelBackgroundColor.r < 100; // Nhận diện Dark Mode
+    
+    // Calculate font size for labels based on cell size
+    unsigned int labelFontSize = (cellSize > 25.0f) ? 12 : (cellSize > 18.0f) ? 10 : 8;
+
+    // Draw column header indices (0, 1, 2, ...)
+    for (size_t c = 0; c < cols; ++c) {
+        std::string colLabel = std::to_string(c);
+        sf::Vector2f headerPos(startX + c * cellSize + cellSize / 2.0f, startY - labelHeight + 5.0f);
+        drawText(headerPos, colLabel, labelFontSize, theme.accentColor, TextPosition::Top);
+    }
+    
+    // Draw row header indices (0, 1, 2, ...)
+    for (size_t r = 0; r < rows; ++r) {
+        std::string rowLabel = std::to_string(r);
+        sf::Vector2f headerPos(startX - labelWidth + 10.0f, startY + r * cellSize + cellSize / 2.0f);
+        drawText(headerPos, rowLabel, labelFontSize, theme.accentColor, TextPosition::TopRight);
+    }
 
     for (size_t r = 0; r < rows; ++r) {
         for (size_t c = 0; c < cols; ++c) {

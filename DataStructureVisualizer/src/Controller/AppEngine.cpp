@@ -715,9 +715,9 @@ void AppEngine::handleDataActionRequest() {
                     break;
                 }
                 case 4: { // 4. OPSP
-                    dataManager.inputFromConsoleNonNegative(input1);
-                    
-                    if (dataManager.getData().size() >= 1) {
+                    dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
+
+                    if (dataManager.getData().size() >= 2) {
                         directedgraph->runAStar(dataManager.getData()[0], dataManager.getData()[1], timeline);
                         handled = true;
                     }
@@ -726,14 +726,15 @@ void AppEngine::handleDataActionRequest() {
                 case 5: { // 5. SPSP
                     dataManager.inputFromConsoleNonNegative(input1);
                     if (!dataManager.getData().empty()) {
+                        const size_t startVertex = static_cast<size_t>(dataManager.getData()[0]);
                         if (mode == 0) { // DAG
-                            directedgraph->runDAGShortestPath(dataManager.getDataGraph()[0].from, timeline);
+                            directedgraph->runDAGShortestPath(startVertex, timeline);
                             handled = true;
                         } else if (mode == 1) { // Dijkstra
-                            directedgraph->runDijkstra(dataManager.getDataGraph()[0].from, timeline);
+                            directedgraph->runDijkstra(startVertex, timeline);
                             handled = true;
                         } else if (mode == 2) { // BellmanFord
-                            directedgraph->runBellmanFord(dataManager.getDataGraph()[0].from, timeline);
+                            directedgraph->runBellmanFord(startVertex, timeline);
                             handled = true;
                         }
                     }
@@ -813,9 +814,9 @@ void AppEngine::handleDataActionRequest() {
                     break;
                 }
                 case 4: { // 4. OPSP
-                    dataManager.inputFromConsoleNonNegative(input1);
-                    
-                    if (dataManager.getData().size() >= 1) {
+                    dataManager.inputFromConsoleNonNegative(input1 + " " + input2);
+
+                    if (dataManager.getData().size() >= 2) {
                         undirectedgraph->runAStar(dataManager.getData()[0], dataManager.getData()[1], timeline);
                         handled = true;
                     }
@@ -824,11 +825,12 @@ void AppEngine::handleDataActionRequest() {
                 case 5: { // 5. SPSP
                     dataManager.inputFromConsoleNonNegative(input1);
                     if (!dataManager.getData().empty()) {
+                        const size_t startVertex = static_cast<size_t>(dataManager.getData()[0]);
                         if (mode == 0) { // Dijkstra
-                            undirectedgraph->runDijkstra(dataManager.getDataGraph()[0].from, timeline);
+                            undirectedgraph->runDijkstra(startVertex, timeline);
                             handled = true;
                         } else if (mode == 1) { // BellmanFord
-                            undirectedgraph->runBellmanFord(dataManager.getDataGraph()[0].from, timeline);
+                            undirectedgraph->runBellmanFord(startVertex, timeline);
                             handled = true;
                         }
                     }

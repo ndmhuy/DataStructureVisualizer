@@ -332,7 +332,7 @@ void IGraphStructure::runAStar(size_t startVertex, size_t targetVertex, Timeline
         }
     }
 
-    std::vector<Position> positions = generatePhysicsBasedLayout(layoutConfig);
+    std::vector<Position> positions = makeGraphPayload().positions;
     std::vector<int> gCosts(vertexCount, INF);
     std::vector<int> hCosts(vertexCount, INF);
     std::vector<int> fCosts(vertexCount, INF);
