@@ -240,12 +240,12 @@ IVisualizable* AppEngine::resolveStructure(StructureType structureType, bool dir
 }
 
 void AppEngine::switchActiveStructure(StructureType structureType, bool directed) {
-    window.getWindow().setView(window.getWindow().getDefaultView());
-
     if (activeStructureType == structureType) {
         return;
     }
-    
+
+    window.getWindow().setView(window.getWindow().getDefaultView()); // I HATE THIS
+
     if (activeStructure) {
         delete activeStructure;
         activeStructure = nullptr;
@@ -956,7 +956,6 @@ void AppEngine::run() {
             window.getWindow().close();
             continue;
         }
-        
         update(deltaTime);
         render();
     }
@@ -989,46 +988,43 @@ void AppEngine::processInput(const sf::Event& event) {
         
     // Pass the event to Dear ImGui and your custom buttons
     uiManager.processEvent(window.getWindow(), event);
-        if (const auto* wheelScrolled = event.getIf<sf::Event::MouseWheelScrolled>()) {
+
+    if (const auto* wheelScrolled = event.getIf<sf::Event::MouseWheelScrolled>()) {
         if (!uiManager.isMouseOverUI()) {
             sf::View view = window.getWindow().getView();
+            
             const sf::Vector2i pixelPos = wheelScrolled->position;
             const sf::Vector2f worldPosBeforeZoom = window.getWindow().mapPixelToCoords(pixelPos, view);
 
             const float zoomFactor = 1.1f;
             float zoom = 1.0f;
-            if (wheelScrolled->delta > 0) { // Zoom in
+            if (wheelScrolled->delta > 0) {
                 zoom = 1.f / zoomFactor;
-            } else if (wheelScrolled->delta < 0) { // Zoom out
+            } else if (wheelScrolled->delta < 0) {
                 zoom = zoomFactor;
             }
 
-                // Lấy kích thước hiện tại và kích thước giới hạn
-                sf::Vector2f currentSize = view.getSize();
-                sf::Vector2u winSize = window.getWindow().getSize();
+            sf::Vector2f currentSize = view.getSize();
+            sf::Vector2u winSize = window.getWindow().getSize();
+            float maxWidth = static_cast<float>(winSize.x) * 2.0f;
+            float minWidth = static_cast<float>(winSize.x) * 0.2f;
+            float expectedWidth = currentSize.x * zoom;
+
+            if (expectedWidth > maxWidth) {
+                zoom = maxWidth / currentSize.x;
+            } else if (expectedWidth < minWidth) {
+                zoom = minWidth / currentSize.x;
+            }
+
+            if (zoom != 1.0f) {
+                view.zoom(zoom);
+                window.getWindow().setView(view);
+
+                const sf::Vector2f worldPosAfterZoom = window.getWindow().mapPixelToCoords(pixelPos, view);
+                view.move(worldPosBeforeZoom - worldPosAfterZoom);
                 
-                float maxWidth = static_cast<float>(winSize.x);   // Zoom out tối đa (1.0x)
-                float minWidth = maxWidth * 0.1f;                 // Zoom in tối đa (10.0x)
-
-                // Tính toán zoom an toàn
-                float expectedWidth = currentSize.x * zoom;
-                if (expectedWidth > maxWidth) {
-                    zoom = maxWidth / currentSize.x;
-                } else if (expectedWidth < minWidth) {
-                    zoom = minWidth / currentSize.x;
-                }
-
-                if (zoom != 1.0f) {
-                    view.zoom(zoom);
-                    window.getWindow().setView(view);
-
-                    const sf::Vector2f worldPosAfterZoom = window.getWindow().mapPixelToCoords(pixelPos, view);
-                    view.move(worldPosBeforeZoom - worldPosAfterZoom);
-                    
-                    // Giữ View không bị trôi ra ngoài màn hình quá xa
-                    clampView(view, winSize);
-                    window.getWindow().setView(view);
-                }
+                window.getWindow().setView(view);
+            }
         }
     }
 

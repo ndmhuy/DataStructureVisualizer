@@ -1847,8 +1847,8 @@ void Renderer::visit(const TopBarPayload& payload) {
     window.getWindow().setView(sf::View(sf::FloatRect({0.f, 0.f}, {payload.winSize.x, payload.winSize.y})));
     
     drawSFMLButton({10.0f, 10.0f}, {80.0f, 35.0f}, "Home", payload.isDarkMode, 16);
-    drawSFMLButton({270.0f, 10.0f}, {100.0f, 35.0f}, payload.isDarkMode ? "Light Mode" : "Dark Mode", payload.isDarkMode, 16);
-    drawSFMLButton({390.0f, 10.0f}, {90.0f, 35.0f}, payload.isShowingCode ? "Hide Code" : "Show Code", payload.isDarkMode, 16);
+    drawSFMLButton({110.0f, 10.0f}, {100.0f, 35.0f}, payload.isDarkMode ? "Light Mode" : "Dark Mode", payload.isDarkMode, 16);
+    drawSFMLButton({230.0f, 10.0f}, {90.0f, 35.0f}, payload.isShowingCode ? "Hide Code" : "Show Code", payload.isDarkMode, 16);
 
     window.getWindow().setView(currentView);
 }

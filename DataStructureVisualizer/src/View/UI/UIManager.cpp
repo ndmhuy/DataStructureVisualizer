@@ -259,21 +259,22 @@ void UIManager::render(sf::RenderWindow& window) {
             clickSound.play();
         }
 
-        ImGui::SetCursorScreenPos(ImVec2(120.0f, 10.0f));
-        ImGui::SetNextItemWidth(120.0f);
-        if (ImGui::SliderFloat("##ScaleApp", &theme.nodeScale, 0.3f, 2.0f, "Size %.1f")) {
-            theme.arrayScale = theme.nodeScale;
-            themeScaleChanged = true;
-        }
+        ImGui::SetCursorScreenPos(ImVec2(340.0f, 10.0f));
+        // ImGui::SetNextItemWidth(180.0f);
+        // if (ImGui::SliderFloat("##ScaleApp", &theme.nodeScale, 0.3f, 2.0f, "Size %.1f")) {
+        //     theme.arrayScale = theme.nodeScale;
+        //     themeScaleChanged = true;
+        // }
+        // ImGui::SliderFloat("##speed", &speed, 0.1f, 10.0f, "Speed %.1fx");
         
-        ImGui::SetCursorScreenPos(ImVec2(270.0f, 10.0f));
+        ImGui::SetCursorScreenPos(ImVec2(110.0f, 10.0f));
         if (ImGui::InvisibleButton("ThemeBtnTop", ImVec2(100.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
             clickSound.play();
         }
         
-        ImGui::SetCursorScreenPos(ImVec2(390.0f, 10.0f));
+        ImGui::SetCursorScreenPos(ImVec2(230.0f, 10.0f));
         if (ImGui::InvisibleButton("CodeBtnTop", ImVec2(90.0f, 35.0f))) {
             codePanel.toggleShowCode();
             clickSound.play();
@@ -284,15 +285,63 @@ void UIManager::render(sf::RenderWindow& window) {
         inputMenu.setDS(currentDS);
         inputMenu.render(window);
         codePanel.render(window);
-        slider.render(window);
+        // slider.render(window);
 
-        if (isshowingPlay) {
-            play.render(window);
-        } else {
-            pause.render(window);
-        }
-        stepForward.render(window);
-        stepBackward.render(window);
+        float winW = (float)window.getSize().x;
+        float winH = (float)window.getSize().y;
+
+        // Dòng quan trọng nhất: Pivot (0.5f, 0.5f) sẽ khóa TÂM cửa sổ vào giữa màn hình
+        ImGui::SetNextWindowPos(ImVec2(winW * 0.5f, winH - 120.0f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        ImGui::Begin("PlaybackControls", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground);
+
+        // 1. THANH SPEED NẰM TRÊN (CENTERED)
+        float sliderWidth = 300.0f; 
+        // Tính toán lề để đẩy cái slider vào giữa lòng cửa sổ ImGui
+        float windowInnerWidth = ImGui::GetWindowSize().x;
+        ImGui::SetCursorPosX((windowInnerWidth - sliderWidth) * 0.5f);
+
+        ImGui::PushItemWidth(sliderWidth);
+        ImGui::SliderFloat("##speed", &speed, 0.1f, 10.0f, "Speed %.1fx");
+        ImGui::PopItemWidth();
+
+        ImGui::Spacing(); // Cách ra một đoạn
+
+        // 2. CỤM NÚT NẰM DƯỚI (CENTERED)
+        // Dùng Group để gom 3 nút lại rồi đẩy cả Group vào giữa
+        ImGui::BeginGroup();
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(40.0f, 40.0f)); 
+
+            // Nút Backward
+            ImGui::BeginDisabled(lastIsAtBeginning || lastIsPlaying); 
+            if (ImGui::Button(" |<< ")) { stepBackwardClicked = true; }
+            ImGui::EndDisabled();
+
+            ImGui::SameLine(0, 15);
+
+            // Nút Play / Pause
+            if (isshowingPlay) {
+                ImGui::BeginDisabled(lastIsAtEnd || lastIsEmpty);
+                if (ImGui::Button("  >  ")) { playClicked = true; }
+                ImGui::EndDisabled();
+            } else {
+                if (ImGui::Button(" || ")) { pauseClicked = true; }
+            }
+
+            ImGui::SameLine(0, 15);
+
+            // Nút Forward
+            ImGui::BeginDisabled(lastIsAtEnd || lastIsPlaying);
+            if (ImGui::Button(" >>| ")) { stepForwardClicked = true; }
+            ImGui::EndDisabled();
+
+            ImGui::PopStyleVar();
+        ImGui::EndGroup();
+
+        // Căn giữa cái Group nút so với chiều rộng cửa sổ
+        float groupWidth = ImGui::GetItemRectSize().x;
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - groupWidth) * 0.5f);
+
+        ImGui::End();
     }
 
     ImGui::SFML::Render(window);
