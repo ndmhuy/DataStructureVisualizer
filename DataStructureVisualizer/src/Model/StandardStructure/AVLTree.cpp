@@ -21,7 +21,7 @@ int AVLTree::Node::balanceFactor() {
     return heightLChild() - heightRChild();
 }
 
-TreePayload AVLTree::makeTreePayload(const std::vector<size_t>& highlightedNodes, const std::map<std::string, size_t>& pointers) {
+TreePayload AVLTree::makeTreePayload(const std::vector<size_t>& highlightedNodes, const std::map<std::string, size_t>& pointers, const std::vector<size_t>& successNodes) {
     std::vector<TreeNodeData> nodes;
     // getNodeIndex.clear();
 
@@ -60,7 +60,7 @@ TreePayload AVLTree::makeTreePayload(const std::vector<size_t>& highlightedNodes
         nodes.push_back(nodeData);
     }
 
-    return TreePayload(std::move(nodes), 0, highlightedNodes, pointers);
+    return TreePayload(std::move(nodes), 0, highlightedNodes, pointers, {}, successNodes);
 }
 
 void AVLTree::deleteNodes(Node*& root) {
@@ -259,7 +259,7 @@ bool AVLTree::initialRemove(int value, Node*& root, Timeline* timeline, size_t i
     }
     else {
         if (timeline)
-        timeline->addFrame(Frame(makeTreePayload({currIdx}), 3, "Found " + std::to_string(value)));
+        timeline->addFrame(Frame(makeTreePayload({currIdx}, {{"Target", currIdx}}, {currIdx}), 3, "Found " + std::to_string(value)));
 
         isRemove = true;
         if (!root->left || !root->right) {
@@ -356,7 +356,7 @@ void AVLTree::search(int value, Timeline& timeline) {
         timeline.addFrame(Frame(makeTreePayload({currentId}), 2, "Comparing with node value " + std::to_string(current->value)));
 
         if (current->value == value) {
-            timeline.addFrame(Frame(makeTreePayload({currentId}), 3, "Value found at index " + std::to_string(currentId)));
+            timeline.addFrame(Frame(makeTreePayload({currentId}, {{"Found!", currentId}}, {currentId}), 3, "Value found at index " + std::to_string(currentId)));
 
             return;
         }
@@ -402,7 +402,7 @@ void AVLTree::update(int oldValue, int newValue, Timeline& timeline) {
         return;
     }
 
-    timeline.addFrame(Frame(makeTreePayload({oldId}), 3, "Found old value. Removing it first..."));
+    timeline.addFrame(Frame(makeTreePayload({oldId}, {{"Target", oldId}}, {oldId}), 3, "Found old value. Removing it first..."));
     remove(oldValue, timeline);
 
     timeline.addFrame(Frame(makeTreePayload({}), 4, "Now inserting the new value..."));

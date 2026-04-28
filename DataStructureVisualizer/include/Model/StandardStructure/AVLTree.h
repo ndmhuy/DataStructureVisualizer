@@ -27,7 +27,7 @@ class AVLTree : public IStandardStructure {
     Node* root;
     // std::unordered_map<int, size_t> getNodeIndex; // value -> node id for highlighting
 
-    TreePayload makeTreePayload(const std::vector<size_t>& highlightedNodes = {}, const std::map<std::string, size_t>& pointers = {});
+    TreePayload makeTreePayload(const std::vector<size_t>& highlightedNodes = {}, const std::map<std::string, size_t>& pointers = {}, const std::vector<size_t>& successNodes = {});
     void deleteNodes(Node*& root);
 
     Node* rotateRight(Node* root, Timeline* timeline, size_t id);
