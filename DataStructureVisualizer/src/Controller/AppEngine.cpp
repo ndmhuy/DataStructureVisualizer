@@ -28,7 +28,7 @@ AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action,
                 return AlgorithmType::SinglyLinkedListInsert;
             }
             if (action == 2) {
-                return AlgorithmType::SinglyLinkedListDelete;
+                return AlgorithmType::SinglyLinkedListRemove;
             }
             if (action == 3) {
                 return AlgorithmType::SinglyLinkedListSearch;
