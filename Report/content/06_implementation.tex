@@ -64,4 +64,26 @@ The \texttt{AVLTree} implementation focuses on demonstrating the maintenance of 
 \end{itemize}
 
 \subsection{View Layer Implementation}
-\textit{Note: The implementation of the UI components (Dear ImGui integration) and the underlying SFML rendering engine is documented in the subsequent View Layer section by the respective team members.}
+
+The View layer is responsible for the visual representation of data structures and the management of user interactions. It adopts a dual-platform approach: utilizing the Simple and Fast Multimedia Library (SFML) for high-performance 2D canvas rendering, and Dear ImGui for immediate-mode overlay interfaces.
+
+\subsubsection{\texttt{UIManager} (The Mediator)}
+To prevent tight coupling between the graphical interface and the core algorithmic logic, the system employs the \texttt{UIManager} class acting as a Mediator.
+\begin{itemize}
+    \item \textbf{Centralized UI Aggregation}: Instead of exposing individual UI components to the engine, \texttt{UIManager} encapsulates the \texttt{NavigationMenu}, \texttt{InputMenu}, \texttt{CodePanel}, and all playback widgets (\texttt{Button}, \texttt{Slider}).
+    \item \textbf{State Synchronization}: The interface does not process logic; it merely polls user commands (e.g., \texttt{getInputAction()}, \texttt{getInputString1()}) and relays them to the \texttt{AppEngine}. Conversely, the engine updates the UI via the \texttt{syncPlaybackUI()} method, ensuring that buttons correctly reflect the current timeline state (e.g., disabling the 'Step Forward' button when the algorithm terminates).
+\end{itemize}
+
+\subsubsection{\texttt{Renderer} (The Visitor Pattern)}
+The \texttt{Renderer} class is dedicated to drawing the algorithmic payloads onto the SFML canvas. It explicitly implements the \texttt{IPayloadVisitor} interface, leveraging the Visitor design pattern.
+\begin{itemize}
+    \item \textbf{Polymorphic Rendering}: When the core generates a visual state, it passes a generic payload to the \texttt{Renderer}. Through overloaded \texttt{visit()} methods, the \texttt{Renderer} dynamically resolves the payload type (e.g., \texttt{TreePayload}, \texttt{GraphPayload}) and invokes the appropriate drawing subroutines.
+    \item \textbf{Geometric Calculations}: The renderer abstracts complex SFML draw calls into reusable functions like \texttt{drawImageNode()} and \texttt{drawLineWithArrow()}, mathematically calculating boundary points based on the shape types (Circle or Rectangle) to ensure arrows precisely touch the edges of the nodes without overlapping.
+\end{itemize}
+
+\subsubsection{Dynamic Theming and Custom Animations}
+To enhance the user experience, the system avoids static styling by implementing a global \texttt{Theme} singleton.
+\begin{itemize}
+    \item \textbf{On-the-fly Customization}: The \texttt{Theme} structure holds global configurations for colors, typography, and asset paths, enabling seamless toggling between Dark and Light modes without requiring an application restart.
+    \item \textbf{Advanced ImGui Widgets}: Moving beyond default ImGui components, the \texttt{UIanimation} namespace introduces custom, mathematically interpolated widgets. Functions such as \texttt{JuicySliderFloat()} and \texttt{CyberButton()} utilize linear interpolation (Lerp) to create smooth scaling, pulsing glows, and dynamic color transitions, providing a highly polished, modern interface.
+\end{itemize}

@@ -1,6 +1,10 @@
 % 07_tech_problems.tex
 \section{Technical Problems}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.
+\subsection{Input Event Overlap (SFML vs. ImGui)}
+\textbf{Problem:} The system utilizes ImGui as an overlay on top of the SFML canvas. Initially, mouse click events intended for ImGui menus (such as clicking a text input field in the \texttt{InputMenu}) would "bleed through" to the underlying SFML layer. This caused unintended behaviors, such as accidentally triggering the Drag-and-Drop node functionality on the canvas while merely attempting to type a value.
 
-Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi.
+\textbf{Solution:} We implemented an event-blocking mechanism within the \texttt{UIManager}. By wrapping ImGui's internal IO queries, we exposed methods such as \texttt{isMouseOverUI()} and \texttt{isKeyboardCapturedByUI()}. Before the \texttt{Renderer} or \texttt{AppEngine} processes any mouse press for canvas manipulation, they strictly poll these flags. If the mouse is actively hovering over an ImGui window, canvas interactions are safely ignored.
+
+\subsection{Playback State Desynchronization}
+\textbf{Problem:} The timeline navigation allows users to rapidly click "Step Forward" or manipulate the speed slider. However, spamming these controls could cause the UI state to desynchronize from the actual \texttt{Timeline} state managed by the \texttt{AppEngine}, occasionally leading to out-of-bounds frame access or conflicting button states (e.g., both Play and Pause appearing active simultaneously).
