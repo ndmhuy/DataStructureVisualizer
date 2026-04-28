@@ -15,7 +15,7 @@ The architecture is divided into three interconnected categories of components:
     \item \textbf{View}: Responsible for rendering the visual representation of the \texttt{Model}'s state. The \texttt{UIManager} handles modern graphical user interface elements via Dear ImGui, providing interactive menus and code panels. The \texttt{Renderer} utilizes SFML to draw graphical shapes based on the data contained in the current \texttt{Frame}.
 \end{itemize}
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \resizebox{\textwidth}{!}{
 \begin{tikzpicture}[
@@ -120,7 +120,7 @@ Instead of immediately drawing the results of an algorithm, the models generate 
 \end{itemize}
 This design effectively isolates the algorithmic logic from the real-time rendering loop. It natively supports playback features such as pausing, rewinding, and fast-forwarding, simply by selecting a different \texttt{Frame} within the \texttt{Timeline}.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
 \begin{tikzpicture}[
     % --- Node Styles ---
@@ -188,7 +188,7 @@ The pattern relies on two primary abstractions:
 
 When a \texttt{Frame} is rendered, the \texttt{Renderer} iterates through the \texttt{Frame}'s payload list and calls \texttt{payload->accept(*this)}. Through dynamic dispatch, the concrete payload's \texttt{accept} method is invoked. This method then immediately calls \texttt{visitor.visit(*this)}, effectively passing its strongly-typed self back to the \texttt{Renderer}.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
 \begin{tikzpicture}[
     scale=0.8, transform shape,
