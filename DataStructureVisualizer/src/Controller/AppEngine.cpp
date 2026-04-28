@@ -21,7 +21,7 @@ namespace {
 
 bool isInitialState = true;
 
-AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action) {
+AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action, int mode) {
     switch (structureType) {
         case StructureType::SinglyLinkedList:
             if (action == 1 || action == 5) {
@@ -38,32 +38,47 @@ AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action)
             }
             break;
         case StructureType::GridGraph:
-            if (action == 6) {
-                return AlgorithmType::GraphGridBFSShortestPath;
-            }
-            if (action == 7) {
-                return AlgorithmType::GraphAStar;
+            if (action == 4) {
+                if (mode == 0) {
+                    return AlgorithmType::GraphAStar;
+                }
+                if (mode == 1) {
+                    return AlgorithmType::GraphGridBFSShortestPath;
+                }
             }
             break;
         case StructureType::AdjacencyList:
         case StructureType::AdjacencyMatrix:
-            if (action == 8) {
-                return AlgorithmType::GraphDAGShortestPath;
-            }
-            if (action == 9) {
-                return AlgorithmType::GraphDijkstra;
-            }
-            if (action == 10) {
+            if (action == 4) {
                 return AlgorithmType::GraphAStar;
             }
-            if (action == 11) {
-                return AlgorithmType::GraphBellmanFord;
+            if (action == 5) {
+                if (structureType == StructureType::AdjacencyList) {
+                    if (mode == 0) {
+                        return AlgorithmType::GraphDAGShortestPath;
+                    }
+                    if (mode == 1) {
+                        return AlgorithmType::GraphDijkstra;
+                    }
+                    if (mode == 2) {
+                        return AlgorithmType::GraphBellmanFord;
+                    }
+                } else {
+                    if (mode == 0) {
+                        return AlgorithmType::GraphDijkstra;
+                    }
+                    if (mode == 1) {
+                        return AlgorithmType::GraphBellmanFord;
+                    }
+                }
             }
-            if (action == 12) {
-                return AlgorithmType::GraphFloydWarshall;
-            }
-            if (action == 13) {
-                return AlgorithmType::GraphJohnson;
+            if (action == 6) {
+                if (mode == 0) {
+                    return AlgorithmType::GraphFloydWarshall;
+                }
+                if (mode == 1) {
+                    return AlgorithmType::GraphJohnson;
+                }
             }
             break;
         default:
@@ -250,7 +265,7 @@ void AppEngine::handleDataActionRequest() {
     const std::string input4 = uiManager.getInputString4();
     
     const AlgorithmType algorithmType =
-    resolveAlgorithmForAction(activeStructureType, action);
+    resolveAlgorithmForAction(activeStructureType, action, mode);
     if (algorithmType == AlgorithmType::None) {
         uiManager.clearCodePanel();
     } else {
