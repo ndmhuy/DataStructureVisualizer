@@ -2,7 +2,7 @@
 \section{Architecture}
 
 % Required TikZ libraries for fit/background scopes used in this chapter's diagrams.
-\usetikzlibrary{fit,backgrounds}
+\usetikzlibrary{fit,backgrounds, calc, shapes.multipart, shapes.geometric, arrows.meta, positioning}
 
 \subsection{Architectural Overview: MVC Intuition}
 
@@ -18,74 +18,88 @@ The architecture is divided into three interconnected categories of components:
 \begin{figure}[h!]
     \centering
     \resizebox{\textwidth}{!}{
-    \begin{tikzpicture}[
-        node distance=1.5cm and 2cm,
-        box/.style={rectangle, draw, thick, minimum width=3.5cm, minimum height=1cm, align=center, fill=white, rounded corners=2pt, font=\small},
-        groupbox/.style={rectangle, draw=gray, dashed, thick, inner sep=15pt},
-        arrow/.style={-{Stealth[scale=1.2]}, thick, draw=black!80},
-        dashed_arrow/.style={-{Stealth[scale=1.2]}, dashed, thick, draw=black!80},
-        labelnode/.style={font=\bfseries}
-    ]
-    
-    % ================== CONTROLLER ==================
-    \node (appEngine) [box, fill=green!10] {\textbf{AppEngine}\\(Coordinator)};
-    \node (dataManager) [box, fill=green!10, left=of appEngine, xshift=-0.5cm] {DataManager};
-    \node (playback) [box, fill=green!10, right=of appEngine, xshift=0.5cm] {Playback};
-    
-    \begin{scope}[on background layer]
-        \node (controllerGroup) [groupbox, fill=green!5, fit=(appEngine) (dataManager) (playback)] {};
-        \node [above left=0pt of controllerGroup.north west, labelnode, color=green!60!black] {Controller Layer};
-    \end{scope}
-    
-    % ================== VIEW ==================
-    \node (uimanager) [box, fill=red!10, below left=3.5cm and -1.5cm of appEngine] {\textbf{UIManager}\\(ImGui)};
-    \node (renderer) [box, fill=red!10, below=of uimanager] {\textbf{Renderer}\\(SFML)};
-    
-    \begin{scope}[on background layer]
-        \node (viewGroup) [groupbox, fill=red!3, fit=(uimanager) (renderer)] {};
-        \node [above left=0pt of viewGroup.north west, labelnode, color=red!70!black] {View Layer};
-    \end{scope}
-    
-    % ================== MODEL ==================
-    \node (ivisualizable) [box, fill=blue!10, below right=3.5cm and -0.5cm of appEngine] {\textbf{IVisualizable}\\(Base Interface)};
-    \node (structures) [box, fill=blue!5, below=of ivisualizable] {Data Structures\\(List, Graph, Heap, etc.)};
-    
-    \node (timeline) [box, fill=cyan!10, right=of ivisualizable, xshift=1cm] {Timeline \& Frames};
-    \node (payloads) [box, fill=cyan!5, below=of timeline] {IPayload};
-    \node (ipayloadvis) [box, fill=cyan!5, right=of payloads, xshift=0.5cm] {IPayloadVisitor};
-    
-    \begin{scope}[on background layer]
-        \node (modelGroup) [groupbox, fill=blue!3, fit=(ivisualizable) (structures) (timeline) (payloads) (ipayloadvis)] {};
-        \node [above left=0pt of modelGroup.north west, labelnode, color=blue!70!black] {Model Layer};
-    \end{scope}
-    
-    % ================== UTILITIES ==================
-    \node (utilities) [box, fill=yellow!10, below=1.5cm of controllerGroup] {Utilities\\(Pseudocode, config)};
+\begin{tikzpicture}[
+    % Global Styles
+    base/.style={rectangle, rounded corners, draw=black, very thick, minimum width=3.2cm, minimum height=1.2cm, align=center, font=\sffamily\small},
+    controller/.style={base, draw=green!70!black, fill=green!10},
+    view/.style={base, draw=red!70!black, fill=red!10},
+    model/.style={base, draw=blue!70!black, fill=blue!10},
+    utility/.style={base, draw=orange!80!black, fill=yellow!15},
+    layer box/.style={rectangle, draw=#1, dashed, thick, inner sep=15pt, fill=#1!5, rounded corners=10pt},
+    % Arrow Styles
+    arrow/.style={-{Stealth[scale=1.2]}, thick},
+    bidir/.style={<->, >=Stealth, thick},
+    inherit/.style={-{Triangle[open,fill=white,scale=1.2]}, thick}
+]
 
-    % ================== RELATIONSHIPS ==================
-    % Model internal
-    \draw [arrow] (structures) -- (ivisualizable);
-    \draw [dashed_arrow] (ivisualizable) -- node[above, font=\scriptsize] {generates} (timeline);
-    \draw [arrow] (timeline) -- node[right, font=\scriptsize] {owns} (payloads);
-    \draw [dashed_arrow] (ipayloadvis) -- node[above, font=\scriptsize] {visits} (payloads);
-    
-    % Controller connections
-    \draw [arrow] (appEngine) -- (dataManager);
-    \draw [arrow] (appEngine) -- (playback);
-    \draw [arrow] (appEngine) -- node[above right, font=\scriptsize, sloped, pos=0.6] {routes actions} (modelGroup.north west);
-    \draw [dashed_arrow] (playback.east) -| ++(1.5,0) |- node[above, font=\scriptsize, near end] {traverses} (timeline.east);
-    
-    % View connections
-    \draw [arrow] (appEngine) -- node[above left, font=\scriptsize, sloped, pos=0.6] {updates} (viewGroup.north east);
-    
-    % Cross-layer interactions
-    \draw [arrow] (renderer.south) |- ++(0,-1cm) -| node[right, font=\scriptsize, near end] {implements} (ipayloadvis.south);
-    \draw [dashed_arrow] (renderer.east) -- node[above, font=\scriptsize] {renders} (payloads.west);
-    
-    \draw [dashed_arrow] (uimanager.south) |- ++(0,-2cm) -| node[right, font=\scriptsize, near end] {queries state} (timeline.south);
-    
-    \draw [arrow] (uimanager.north) |- node[above, font=\scriptsize, near end] {reads context} (utilities.west);
-    \end{tikzpicture}
+% ================= Nodes =================
+% Utilities (Bottom Center) - Moved down
+\node[utility] (Utilities) at (0, -7.5) {\textbf{Utilities}\\(Pseudocode, Math, Configs)};
+
+% Controller Layer (Top Center) - Kept at top
+\node[controller] (AppEngine) at (0, 0) {\textbf{AppEngine}\\(Coordinator)};
+\node[controller] (DataManager) at (-5, 0) {\textbf{DataManager}\\(File I/O)};
+\node[controller] (Playback) at (5, 0) {\textbf{Playback}\\(Time Controls)};
+
+\begin{scope}[on background layer]
+    \node[layer box=green!60!black, fit=(DataManager) (AppEngine) (Playback), label={[font=\sffamily\bfseries\color{green!60!black}]above:Controller Layer}] (ControllerLayer) {};
+\end{scope}
+
+% View Layer (Bottom Left) - Moved down
+\node[view] (UIManager) at (-5, -6) {\textbf{UIManager}\\(ImGui)};
+\node[view] (Renderer) at (-5, -9) {\textbf{Renderer}\\(SFML)};
+
+\begin{scope}[on background layer]
+    \node[layer box=red!60!black, fit=(UIManager) (Renderer), label={[font=\sffamily\bfseries\color{red!60!black}]above:View Layer}] (ViewLayer) {};
+\end{scope}
+
+% Model Layer (Bottom Right) - Moved down
+\node[model] (Timeline) at (3.5, -6) {\textbf{Timeline \& Frames}};
+\node[model] (DataStructures) at (8, -3.5) {\textbf{Data Structures}\\(List, Graph, Heap)};
+\node[model] (IVisualizable) at (8, -6) {\textbf{IVisualizable}\\(Base Interface)};
+\node[model] (IPayload) at (3.5, -9) {\textbf{IPayload}};
+\node[model] (IPayloadVisitor) at (8, -9) {\textbf{IPayloadVisitor}};
+
+\begin{scope}[on background layer]
+    \node[layer box=blue!60!black, fit=(DataStructures) (IVisualizable) (Timeline) (IPayload) (IPayloadVisitor), label={[font=\sffamily\bfseries\color{blue!60!black}]above:Model Layer}] (ModelLayer) {};
+\end{scope}
+
+% ================= Intra-Layer Relationships =================
+% Controller
+\draw[bidir] (AppEngine) -- (DataManager);
+\draw[bidir] (AppEngine) -- (Playback);
+
+% View
+\draw[arrow] (UIManager) -- (Renderer);
+
+% Model
+\draw[inherit] (DataStructures) -- (IVisualizable);
+\draw[arrow] (IVisualizable) -- (Timeline) node[midway, above, font=\scriptsize\sffamily] {generates};
+\draw[arrow] (Timeline) -- (IPayload) node[midway, right, font=\scriptsize\sffamily] {owns};
+\draw[arrow] (IPayloadVisitor) -- (IPayload) node[midway, above, font=\scriptsize\sffamily] {visits};
+
+
+% ================= Cross-Layer Connections =================
+
+% --- AppEngine Connections ---
+\draw[arrow, color=green!60!black] (AppEngine.south west) to[bend right=20] node[midway, left, xshift=-5pt, font=\scriptsize\sffamily] {updates} (UIManager.north east);
+\draw[arrow, color=green!60!black] (AppEngine.south east) to[bend left=20] node[midway, right, xshift=5pt, font=\scriptsize\sffamily] {routes actions} (Timeline.north west);
+
+% --- Playback Connections ---
+\draw[arrow, color=green!60!black, dashed] (Playback.south) to[bend left=15] node[midway, right, font=\scriptsize\sffamily] {traverses} (Timeline.north east);
+
+% --- View to Model Connections ---
+% Renderer implements IPayloadVisitor
+\draw[inherit, color=red!60!black, dashed] (Renderer.south) -- ++(0,-0.8) -| (IPayloadVisitor.south) node[pos=0.25, above, font=\scriptsize\sffamily] {implements};
+% Renderer renders IPayload
+\draw[arrow, color=red!60!black] (Renderer.east) -- (IPayload.west) node[midway, above, font=\scriptsize\sffamily] {renders};
+% UIManager queries state of Timeline
+\draw[arrow, color=red!60!black] (UIManager.east) -- (Timeline.west) node[midway, above, font=\scriptsize\sffamily] {queries state};
+
+% --- View to Utility Connections ---
+\draw[arrow, color=red!60!black] (UIManager.south east) -- (Utilities.north west) node[midway, below left, font=\scriptsize\sffamily] {reads context};
+
+\end{tikzpicture}
     }
     \caption{Application Architecture Diagram detailing the relationships between MVC components.}
     \label{fig:arch_diagram}
@@ -108,39 +122,53 @@ This design effectively isolates the algorithmic logic from the real-time render
 
 \begin{figure}[h!]
     \centering
-    \begin{tikzpicture}[
-        node distance=1.5cm and 2cm,
-        base/.style={ellipse, draw, thick, minimum width=2.5cm, minimum height=1cm, align=center},
-        process/.style={rectangle, draw, thick, minimum width=3cm, minimum height=1cm, align=center, fill=blue!5},
-        decision/.style={diamond, aspect=1.5, draw, thick, minimum width=2.5cm, minimum height=1cm, align=center, fill=orange!5},
-        arrow/.style={-{Stealth[scale=1.2]}, thick}
-    ]
-    
-    % Nodes
-    \node (start) [base, fill=gray!10] {Main Loop};
-    \node (poll) [process, below=of start] {Process Input\\(SFML Events)};
-    \node (update) [process, below=of poll] {Update System State\\(UI state, Playback)};
-    \node (handleAction) [decision, below=of update, yshift=-1cm] {Action\\Requested?};
-    
-    \node (genTimeline) [process, right=of handleAction, xshift=1cm] {Model executes action\\Generates Timeline};
-    \node (assignTimeline) [process, above=of genTimeline] {Assign Timeline\\to Playback};
-    
-    \node (render) [process, below=of handleAction, yshift=-1cm] {Render Current Frame\\(Renderer \& UI)};
-    
-    % Arrows
-    \draw [arrow] (start) -- (poll);
-    \draw [arrow] (poll) -- (update);
-    \draw [arrow] (update) -- (handleAction);
-    
-    \draw [arrow] (handleAction) -- node[anchor=north] {Yes (Insert/Delete/\dots)} (genTimeline);
-    \draw [arrow] (handleAction) -- node[anchor=east] {No} (render);
-    
-    \draw [arrow] (genTimeline) -- (assignTimeline);
-    \draw [arrow] (assignTimeline) |- (render);
-    
-    \draw [arrow] (render) -- ++(-4,0) |- (poll);
-    
-    \end{tikzpicture}
+\begin{tikzpicture}[
+    % --- Node Styles ---
+    startstop/.style={ellipse, draw=black, very thick, fill=green!20, minimum width=3cm, minimum height=1cm, align=center, font=\sffamily\bfseries},
+    process/.style={rectangle, rounded corners, draw=black, very thick, fill=blue!10, minimum width=3.5cm, minimum height=1cm, align=center, font=\sffamily},
+    action/.style={rectangle, rounded corners, draw=black, very thick, fill=purple!10, minimum width=3.5cm, minimum height=1cm, align=center, font=\sffamily},
+    decision/.style={diamond, aspect=2, draw=black, very thick, fill=orange!20, minimum width=4cm, minimum height=1cm, align=center, font=\sffamily},
+    % --- Line Styles ---
+    arrow/.style={-{Stealth[scale=1.2]}, thick},
+    label/.style={font=\sffamily\footnotesize\bfseries, fill=white, inner sep=2pt}
+]
+
+% ================= Nodes =================
+
+% Main Flow (Straight Down)
+\node[startstop] (Start) at (0, 0) {Main Loop\\(while window.isOpen)};
+\node[process] (Input) [below=0.8cm of Start] {Process Input\\(Poll SFML Events)};
+\node[process] (Update) [below=0.8cm of Input] {Update System State\\(UI \& Playback)};
+\node[decision] (Decision) [below=0.8cm of Update] {Action\\Requested?};
+\node[process] (Render) [below=2.5cm of Decision] {Render Current Frame\\(Draw SFML \& ImGui)};
+
+% Branch Flow (To the Right)
+\node[action] (Execute) [right=1.5cm of Decision] {Model Executes Action\\\& Generates Timeline};
+\node[action] (Assign) [below=0.8cm of Execute] {Assign Timeline\\to Playback};
+
+% ================= Connections =================
+
+% Main Path
+\draw[arrow] (Start) -- (Input);
+\draw[arrow] (Input) -- (Update);
+\draw[arrow] (Update) -- (Decision);
+
+% Decision: No Path
+\draw[arrow] (Decision) -- node[label] {No} (Render);
+
+% Decision: Yes Path
+\draw[arrow] (Decision) -- node[label] {Yes} (Execute);
+\draw[arrow] (Execute) -- (Assign);
+
+% Re-merge Yes Path into Render
+% Draws down from Assign, then left into the top of the Render node
+\draw[arrow] (Assign.south) |- ($ (Render.north) + (1.5,0.5) $) -- ($ (Render.north) + (1.5,0) $);
+
+% Loop Back to Process Input
+% Draws left from Render, up past the decision/update, and right into Input
+\draw[arrow] (Render.west) -- ++(-1.5,0) |- (Input.west);
+
+\end{tikzpicture}
     \caption{Application Execution Flow Loop.}
     \label{fig:app_flow}
 \end{figure}
@@ -162,37 +190,110 @@ When a \texttt{Frame} is rendered, the \texttt{Renderer} iterates through the \t
 
 \begin{figure}[h!]
     \centering
-    \resizebox{\textwidth}{!}{
-    \begin{tikzpicture}[
-        node distance=2cm and 2cm,
-        box/.style={rectangle, draw, thick, minimum width=3cm, minimum height=1cm, align=center, fill=white, rounded corners=2pt},
-        interface/.style={box, fill=blue!5, font=\ttfamily},
-        class/.style={box, fill=green!5, font=\ttfamily},
-        arrow/.style={-{Stealth[scale=1.2]}, thick},
-        dashed_arrow/.style={-{Stealth[scale=1.2]}, dashed, thick}
-    ]
-    
-    % Nodes
-    \node (iv) [interface] {IPayloadVisitor \\ \rule{2.6cm}{0.4pt} \\ + visit(LinkedListPayload) \\ + visit(GraphPayload) \\ \dots};
-    \node (renderer) [class, below=of iv, yshift=-0.5cm] {Renderer \\ \rule{2.6cm}{0.4pt} \\ + visit(LinkedListPayload) \\ + visit(GraphPayload) \\ \dots};
-    
-    \node (ip) [interface, right=of iv, xshift=5cm] {IPayload \\ \rule{2.6cm}{0.4pt} \\ + accept(IPayloadVisitor) \\ + clone()};
-    \node (llp) [class, below=of ip, xshift=-2.5cm, yshift=-0.5cm] {LinkedListPayload \\ \rule{2.6cm}{0.4pt} \\ + accept(v: IPayloadVisitor) \\ \textit{\{ v.visit(*this) \}}};
-    \node (gp) [class, below=of ip, xshift=2.5cm, yshift=-0.5cm] {GraphPayload \\ \rule{2.6cm}{0.4pt} \\ + accept(v: IPayloadVisitor) \\ \textit{\{ v.visit(*this) \}}};
-    
-    % Inheritance arrows
-    \draw [{Stealth[scale=1.2, fill=white]}-, thick] (iv) -- (renderer);
-    \draw [{Stealth[scale=1.2, fill=white]}-, thick] (ip) -- (llp);
-    \draw [{Stealth[scale=1.2, fill=white]}-, thick] (ip) -- (gp);
-    
-    % Dependency arrows
-    \draw [dashed_arrow] (llp.west) -- node[above, font=\scriptsize] {calls} (renderer.east);
-    \draw [dashed_arrow] (gp.south) |- ++(0,-0.8cm) -| node[above, near start, font=\scriptsize] {calls} (renderer.south);
-    
-    \end{tikzpicture}
+\begin{tikzpicture}[
+    scale=0.8, transform shape,
+    % --- UML Node Styles ---
+    umlclass/.style={
+        rectangle split, 
+        rectangle split parts=2, 
+        draw, 
+        very thick, 
+        fill=white, 
+        minimum width=4.5cm, 
+        align=center, 
+        font=\sffamily
+    },
+    umlinterface/.style={
+        umlclass, 
+        fill=blue!5
+    },
+    % --- Arrow Styles ---
+    inherit/.style={
+        -{Triangle[open, fill=white, scale=1.5]}, 
+        very thick
+    },
+    dependency/.style={
+        -{Straight Barb[scale=1.2]}, 
+        dashed, 
+        very thick
     }
+]
+
+% ================= LEFT SIDE (The Visitors) =================
+
+\node[umlinterface] (IPayloadVisitor) at (0, 0) {
+    $\langle\langle$Interface$\rangle\rangle$ \\
+    \textbf{IPayloadVisitor}
+    \nodepart{second}
+    \begin{tabular}{l}
+        + visit(LinkedListPayload) \\
+        + visit(GraphPayload)
+    \end{tabular}
+};
+
+\node[umlclass, fill=red!5] (Renderer) at (0, -5.25) {
+    \textbf{Renderer}
+    \nodepart{second}
+    \begin{tabular}{l}
+        + visit(LinkedListPayload) \\
+        + visit(GraphPayload)
+    \end{tabular}
+};
+
+% ================= RIGHT SIDE (The Visitables) =================
+
+\node[umlinterface] (IPayload) at (9, 0) {
+    $\langle\langle$Interface$\rangle\rangle$ \\
+    \textbf{IPayload}
+    \nodepart{second}
+    \begin{tabular}{l}
+        + accept(IPayloadVisitor)
+    \end{tabular}
+};
+
+\node[umlclass, fill=green!5] (LinkedListPayload) at (9, -3.5) {
+    \textbf{LinkedListPayload}
+    \nodepart{second}
+    \begin{tabular}{l}
+        + accept(IPayloadVisitor v) \\
+        \textit{\{ v.visit(*this) \}}
+    \end{tabular}
+};
+
+\node[umlclass, fill=green!5] (GraphPayload) at (9, -7) {
+    \textbf{GraphPayload}
+    \nodepart{second}
+    \begin{tabular}{l}
+        + accept(IPayloadVisitor v) \\
+        \textit{\{ v.visit(*this) \}}
+    \end{tabular}
+};
+
+
+% ================= INHERITANCE CONNECTIONS =================
+
+% Renderer inherits from IPayloadVisitor
+\draw[inherit] (Renderer.north) -- (IPayloadVisitor.south);
+
+% Both Payloads inherit from IPayload (Routed cleanly to avoid overlapping boxes)
+\coordinate (PayloadSplit) at (9, -1.8);
+\draw[inherit] (PayloadSplit) -- (IPayload.south);
+\draw[very thick] (LinkedListPayload.north) -- (PayloadSplit);
+
+% Route GraphPayload's inheritance line around the right side of LinkedListPayload
+\draw[very thick] (GraphPayload.east) -- ++(1.5, 0) |- (PayloadSplit);
+
+
+% ================= DEPENDENCY CONNECTIONS =================
+
+% Dashed lines pointing "horizontally across" to the Renderer
+\draw[dependency] (LinkedListPayload.west) -- node[above, sloped, font=\sffamily\footnotesize] {calls} (Renderer.east);
+\draw[dependency] (GraphPayload.west) -- node[above, sloped, font=\sffamily\footnotesize] {calls} (Renderer.east);
+
+\end{tikzpicture}
     \caption{UML Class Diagram illustrating the Visitor Pattern for Payload rendering.}
     \label{fig:visitor_pattern}
 \end{figure}
 
 This architecture guarantees that the \texttt{Model} never references SFML or rendering specifics, while the \texttt{Renderer} avoids costly runtime type checks (\texttt{dynamic\_cast}), resulting in safe, robust, and highly decoupled code.
+

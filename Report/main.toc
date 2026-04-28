@@ -1,0 +1,71 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{\numberline {1}Abstract}{1}{section.1}%
+\contentsline {section}{\numberline {2}Introduction}{1}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Key Features}{1}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Supported Data Structures and Algorithms}{2}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Technical Architecture}{3}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Task Assignment}{3}{section.3}%
+\contentsline {section}{\numberline {4}Data Storage}{6}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Data Life-cycle and Storage Architecture}{6}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}Transient Input Storage}{6}{subsubsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.2}Persistent Structural Representation}{6}{subsubsection.4.1.2}%
+\contentsline {section}{\numberline {5}Architecture}{7}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Architectural Overview: MVC Intuition}{7}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Detailed System Design and Interfaces}{8}{subsection.5.2}%
+\contentsline {subsubsection}{\numberline {5.2.1}The \texttt {IVisualizable} Abstraction}{8}{subsubsection.5.2.1}%
+\contentsline {subsubsection}{\numberline {5.2.2}Timeline and Frames}{9}{subsubsection.5.2.2}%
+\contentsline {subsection}{\numberline {5.3}Visitor Design Pattern for Rendering}{10}{subsection.5.3}%
+\contentsline {subsubsection}{\numberline {5.3.1}Pattern Implementation}{10}{subsubsection.5.3.1}%
+\contentsline {section}{\numberline {6}Implementation}{10}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Controller Layer Implementation}{11}{subsection.6.1}%
+\contentsline {subsubsection}{\numberline {6.1.1}\texttt {AppEngine} (Application Orchestrator)}{11}{subsubsection.6.1.1}%
+\contentsline {subsubsection}{\numberline {6.1.2}\texttt {Playback} (Timeline Management)}{12}{subsubsection.6.1.2}%
+\contentsline {subsubsection}{\numberline {6.1.3}\texttt {DataManager} (Data Ingestion Logic)}{12}{subsubsection.6.1.3}%
+\contentsline {subsection}{\numberline {6.2}Model Layer Implementation}{13}{subsection.6.2}%
+\contentsline {subsubsection}{\numberline {6.2.1}Singly Linked List}{13}{subsubsection.6.2.1}%
+\contentsline {subsubsection}{\numberline {6.2.2}Graph Structures (Adjacency List \& Adjacency Matrix)}{13}{subsubsection.6.2.2}%
+\contentsline {subsubsection}{\numberline {6.2.3}Grid Graph (Pathfinding Grids)}{14}{subsubsection.6.2.3}%
+\contentsline {subsubsection}{\numberline {6.2.4}Binary Heap}{14}{subsubsection.6.2.4}%
+\contentsline {subsubsection}{\numberline {6.2.5}AVL Tree (Self-Balancing BST)}{15}{subsubsection.6.2.5}%
+\contentsline {subsection}{\numberline {6.3}View Layer Implementation}{15}{subsection.6.3}%
+\contentsline {subsubsection}{\numberline {6.3.1}\texttt {UIManager} (The Mediator)}{15}{subsubsection.6.3.1}%
+\contentsline {subsubsection}{\numberline {6.3.2}\texttt {Renderer} (The Visitor Pattern)}{16}{subsubsection.6.3.2}%
+\contentsline {subsubsection}{\numberline {6.3.3}Dynamic Theming and Custom Animations}{16}{subsubsection.6.3.3}%
+\contentsline {subsection}{\numberline {6.4}Animation System}{17}{subsection.6.4}%
+\contentsline {subsubsection}{\numberline {6.4.1}Mathematical Foundations}{17}{subsubsection.6.4.1}%
+\contentsline {paragraph}{Non-linear Interpolation (Exponential Decay Lerp)}{17}{section*.2}%
+\contentsline {paragraph}{Sinusoidal Waves for Continuous Motion}{17}{section*.3}%
+\contentsline {subsubsection}{\numberline {6.4.2}Data Structure Animations}{18}{subsubsection.6.4.2}%
+\contentsline {paragraph}{Curved Paths in Trees and Heaps}{18}{section*.4}%
+\contentsline {paragraph}{Spring-Damper Physics for Graphs}{18}{section*.5}%
+\contentsline {subsubsection}{\numberline {6.4.3}UI Animations}{19}{subsubsection.6.4.3}%
+\contentsline {paragraph}{Particle System for Buttons}{19}{section*.6}%
+\contentsline {paragraph}{Glitch Effect (RGB Split \& Noise)}{19}{section*.7}%
+\contentsline {paragraph}{Interactive Juicy Slider}{20}{section*.8}%
+\contentsline {subsubsection}{\numberline {6.4.4}Main Menu Cinematic Decorations}{20}{subsubsection.6.4.4}%
+\contentsline {paragraph}{Interactive Hexagon Web \& Matrix Rain}{20}{section*.9}%
+\contentsline {paragraph}{Geometric Data Structure Emulations}{21}{section*.10}%
+\contentsline {section}{\numberline {7}Technical Problems}{22}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Input Event Overlap (SFML vs. ImGui)}{22}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Playback State Desynchronization}{22}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Refactoring IDataStructure into IVisualizable and Sub-interfaces}{22}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}State Encapsulation Leaks}{23}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}Integer Overflow and Memory Safety}{23}{subsection.7.5}%
+\contentsline {subsection}{\numberline {7.6}ImGui-SFML Lifecycle Assertions}{24}{subsection.7.6}%
+\contentsline {subsection}{\numberline {7.7}Visualizing Array-Backed Heaps as Trees}{24}{subsection.7.7}%
+\contentsline {subsection}{\numberline {7.8}Invalid Formats in File Input}{24}{subsection.7.8}%
+\contentsline {subsection}{\numberline {7.9}Tracking State in Recursive Algorithms}{24}{subsection.7.9}%
+\contentsline {subsection}{\numberline {7.10}Asset Path Resolution in Production}{25}{subsection.7.10}%
+\contentsline {subsection}{\numberline {7.11}Circular Dependencies in Frame Payload}{25}{subsection.7.11}%
+\contentsline {subsection}{\numberline {7.12}UI Component Hardcoding and Consistency}{25}{subsection.7.12}%
+\contentsline {subsection}{\numberline {7.13}Payload Type-Checking Overhead}{25}{subsection.7.13}%
+\contentsline {section}{\numberline {8}Features Demo}{26}{section.8}%
+\contentsline {subsection}{\numberline {8.1}System Overview}{26}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Core Features}{26}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Demonstration Scenarios}{26}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}Discussion}{27}{subsection.8.4}%
+\contentsline {section}{\numberline {9}Conclusion}{27}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Summary of Achievements}{27}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Limitations}{27}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}Future Work}{28}{subsection.9.3}%
+\contentsline {section}{References}{29}{section*.11}%
