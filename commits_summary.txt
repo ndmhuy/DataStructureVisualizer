@@ -1,0 +1,423 @@
+=== Commit Summary ===
+
+Author: Nguyen Dinh Minh Huy (Total: 129)
+  - feat: 38
+  - merge: 33
+  - fix: 33
+  - refactor: 10
+  - none: 7
+  - docs: 4
+  - chore: 2
+  - chores: 1
+  - initial: 1
+
+Commits:
+  * Merge branch 'main' into docs
+  * docs: update the draft diagram
+  * Merge pull request #80 from ndmhuy/fix-DataManager&AppEngineHandle
+  * Merge pull request #81 from ndmhuy/relocation-table
+  * feat: Add comments for all header files
+  * chores: Setting up TestFiles folder
+  * Merge pull request #78 from ndmhuy/animationfornewbutton
+  * fix: reorder SLL pseudocode
+  * Merge pull request #77 from ndmhuy/fix-DataManager&AppEngineHandle
+  * docs: Draft for 05 and 06
+  * docs:Upload Khai's report for W06's
+  * feat: wire the rest pseudocode
+  * Merge pull request #74 from ndmhuy/fixcolorSPSPandOPSP
+  * Merge pull request #72 from ndmhuy/fix-DataManager&AppEngineHandle
+  * Merge pull request #71 from ndmhuy/animation
+  * fix: reallocate assets folder
+  * Merge pull request #70 from ndmhuy/#12-CompleteGUI
+  * feat: introduce indices rendering for grid and fix miswired functions
+  * feat: Wire the directivity resolver
+  * feat: Wire pseudocode to panel partly
+  * Merge pull request #69 from ndmhuy/animation
+  * Merge pull request #68 from ndmhuy/fix-dijkstrea
+  * feat: upgrade physics layout graph generator
+  * feat: Move the visualizer for not overlapping codepanel
+  * feat: fix Graph Layout Generation for better clustering resolution, and log the addEdge to timeline
+  * fix: adapt pseudocode and fix hardcoding
+  * fix: apply layout config and add negative weight check for algorithms
+  * Merge pull request #59 from ndmhuy/fixdragnode
+  * Merge pull request #60 from ndmhuy/#12-CompleteGUI
+  * Merge pull request #61 from ndmhuy/wiremessage
+  * feat: reset Grid states before start new algorithms, wire features and fix highlight bugs
+  * Merge pull request #54 from ndmhuy/#12-CompleteGUI
+  * fix: reapply lost changes
+  * Merge pull request #51 from ndmhuy/#12-CompleteGUI
+  * Integrate AppEngine into main application flow
+  * Merge branch 'dev' into utilities
+  * Merge pull request #48 from ndmhuy/fix-integration
+  * fix: Update timeline frame indices in SinglyLinkedList
+  * refactor: move untracked files to its designated place
+  * Merge branch '#12-CompleteGUI' into dev
+  * Merge pull request #47 from ndmhuy/window-fixing
+  * fix: fix code format
+  * fix: reorder toggle request
+  * fix: fix code format
+  * fix: fix indentation issue
+  * Add .gitignore .cache/
+  * feat: Introduce Grid A* Algorithm
+  * feat: Wire AppEngine with placeholder actions for graph algorithms
+  * feat: Implement renderer visit functions for Graph algorithmic payload
+  * feat: Complete shortest path algorithms and sync with PseudocodeManager
+  * feat: Grid Graph implementation
+  * Re-apply formatting and payload tracking after user conflict
+  * feat: Introduce new Global Config and Position operators
+  * feat: Introduce Global config and add operators for Position
+  * feat: Implement GridGraph for grid representation, implement Dijkstra and Bellman-Ford (incomplete)
+  * Merge branch 'integration/#9-#10-#5.1' into dev
+  * fix: finalize post-merge cleanup in AppEngine and Renderer
+  * fix: clean accidental merge-conflict artifacts in AppEngine update flow
+  * Merge branch 'feat/menu-graph-and-heap' into dev
+  * Merge branch 'feat/drag-node' into dev
+  * fix: fix sentinel value and delete unnecessary functions and alter them to new payloads
+  * feat: Wiring a few features for testing
+  * refactor: Apply new Payload structure
+  * refactor: Implement Visitor Design Pattern for Renderer
+  * refactor: refactor View folder into subfolders for better maintainability
+  * Merge pull request #33 from ndmhuy/#5.1-DSExtra
+  * Merge branch 'dev' into #9-HeapStructure
+  * Merge pull request #31 from ndmhuy/feat/frame-payload
+  * fix: Alter functions to match new signature, and implement the unified drawText function
+  * fix: Add boundary check for Slider::setValue
+  * fix: Apply global theme change in AppEngine and implement the send request to change theme in UIManager
+  * feat: Implement the pseudocode of a few shortest path algorithm
+  * Rename Node.png to node.png
+  * chore(git): ignore imgui local state file
+  * fix: Improve DataManager error messages
+  * refactor: Integrate renderer/ui/theme into main loop
+  * refactor: Apply theme-driven styling and safer ImGui lifecycle handling
+  * refactor: centralize theme config and fix runtime asset root resolution
+  * fix: Delete outdated files and move Theme into View
+  * Merge branch 'dev' into #3-UIControlPanel
+  * fix: Return alias reference in getPseudocode and alter the enum names for meeting standards
+  * feat: Implement a few algorithms of singly linked list
+  * feat: Introduce PseudocodeManager as the code database
+  * Merge branch and fix syntax and things
+  * Merge branch 'dev' into #3-UIControlPanel
+  * Merge pull request #13 from ndmhuy/feat/renderer
+  * feat: Complete graph's core timeline-corporated functions and alter the vertices from int to size_t
+  * feat: Update Frame so that it can handle more complex structure, move Edge outside to avoid circular dependencies
+  * feat: Implement AdjacencyMatrix core
+  * feat: Implement AdjacencyMatrix core
+  * feat: Add IGraphStructure interface for graphs
+  * fix: syntax
+  * Merge branch 'dev' into #5-IDataStructure
+  * fix: remove unnecessary condition
+  * refactor: update SinglyLinkedList dependency and fix minor bugs
+  * refactor: Seperate into many interfaces for each group of data structures because of their input difference
+  * refactor: Rename IDataStructure to IVisualizable, then define the enum class for StructureType
+  * fix: Change all indices to size_t
+  * fix: Fix encapsulation and syntax
+  * fix: Fix recalculation data, and copy assignment denial and refactor
+  * feat: Test with SinglyLinkedList structure
+  * feat: Add interface (virtual class) IDataStructure
+  * fix: Change all indices to size_t
+  * fix: Fix encapsulation and syntax
+  * Wire partly to AppEngine
+  * feat: Implement Playback Controller to process the Timeline
+  * feat: Define Frame to hold the current state and Timeline to hold a sequence of Frame
+  * fix: Fix recalculation data, and copy assignment denial and refactor
+  * feat: Test with SinglyLinkedList structure
+  * feat: Add interface (virtual class) IDataStructure
+  * fix: Change all indices to size_t
+  * fix: Fix encapsulation and syntax
+  * Wire partly to AppEngine
+  * feat: Implement Playback Controller to process the Timeline
+  * feat: Define Frame to hold the current state and Timeline to hold a sequence of Frame
+  * Merge pull request #6 from ndmhuy/#4-DataManager
+  * Merge pull request #8 from ndmhuy/#5-IDataStructure
+  * fix: Fix recalculation data, and copy assignment denial and refactor
+  * fix: Change all indices to size_t
+  * fix: Fix encapsulation and syntax
+  * feat: Test with SinglyLinkedList structure
+  * feat: Add interface (virtual class) IDataStructure
+  * Wire partly to AppEngine
+  * feat: Implement Playback Controller to process the Timeline
+  * feat: Define Frame to hold the current state and Timeline to hold a sequence of Frame
+  * fix: Generate compile_commands.json for editors and IDEs understanding
+  * docs: setup initial LaTeX report structure and templates
+  * chore: setup initial MVC project structure and CMake build
+  * Initial commit
+
+========================================
+
+Author: kietanhnguyen2007 (Total: 41)
+  - fix: 22
+  - feat: 12
+  - none: 4
+  - merge: 2
+  - docs: 1
+
+Commits:
+  * Merge branch 'docs' of https://github.com/ndmhuy/DataStructureVisualizer into docs
+  * docs: add Kiet's implementation for animation
+  * fix location
+  * fix
+  * fix: add animation for new button
+  * add Task Assignment
+  * fix: SPSP and OPSP
+  * fix: change path of assets
+  * fix
+  * fix: AVL Tree when find function find the result
+  * fix: grid and image for menu
+  * feat: animation for grid
+  * fix: add result for STP and searching in SLL
+  * fix: slider animation
+  * fix: draw again hide code button
+  * fix: button
+  * fix: undirected graph
+  * feat: animation for UX
+  * Merge branch 'dev' into animation
+  * fix: dhange shortest path color when dark theme
+  * fix: Add background for dark mode
+  * feat: decoration
+  * feat: Beautify menu
+  * fix: add more button type
+  * fix: refactor file
+  * feat: UI animation
+  * feat: wire message
+  * fix: add text and when drag node text follows node
+  * fix: drag node
+  * fix: relocation when resize the window
+  * feat: add resize node for user( a slider to resize)
+  * fix: help drag node to find old location when creates new one
+  * fix: help drag node to find old location when creates new one
+  * fix: drag node and DS
+  * feat: zoom in and zoom out
+  * feat: drag node
+  * feat: Menu for graph and Heap
+  * fix: return to old version drawHeapFrame of Duc Huy
+  * fix: drag and drop node
+  * feat: App Engine to drag node
+  * feat: Renderer.h and renderer.cpp use to handle Mouse and take the position
+
+========================================
+
+Author: Nhu Khai (Total: 57)
+  - fix: 30
+  - feat: 20
+  - merge: 5
+  - docs: 2
+
+Commits:
+  * Merge branch 'dev' of https://github.com/ndmhuy/DataStructureVisualizer into dev
+  * Merge branch 'docs' of https://github.com/ndmhuy/DataStructureVisualizer into dev
+  * docs: Khai's report
+  * fix: Grid position and indexing distance matrix
+  * docs: Khai's final report
+  * Merge branch 'dev' of https://github.com/ndmhuy/DataStructureVisualizer into dev
+  * fix: restore Init from file
+  * Merge branch '#12-CompleteGUI' of https://github.com/ndmhuy/DataStructureVisualizer into #12-CompleteGUI
+  * fix: Allow input negative weight for undirected graph
+  * fix: Remove Choosing mode for init Graph from file
+  * fix: focus line CodePanel
+  * feat: Menu choosing Directed/ Undirected Graph
+  * feat: Allow show/hide CodePanel
+  * fix: Add Johnson button for SPA
+  * fix: Add Random DAG
+  * fix: Add A* for Grid
+  * fix: fix functions and fix ID Return of InputMenu
+  * fix: fix PlayBackUI logic error
+  * fix: sync Playback logic
+  * fix: path error and logic switch menu error
+  * fix: Add Random function for graph
+  * fix: merge conflicts
+  * fix: Add functions to InputMenu
+  * fix: fix size CodePanel
+  * fix: Add Scroll Bar for codePanel
+  * fix: Create new InputMenu for Grid
+  * fix: Create featured menu for each DS
+  * fix: isPlay -> isshowingPlay
+  * Merge branch '#12-CompleteGUI' of https://github.com/ndmhuy/DataStructureVisualizer into #12-CompleteGUI
+  * fix: Button interaction logics
+  * fix: Fix format of InputBox
+  * feat: imfilebrowser initialization
+  * feat: Home button and Dark/Light Mode button. fix: Polish UI/UX
+  * feat: Init Navigation Menu and add it into UIManager
+  * feat: Add InputMenu, Code Panel into UIManager and add interact functions to UIManager
+  * feat: add functions in UIManager to access controlPanel functions
+  * feat: Code Panel Class and add it into UIManager Class
+  * fix: merge conflicts
+  * feat:Add InputMenu into UIManager
+  * fix: logic input box
+  * feat: Input Menu Class
+  * fix: Size and position logic
+  * fix: alter the button image and fix button logic
+  * feat: build Slider class and initialize speed Slider in UIManager class
+  * feat: add images and add address path
+  * feat: Play, Pause, Step Forward and Step backward button
+  * fix: split files
+  * fix: correct Button handle event logic
+  * feat: intialize Button class
+  * feat: initialize UIManager class and setup ImGui
+  * feat: configure CMake for ImGui and SFML integration
+  * feat: Play, Pause, Step Forward and Step backward button
+  * fix: split files
+  * fix: correct Button handle event logic
+  * feat: intialize Button class
+  * feat: initialize UIManager class and setup ImGui
+  * feat: configure CMake for ImGui and SFML integration
+
+========================================
+
+Author: SpheraXX (Total: 109)
+  - fix: 42
+  - feat: 38
+  - merge: 14
+  - refactor: 4
+  - fix, feat: 3
+  - none: 2
+  - feat, fix: 2
+  - docs: 1
+  - refactor, feat: 1
+  - fix & feat: 1
+  - feat & fit: 1
+
+Commits:
+  * feat: new AVL renderer, no more big belly
+  * feat: file graph input test
+  * feat: add zoom cursor, new speed & playback UI
+  * docs: DHuy's report
+  * fix: recover pseudocode
+  * fix: random less node
+  * fix: include resetInputAction for each return
+  * fix: floyd, johnson wrong wire
+  * fix: change dist node
+  * Merge branch 'dev' into fix-DataManager&AppEngineHandle
+  * fix: include missing frame
+  * fix: wire handle ui with directed/undirected graph
+  * feat: initialize skip frame
+  * fix: temporary addVertex handle
+  * feat: wire handle UI complete
+  * fix: remove creating start, end in random grid
+  * feat: Hap, AVL lines now adapt with nodeSize
+  * fix: now left, right return correct index
+  * fix, feat: nodePositions becomes a vector, add DAG random
+  * fix, feat: nodePositions becomes a vector, add DAG random
+  * feat: add constructor
+  * fix: move all INVALID_INDEX into GlobalConst
+  * feat: add Layout config constructor
+  * add grid graph handle
+  * feat: add initialize from data
+  * feat: add grid functions and change sfml coor to new position
+  * feat: add grid functions and change sfml coor to new position
+  * Merge branch 'dev' into #4-DataManager
+  * fix: change switch case in handle UI input to adapt new UI readme
+  * Merge branch 'dev' into fix-integration
+  * feat: add single vertice case
+  * feat: replace temporary handle UI input with new one created from DataManager
+  * fix, feat: dataGraph now stores only edges, add randomGraph and randomPlanarGraph
+  * refactor: merge with random into MathUtils
+  * Merge branch 'dev' into #4-DataManager
+  * Merge branch 'dev' into fix-integration
+  * fix: coordinate adapt with wins.size
+  * Merge branch 'dev' into fix-integration
+  * fix: replace old frame in update func with new frame (payload)
+  * fix: change 0 (null) to max
+  * fix: set INVALID_INDEX to 'modern' max
+  * fix: change 0 (null) to max
+  * feat: add visit TreePayLoad
+  * fix: remove getNodeIndex, use heap formula to compute instead then return to payload
+  * fix: change all int to size_t and redefine null
+  * fix: change drawLine to drawLineWithArrow
+  * feat: add renderer
+  * fix: checking merge
+  * Merge branch '#10-AVLTreeStructure' into integration/#9-#10-#5.1
+  * Merge branch '#9-HeapStructure' into integration/#9-#10-#5.1
+  * fix: change initial coor & change check left right to parent
+  * Merge branch 'dev' into #10-AVLTreeStructure
+  * fix: undo
+  * fix: not draw null
+  * Merge branch '#5.1-DSExtra' into integration/#9-#10-#5.1
+  * refactor, feat: toVector now as a heap and add update func
+  * feat: add update func
+  * refactor: add default functions
+  * Merge branch 'dev' into #4-DataManager
+  * feat: rename random func and add geometry funcs
+  * fix: adjust randomGraph and include missing libs
+  * fix: simplify dataGraph
+  * Merge branch '#5.1-DSExtra' into integration/#9-#10-#5.1
+  * Merge remote-tracking branch 'origin/#10-AVLTreeStructure' into integration/#9-#10
+  * refactor: move AVL struct in general render into its renderer
+  * fix: include missing headers
+  * fix: include missing headers
+  * refactor: move heap frame in general renderer into its renderer
+  * feat: temporary geometric function
+  * feat: implement random graph function
+  * feat: simpler rand() and graph random function
+  * feat: almost complete drawAVLTreeFrame
+  * fix: change parent idx
+  * feat: include missing timeline in recursion
+  * feat: include timeline in heapify()
+  * fix: PR copilot suggestions
+  * fix: delete DataStructure folder
+  * feat: add graph data functions
+  * feat: add outputGraph functions
+  * feat: add inputGraph functions and dataGraph getter
+  * fix: change ignore value 0 to accept all int value
+  * fix: split heap StructureType into 2 options
+  * feat: add getStructureType() for min, max heap
+  * feat: add drawHeapFrame()
+  * fix & feat: typo and add clear() function
+  * fix: typo and toVector() return values not indices
+  * Merge branch 'dev' into #5.1-DSExtra
+  * Resolve merge conflict by removing redundant Heap.cpp
+  * feat: include timeline to helper functions
+  * feat: include timeline to helper functions
+  * fix: rename function
+  * fix: remove buildHeap function
+  * fix: tree reconstruct
+  * fix: tree reconstructure
+  * feat & fit: restructure & distinct max, min heap
+  * feat: beta AVL Tree operations
+  * feat, fix: include initial operations & add static
+  * feat: avltree function implementation
+  * feat: heap operations
+  * feat: heap function implementation
+  * fix: improve warning message
+  * fix: include missing lib
+  * feat, fix: remove redundant lib & separate input console function
+  * fix: repair input from file & improve randomizer & split input console into stream and manual
+  * fix: remove crash when input is empty
+  * feat: Add data getter & randomizer function
+  * feat: Add file/console output function
+  * feat: Add file/console input function
+  * feat: initial setup
+
+========================================
+
+Author: Nguyễn Anh Kiệt (Total: 15)
+  - feat: 12
+  - merge: 2
+  - fix: 1
+
+Commits:
+  * Merge branch 'dev' into utilities
+  * Merge branch 'dev' into utilities
+  * feat: theme.cpp
+  * feat: Renderer.cpp add framepayload and refactor the parameter
+  * feat: theme.h update color for highlight
+  * feat: Renderer.h
+  * fix: relocation assets
+  * feat: Add drawsubText for circle node and array cell
+  * feat: drawline
+  * feat: add draw Array Cell
+  * feat: fix draw Node
+  * feat: new Renderer.h and load image and font from assets
+  * feat: assets for array,node,background image and theme.h and theme.cpp
+  * feat: renderer.h and drawNode
+  * feat: add Window class and configure CMake for SFML 3.0.2
+
+========================================
+
+Author: copilot-swe-agent[bot] (Total: 1)
+  - fix uimanager: 1
+
+Commits:
+  * Fix UIManager::init to call ImGui::SFML::Shutdown() on icon-load early returns
+
+========================================
+
