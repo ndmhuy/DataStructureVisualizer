@@ -27,11 +27,30 @@ The architecture is divided into three interconnected categories of components:
         labelnode/.style={font=\bfseries}
     ]
     
+    % ================== CONTROLLER ==================
+    \node (appEngine) [box, fill=green!10] {\textbf{AppEngine}\\(Coordinator)};
+    \node (dataManager) [box, fill=green!10, left=of appEngine, xshift=-0.5cm] {DataManager};
+    \node (playback) [box, fill=green!10, right=of appEngine, xshift=0.5cm] {Playback};
+    
+    \begin{scope}[on background layer]
+        \node (controllerGroup) [groupbox, fill=green!5, fit=(appEngine) (dataManager) (playback)] {};
+        \node [above left=0pt of controllerGroup.north west, labelnode, color=green!60!black] {Controller Layer};
+    \end{scope}
+    
+    % ================== VIEW ==================
+    \node (uimanager) [box, fill=red!10, below left=3.5cm and -1.5cm of appEngine] {\textbf{UIManager}\\(ImGui)};
+    \node (renderer) [box, fill=red!10, below=of uimanager] {\textbf{Renderer}\\(SFML)};
+    
+    \begin{scope}[on background layer]
+        \node (viewGroup) [groupbox, fill=red!3, fit=(uimanager) (renderer)] {};
+        \node [above left=0pt of viewGroup.north west, labelnode, color=red!70!black] {View Layer};
+    \end{scope}
+    
     % ================== MODEL ==================
-    \node (ivisualizable) [box, fill=blue!10] {\textbf{IVisualizable}\\(Base Interface)};
+    \node (ivisualizable) [box, fill=blue!10, below right=3.5cm and -0.5cm of appEngine] {\textbf{IVisualizable}\\(Base Interface)};
     \node (structures) [box, fill=blue!5, below=of ivisualizable] {Data Structures\\(List, Graph, Heap, etc.)};
     
-    \node (timeline) [box, fill=cyan!10, right=of ivisualizable, xshift=2cm] {Timeline \& Frames};
+    \node (timeline) [box, fill=cyan!10, right=of ivisualizable, xshift=1cm] {Timeline \& Frames};
     \node (payloads) [box, fill=cyan!5, below=of timeline] {IPayload};
     \node (ipayloadvis) [box, fill=cyan!5, right=of payloads, xshift=0.5cm] {IPayloadVisitor};
     
@@ -40,27 +59,8 @@ The architecture is divided into three interconnected categories of components:
         \node [above left=0pt of modelGroup.north west, labelnode, color=blue!70!black] {Model Layer};
     \end{scope}
     
-    % ================== CONTROLLER ==================
-    \node (appEngine) [box, fill=green!10, below=of structures, yshift=-1.5cm] {\textbf{AppEngine}\\(Coordinator)};
-    \node (dataManager) [box, fill=green!10, left=of appEngine, xshift=-1cm] {DataManager};
-    \node (playback) [box, fill=green!10, right=of appEngine, xshift=1cm] {Playback};
-    
-    \begin{scope}[on background layer]
-        \node (controllerGroup) [groupbox, fill=green!5, fit=(appEngine) (dataManager) (playback)] {};
-        \node [above left=0pt of controllerGroup.north west, labelnode, color=green!60!black] {Controller Layer};
-    \end{scope}
-    
-    % ================== VIEW ==================
-    \node (uimanager) [box, fill=red!10, below=of appEngine, yshift=-1.5cm, xshift=-2.5cm] {\textbf{UIManager}\\(ImGui)};
-    \node (renderer) [box, fill=red!10, right=of uimanager, xshift=3cm] {\textbf{Renderer}\\(SFML)};
-    
-    \begin{scope}[on background layer]
-        \node (viewGroup) [groupbox, fill=red!3, fit=(uimanager) (renderer)] {};
-        \node [below left=0pt of viewGroup.south west, labelnode, color=red!70!black] {View Layer};
-    \end{scope}
-    
     % ================== UTILITIES ==================
-    \node (utilities) [box, fill=yellow!10, left=of ivisualizable, xshift=-2cm] {Utilities\\(Pseudocode, config)};
+    \node (utilities) [box, fill=yellow!10, below=1.5cm of controllerGroup] {Utilities\\(Pseudocode, config)};
 
     % ================== RELATIONSHIPS ==================
     % Model internal
@@ -72,20 +72,19 @@ The architecture is divided into three interconnected categories of components:
     % Controller connections
     \draw [arrow] (appEngine) -- (dataManager);
     \draw [arrow] (appEngine) -- (playback);
-    \draw [arrow] (appEngine) -- node[left, font=\scriptsize] {routes actions} (structures);
-    \draw [dashed_arrow] (playback.east) -| node[right, font=\scriptsize, near start] {traverses} (timeline.south);
+    \draw [arrow] (appEngine) -- node[above right, font=\scriptsize, sloped, pos=0.6] {routes actions} (modelGroup.north west);
+    \draw [dashed_arrow] (playback.east) -| ++(1.5,0) |- node[above, font=\scriptsize, near end] {traverses} (timeline.east);
     
     % View connections
-    \draw [arrow] (appEngine) -- node[left, font=\scriptsize] {updates} (uimanager);
-    \draw [arrow] (appEngine) -- node[right, font=\scriptsize] {draws} (renderer);
+    \draw [arrow] (appEngine) -- node[above left, font=\scriptsize, sloped, pos=0.6] {updates} (viewGroup.north east);
     
     % Cross-layer interactions
-    \draw [arrow] (renderer.east) -| ++(1.5cm, 0) |- node[right, font=\scriptsize, near start] {implements} (ipayloadvis.east);
+    \draw [arrow] (renderer.south) |- ++(0,-1cm) -| node[right, font=\scriptsize, near end] {implements} (ipayloadvis.south);
+    \draw [dashed_arrow] (renderer.east) -- node[above, font=\scriptsize] {renders} (payloads.west);
     
-    \draw [dashed_arrow] (renderer.north) -- node[right, font=\scriptsize, pos=0.8] {renders} (payloads.south);
-    \draw [dashed_arrow] (uimanager.north) .. controls +(up:4.5) and +(down:2) .. node[left, font=\scriptsize, pos=0.8] {queries state} (timeline.south west);
+    \draw [dashed_arrow] (uimanager.south) |- ++(0,-2cm) -| node[right, font=\scriptsize, near end] {queries state} (timeline.south);
     
-    \draw [arrow] (uimanager) -| node[left, font=\scriptsize, pos=0.2] {reads context} (utilities);
+    \draw [arrow] (uimanager.north) |- node[above, font=\scriptsize, near end] {reads context} (utilities.west);
     \end{tikzpicture}
     }
     \caption{Application Architecture Diagram detailing the relationships between MVC components.}
@@ -163,6 +162,7 @@ When a \texttt{Frame} is rendered, the \texttt{Renderer} iterates through the \t
 
 \begin{figure}[h!]
     \centering
+    \resizebox{\textwidth}{!}{
     \begin{tikzpicture}[
         node distance=2cm and 2cm,
         box/.style={rectangle, draw, thick, minimum width=3cm, minimum height=1cm, align=center, fill=white, rounded corners=2pt},
@@ -190,6 +190,7 @@ When a \texttt{Frame} is rendered, the \texttt{Renderer} iterates through the \t
     \draw [dashed_arrow] (gp.south) |- ++(0,-0.8cm) -| node[above, near start, font=\scriptsize] {calls} (renderer.south);
     
     \end{tikzpicture}
+    }
     \caption{UML Class Diagram illustrating the Visitor Pattern for Payload rendering.}
     \label{fig:visitor_pattern}
 \end{figure}
