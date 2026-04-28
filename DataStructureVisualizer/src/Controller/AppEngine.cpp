@@ -24,16 +24,16 @@ bool isInitialState = true;
 AlgorithmType resolveAlgorithmForAction(StructureType structureType, int action, int mode) {
     switch (structureType) {
         case StructureType::SinglyLinkedList:
-            if (action == 1 || action == 5) {
-                return AlgorithmType::SinglyLinkedListInsert;
-            }
             if (action == 2) {
-                return AlgorithmType::SinglyLinkedListRemove;
+                return AlgorithmType::SinglyLinkedListInsert;
             }
             if (action == 3) {
                 return AlgorithmType::SinglyLinkedListSearch;
             }
             if (action == 4) {
+                return AlgorithmType::SinglyLinkedListRemove;
+            }
+            if (action == 5) {
                 return AlgorithmType::SinglyLinkedListUpdate;
             }
             break;
