@@ -83,7 +83,8 @@ void Renderer::drawLineWithArrow(
     ShapeType type2,
     float thickness,
     float arrowSize,
-    bool isHighlighted) {
+    bool isHighlighted,
+    float offset) {
     float dx = p2.x - p1.x;
     float dy = p2.y - p1.y;
     float distance = std::sqrt(dx * dx + dy * dy);
@@ -94,6 +95,12 @@ void Renderer::drawLineWithArrow(
     sf::Vector2f start = getBoundaryPoint(p1, size1, angle, type1);
     
     sf::Vector2f end = getBoundaryPoint(p2, size2, angle + M_PI, type2);
+
+    if (offset != 0.0f && distance > 0.0001f) {
+        sf::Vector2f perp(-dy / distance, dx / distance);
+        start += perp * offset;
+        end += perp * offset;
+    }
 
     float lineLength = std::sqrt(std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2));
 
@@ -119,7 +126,7 @@ void Renderer::drawLineWithArrow(
     window.getWindow().draw(arrowHead);
 }
 
-void Renderer::drawLine(sf::Vector2f p1, sf::Vector2f size1, ShapeType type1, sf::Vector2f p2, sf::Vector2f size2, ShapeType type2, float thickness, bool isHighlighted) {
+void Renderer::drawLine(sf::Vector2f p1, sf::Vector2f size1, ShapeType type1, sf::Vector2f p2, sf::Vector2f size2, ShapeType type2, float thickness, bool isHighlighted, float offset) {
     float dx = p2.x - p1.x;
     float dy = p2.y - p1.y;
     float distance = std::sqrt(dx * dx + dy * dy);
@@ -130,6 +137,12 @@ void Renderer::drawLine(sf::Vector2f p1, sf::Vector2f size1, ShapeType type1, sf
     sf::Vector2f start = getBoundaryPoint(p1, size1, angle, type1);
     
     sf::Vector2f end = getBoundaryPoint(p2, size2, angle + M_PI, type2);
+
+    if (offset != 0.0f && distance > 0.0001f) {
+        sf::Vector2f perp(-dy / distance, dx / distance);
+        start += perp * offset;
+        end += perp * offset;
+    }
 
     float lineLength = std::sqrt(std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2));
 
@@ -649,34 +662,62 @@ void Renderer::visit(const GraphPayload& payload) {
                 break;
             }
         }
-        auto fromPosIt = positionsByVertexId.find(edge.from);
-        auto toPosIt = positionsByVertexId.find(edge.to);
-        if (fromPosIt != positionsByVertexId.end() && toPosIt != positionsByVertexId.end()) {
-            drawLineWithArrow(fromPosIt->second, nodeSize, ShapeType::Circle, toPosIt->second, nodeSize, ShapeType::Circle, 3.0f, 15.0f, highlighted);
-            
-            bool textAlreadyDrawn = false;
-            for (const auto& dt : drawnTexts) {
-                if ((dt.first.first == edge.from && dt.first.second == edge.to) ||
-                    (dt.first.first == edge.to && dt.first.second == edge.from && dt.second == edge.weight)) {
-                    textAlreadyDrawn = true;
+        
+            bool hasReverse = false;
+            for (const auto& e : edges) {
+                if (e.from == edge.to && e.to == edge.from) {
+                    hasReverse = true;
                     break;
                 }
             }
             
-            if (!textAlreadyDrawn) {
-                bool textHighlighted = highlighted;
-                if (!textHighlighted) {
-                    for (const auto& he : hEdges) {
-                        if (he.from == edge.to && he.to == edge.from) {
-                            textHighlighted = true;
-                            break;
-                        }
+            float edgeOffset = hasReverse ? -12.0f : 0.0f;
+
+            auto fromPosIt = positionsByVertexId.find(edge.from);
+            auto toPosIt = positionsByVertexId.find(edge.to);
+            if (fromPosIt != positionsByVertexId.end() && toPosIt != positionsByVertexId.end()) {
+                sf::Vector2f p1 = fromPosIt->second;
+                sf::Vector2f p2 = toPosIt->second;
+                
+                drawLineWithArrow(p1, nodeSize, ShapeType::Circle, p2, nodeSize, ShapeType::Circle, 3.0f, 15.0f, highlighted, edgeOffset);
+                
+                bool textAlreadyDrawn = false;
+                for (const auto& dt : drawnTexts) {
+                    if ((dt.first.first == edge.from && dt.first.second == edge.to) ||
+                        (!hasReverse && dt.first.first == edge.to && dt.first.second == edge.from && dt.second == edge.weight)) {
+                        textAlreadyDrawn = true;
+                        break;
                     }
                 }
-                drawTextOnLine(fromPosIt->second, toPosIt->second, 12.0f, std::to_string(edge.weight), 16, textHighlighted ? theme.accentColor : theme.textColor);
-                drawnTexts.push_back({{edge.from, edge.to}, edge.weight});
+                
+                if (!textAlreadyDrawn) {
+                    bool textHighlighted = highlighted;
+                    if (!textHighlighted && !hasReverse) {
+                        for (const auto& he : hEdges) {
+                            if (he.from == edge.to && he.to == edge.from) {
+                                textHighlighted = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    sf::Vector2f perp(0.0f, 0.0f);
+                    if (hasReverse) {
+                        float dx = p2.x - p1.x;
+                        float dy = p2.y - p1.y;
+                        float dist = std::sqrt(dx * dx + dy * dy);
+                        if (dist > 0.0001f) {
+                            perp = sf::Vector2f(-dy / dist, dx / dist);
+                        }
+                    }
+                    
+                    sf::Vector2f tP1 = p1 + perp * edgeOffset;
+                    sf::Vector2f tP2 = p2 + perp * edgeOffset;
+
+                    drawTextOnLine(tP1, tP2, 12.0f, std::to_string(edge.weight), 16, textHighlighted ? theme.accentColor : theme.textColor);
+                    drawnTexts.push_back({{edge.from, edge.to}, edge.weight});
+                }
             }
-        }
     }
 
     for (size_t i = 0; i < vertices.size(); ++i) {
