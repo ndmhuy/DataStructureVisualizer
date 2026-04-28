@@ -24,18 +24,23 @@ private:
 
 public:
     // create a button with image
+    // Loads the button texture and applies the theme.
     bool init(const std::string& imagepath, const Theme& selectedTheme);
 
     // determine if the button is active or not
+    // Enables or disables button interaction.
     void setActive(bool);
 
     // resize event
+    // Updates the button bounds for the new position and radius.
     void resize(sf::Vector2f position, float radius);
 
     // detect if the button is clicked
+    // Handles mouse and keyboard events for the button.
     bool handleEvent(const sf::RenderWindow&, const sf::Event&);
 
     // draw
+    // Renders the button.
     void render(sf::RenderWindow&);
 };
 
