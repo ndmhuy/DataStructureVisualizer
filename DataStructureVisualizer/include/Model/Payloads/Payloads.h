@@ -38,10 +38,11 @@ struct TreePayload : public IPayload {
     size_t rootId;
     std::vector<size_t> highlightedNodes;
     std::map<std::string, size_t> pointers; // e.g., {"current": 2}
+    std::vector<size_t> successNodes;
 
     TreePayload() : rootId(INVALID_INDEX) {}
-    TreePayload(std::vector<TreeNodeData> nodes, size_t rootId = INVALID_INDEX, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<Position> positions = {})
-        : nodes(std::move(nodes)), positions(std::move(positions)), rootId(rootId), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)) {}
+    TreePayload(std::vector<TreeNodeData> nodes, size_t rootId = INVALID_INDEX, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<Position> positions = {}, std::vector<size_t> successNodes = {})
+        : nodes(std::move(nodes)), positions(std::move(positions)), rootId(rootId), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)), successNodes(std::move(successNodes)) {}
         
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new TreePayload(*this); }

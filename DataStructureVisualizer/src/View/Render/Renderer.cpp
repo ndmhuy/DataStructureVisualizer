@@ -499,7 +499,7 @@ void Renderer::visit(const LinkedListPayload& payload) {
     }
     for (const auto& [targetId, label] : pointerLabels) {
         if (targetId < positions.size()) {
-            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Down, nodeSize.y, 0, 10.0f);
+            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Down, nodeSize.y, 0, 30.0f);
         }
     }
 
@@ -587,6 +587,14 @@ void Renderer::visit(const TreePayload& payload) {
         anim.scale += ((isHighlighted ? 1.2f : 1.0f) - anim.scale) * lerpScale;
         anim.highlightAlpha += ((isHighlighted ? 1.0f : 0.0f) - anim.highlightAlpha) * lerpScale;
         
+        bool isSuccess = std::find(payload.successNodes.begin(), payload.successNodes.end(), id) != payload.successNodes.end();
+        sf::Color targetColor = isSuccess ? theme.successColor : (isHighlighted ? theme.highlightColor : theme.nodeTintColor);
+        if (anim.colorR < 0.0f) { anim.colorR = targetColor.r; anim.colorG = targetColor.g; anim.colorB = targetColor.b; }
+        float lerpCol = 1.0f - std::exp(-10.0f * currentDeltaTime);
+        anim.colorR += (targetColor.r - anim.colorR) * lerpCol;
+        anim.colorG += (targetColor.g - anim.colorG) * lerpCol;
+        anim.colorB += (targetColor.b - anim.colorB) * lerpCol;
+        
         positions[id] = anim.pos;
     }
 
@@ -628,7 +636,7 @@ void Renderer::visit(const TreePayload& payload) {
     }
     for (const auto& [targetId, label] : pointerLabels) {
         if (positions.find(targetId) != positions.end()) {
-            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Up, nodeSize.y, 0, 10.0f);
+            drawTextPositioned(positions[targetId], label, 16, theme.accentColor, TextPositionMode::Up, nodeSize.y, 0, 30.0f);
         }
     }
 
@@ -1119,9 +1127,9 @@ void Renderer::visit(const GridPayload& payload) {
             
             sf::Color targetColor;
             if (state == 0) { // Empty
-                targetColor = isDark ? sf::Color(60, 65, 75, 180) : sf::Color(220, 220, 230, 180);
+                targetColor = isDark ? sf::Color(200, 210, 220, 180) : sf::Color(220, 220, 230, 180);
             } else if (state == 1) { // Wall
-                targetColor = isDark ? sf::Color(200, 210, 220) : sf::Color(50, 50, 50);
+                targetColor = isDark ? sf::Color(30, 30, 30) : sf::Color(50, 50, 50);
             } else if (state == 2) { // Start
                 targetColor = theme.successColor; 
             } else if (state == 3) { // Target
@@ -1135,7 +1143,6 @@ void Renderer::visit(const GridPayload& payload) {
             // Khởi tạo màu lần đầu (tránh bị đen xì)
             if (anim.colorR < 0.0f) {
                 anim.colorR = targetColor.r; anim.colorG = targetColor.g; anim.colorB = targetColor.b;
-                anim.scale = 0.0f; // Bắt đầu từ 0 để có hiệu ứng Pop-in lúc mới vẽ
             }
 
             // Pha màu mượt mà (Color Blending)
@@ -1144,21 +1151,9 @@ void Renderer::visit(const GridPayload& payload) {
             anim.colorG += (targetColor.g - anim.colorG) * lerpCol;
             anim.colorB += (targetColor.b - anim.colorB) * lerpCol;
 
-            // Vật lý lò xo cho Scale (Spring Physics)
-            float targetScale = isCurrent ? 1.25f : 1.0f;
-            if (state == 1 && !isCurrent) targetScale = 0.85f; // Tường thụt vào một chút
-            else if ((state == 2 || state == 3 || state == 5) && !isCurrent) targetScale = 1.1f; // Các ô đặc biệt phình to
-            
-            float tension = 250.0f; float damp = 14.0f;
-            anim.velScale += (targetScale - anim.scale) * tension * currentDeltaTime;
-            anim.velScale *= std::exp(-damp * currentDeltaTime);
-            anim.scale += anim.velScale * currentDeltaTime;
-
-            // Vẽ ô Grid với Scale và Origin ở trung tâm
-            float currentCellSize = (cellSize - 2.0f) * anim.scale;
-            sf::RectangleShape cell(sf::Vector2f(currentCellSize, currentCellSize));
-            cell.setOrigin({currentCellSize / 2.0f, currentCellSize / 2.0f});
-            cell.setPosition({startX + c * cellSize + cellSize / 2.0f, startY + r * cellSize + cellSize / 2.0f});
+            // Vẽ ô Grid tĩnh như cũ
+            sf::RectangleShape cell(sf::Vector2f(cellSize - 2.0f, cellSize - 2.0f));
+            cell.setPosition({startX + c * cellSize + 1.0f, startY + r * cellSize + 1.0f});
             
             sf::Color currentColor(
                 static_cast<std::uint8_t>(anim.colorR),
@@ -1173,9 +1168,6 @@ void Renderer::visit(const GridPayload& payload) {
                 float pulse = std::sin(appTime * 15.0f) * 2.0f;
                 cell.setOutlineThickness(3.0f + pulse);
                 cell.setOutlineColor(theme.highlightColor); // Dùng màu highlight của Theme cho đồng bộ
-            } else if (state == 2 || state == 3 || state == 5) {
-                cell.setOutlineThickness(1.5f);
-                cell.setOutlineColor(theme.highlightColor);
             }
 
             window.getWindow().draw(cell);
@@ -1552,6 +1544,91 @@ void Renderer::visit(const MenuAnimPayload& payload) {
                 }
             }
         } else if (payload.menuState == 3) {
+            if (i == 0) {
+                // Directed Graph (Triangle with moving arrows)
+                std::vector<sf::Vector2f> dNodes = {
+                    {cx, cy - 25.0f},
+                    {cx + 25.0f, cy + 20.0f},
+                    {cx - 25.0f, cy + 20.0f}
+                };
+                
+                std::vector<std::pair<int, int>> dEdges = {{0,1}, {1,2}, {2,0}};
+                for (size_t e = 0; e < dEdges.size(); ++e) {
+                    sf::Vector2f p1 = dNodes[dEdges[e].first];
+                    sf::Vector2f p2 = dNodes[dEdges[e].second];
+                    
+                    float dx = p2.x - p1.x;
+                    float dy = p2.y - p1.y;
+                    float dist = std::sqrt(dx*dx + dy*dy);
+                    sf::Vector2f dir(dx/dist, dy/dist);
+                    
+                    sf::Vector2f start = p1 + dir * 12.0f;
+                    sf::Vector2f end = p2 - dir * 12.0f;
+                    
+                    sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+                    line[0].position = start; line[0].color = fade(accent, 200);
+                    line[1].position = end;   line[1].color = fade(accent, 200);
+                    window.getWindow().draw(line);
+                    
+                    sf::Vector2f perp(-dir.y, dir.x);
+                    sf::ConvexShape arrow(3);
+                    arrow.setPoint(0, end);
+                    arrow.setPoint(1, end - dir * 8.0f + perp * 5.0f);
+                    arrow.setPoint(2, end - dir * 8.0f - perp * 5.0f);
+                    arrow.setFillColor(fade(accent, 200));
+                    window.getWindow().draw(arrow);
+                    
+                    float cycle = std::fmod(time * 1.5f + e * 0.3f, 1.0f);
+                    sf::Vector2f packetPos = start + (end - start) * cycle;
+                    sf::CircleShape packet(3.0f);
+                    packet.setOrigin({3.0f, 3.0f});
+                    packet.setPosition(packetPos);
+                    packet.setFillColor(fade(highlight, 255));
+                    window.getWindow().draw(packet);
+                }
+                
+                for (auto& p : dNodes) {
+                    sf::CircleShape node(12.0f);
+                    node.setOrigin({12.0f, 12.0f});
+                    node.setPosition(p);
+                    node.setFillColor(isDark ? fade(silverCol, 80) : fade(primary, 100));
+                    node.setOutlineThickness(2.0f);
+                    node.setOutlineColor(fade(highlight, 200));
+                    window.getWindow().draw(node);
+                }
+            } else if (i == 1) {
+                // Undirected Graph (Pulsing connections)
+                std::vector<sf::Vector2f> uNodes = {
+                    {cx, cy - 25.0f},
+                    {cx + 25.0f, cy + 20.0f},
+                    {cx - 25.0f, cy + 20.0f},
+                    {cx, cy + 5.0f}
+                };
+                
+                std::vector<std::pair<int, int>> uEdges = {{0,1}, {1,2}, {2,0}, {0,3}, {1,3}, {2,3}};
+                for (size_t e = 0; e < uEdges.size(); ++e) {
+                    sf::Vector2f p1 = uNodes[uEdges[e].first];
+                    sf::Vector2f p2 = uNodes[uEdges[e].second];
+                    
+                    float pulse = 0.5f + 0.5f * std::sin(time * 5.0f + e);
+                    sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+                    line[0].position = p1; line[0].color = fade(primary, static_cast<std::uint8_t>(100 + 100 * pulse));
+                    line[1].position = p2; line[1].color = fade(accent, static_cast<std::uint8_t>(100 + 100 * pulse));
+                    window.getWindow().draw(line);
+                }
+                
+                for (size_t n = 0; n < uNodes.size(); ++n) {
+                    float swayY = std::sin(time * 3.0f + n) * 3.0f;
+                    sf::CircleShape node(10.0f);
+                    node.setOrigin({10.0f, 10.0f});
+                    node.setPosition({uNodes[n].x, uNodes[n].y + swayY});
+                    node.setFillColor(fade(primary, 150));
+                    node.setOutlineThickness(2.0f);
+                    node.setOutlineColor(fade(accent, 220));
+                    window.getWindow().draw(node);
+                }
+            }
+        } else if (payload.menuState == 4) {
             if (i == 0) {
                 // Adj Matrix (Glowing Data Grid)
                 int mSize = 4;
