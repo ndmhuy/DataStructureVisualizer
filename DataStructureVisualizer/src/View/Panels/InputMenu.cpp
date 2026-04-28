@@ -566,10 +566,10 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
             if (DrawButton("Graph", true, 60.0f)) {} // Luôn active mode 0
             ImGui::SameLine(0, 15.0f);
             ImGui::SetCursorPosY(textY); ImGui::Text("minW="); ImGui::SameLine();
-            DrawInput("##in_rand_minw", inputBuf1, sizeof(inputBuf1), 40.0f, UnsignedNumberOnlyFilter);
+            DrawInput("##in_rand_minw", inputBuf1, sizeof(inputBuf1), 40.0f,NumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
             ImGui::SetCursorPosY(textY); ImGui::Text("maxW="); ImGui::SameLine();
-            DrawInput("##in_rand_maxw", inputBuf2, sizeof(inputBuf2), 40.0f, UnsignedNumberOnlyFilter);
+            DrawInput("##in_rand_maxw", inputBuf2, sizeof(inputBuf2), 40.0f, NumberOnlyFilter);
             ImGui::SameLine();
             if (DrawButton("OK", false, 60.0f)) {
                 outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = ""; outString4 = "";
@@ -585,7 +585,7 @@ void InputMenu::renderinputform(const sf::RenderWindow& window, int cur, ImVec2 
             DrawInput("##in_edge_v", inputBuf2, sizeof(inputBuf2), 50.0f, UnsignedNumberOnlyFilter);
             ImGui::SameLine(0, theme.inputMenuUpdateLabelSpacing);
             ImGui::SetCursorPosY(textY); ImGui::Text("(u,v)="); ImGui::SameLine();
-            DrawInput("##in_edge_w", inputBuf3, sizeof(inputBuf3), 50.0f, UnsignedNumberOnlyFilter); // Unsigned for Undirected
+            DrawInput("##in_edge_w", inputBuf3, sizeof(inputBuf3), 50.0f, NumberOnlyFilter); // Unsigned for Undirected
             ImGui::SameLine();
             if (DrawButton("OK", false, 60.0f)) {
                 outMode = 0; outString1 = inputBuf1; outString2 = inputBuf2; outString3 = inputBuf3; outString4 = "";
