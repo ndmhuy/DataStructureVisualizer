@@ -533,33 +533,37 @@ void DataManager::randomDataPlanarGraph(int n, int minValue, int maxValue, float
     }
 }
 
-void DataManager::randomDataDAG(int vertexCount, int edgeCount, int minWeight, int maxWeight) {
+void DataManager::randomDataDAG(int vertexCount, int minWeight, int maxWeight) {
     dataGraph.clear();
     
     if (vertexCount <= 0) return;
 
     int maxPossibleEdges = vertexCount * (vertexCount - 1) / 2;
-    if (edgeCount > maxPossibleEdges) {
-        edgeCount = maxPossibleEdges; 
-    }
+    int targetEdgeCount = MathUtils::getRandomInRange(
+        vertexCount - 1, 
+        std::min(maxPossibleEdges, vertexCount + vertexCount / 2)
+    );
 
     std::set<std::pair<int, int>> existingEdges;
-    
+
+    for (int u = 0; u < vertexCount - 1; ++u) {
+        int v = MathUtils::getRandomInRange(u + 1, vertexCount - 1);
+        existingEdges.insert({u, v});
+        
+        int weight = MathUtils::getRandomInRange(minWeight, maxWeight);
+        dataGraph.push_back(Edge((size_t)u, (size_t)v, weight));
+    }
+
     int attempts = 0;
-    int maxAttempts = edgeCount * 10; 
+    int maxAttempts = targetEdgeCount * 10; 
 
-    while (existingEdges.size() < (size_t)edgeCount && attempts < maxAttempts) {
-        int u = MathUtils::getRandomInRange(0, vertexCount - 1);
-        int v = MathUtils::getRandomInRange(0, vertexCount - 1);
+    while (existingEdges.size() < (size_t)targetEdgeCount && attempts < maxAttempts) {
+        int u = MathUtils::getRandomInRange(0, vertexCount - 2);
+        int v = MathUtils::getRandomInRange(u + 1, vertexCount - 1);
 
-        if (u > v) {
-            std::swap(u, v);
-        }
-
-        if (u != v && existingEdges.find({u, v}) == existingEdges.end()) {
+        if (existingEdges.find({u, v}) == existingEdges.end()) {
             existingEdges.insert({u, v});
             int weight = MathUtils::getRandomInRange(minWeight, maxWeight);
-            
             dataGraph.push_back(Edge((size_t)u, (size_t)v, weight));
         }
         attempts++;
