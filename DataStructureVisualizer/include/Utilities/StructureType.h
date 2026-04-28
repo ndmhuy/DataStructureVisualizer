@@ -23,6 +23,7 @@ enum class StructureType {
     AdjacencyMatrix,
     GridGraph,
 
+    // No active structure.
     None // Default
 };
 

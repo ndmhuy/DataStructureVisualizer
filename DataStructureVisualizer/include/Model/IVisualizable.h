@@ -6,10 +6,13 @@
 
 class IVisualizable {
 public:
+    // Destroys the visualizable interface.
     virtual ~IVisualizable() = default;
     
+    // Clears the underlying structure and logs the change.
     virtual void clear(Timeline& timeline) = 0;
 
+    // Returns the structure type used by the UI.
     virtual StructureType getStructureType() const = 0;
 };
 

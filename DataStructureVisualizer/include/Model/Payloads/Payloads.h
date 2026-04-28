@@ -17,6 +17,7 @@ struct LinkedListPayload : public IPayload {
     std::vector<size_t> successNodes;
 
     LinkedListPayload() = default;
+    // Creates a linked-list payload snapshot.
     LinkedListPayload(std::vector<int> values, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<size_t> successNodes = {})
         : values(std::move(values)), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)), successNodes(std::move(successNodes)) {}
         
@@ -41,6 +42,7 @@ struct TreePayload : public IPayload {
     std::vector<size_t> successNodes;
 
     TreePayload() : rootId(INVALID_INDEX) {}
+    // Creates a tree payload snapshot.
     TreePayload(std::vector<TreeNodeData> nodes, size_t rootId = INVALID_INDEX, std::vector<size_t> highlightedNodes = {}, std::map<std::string, size_t> pointers = {}, std::vector<Position> positions = {}, std::vector<size_t> successNodes = {})
         : nodes(std::move(nodes)), positions(std::move(positions)), rootId(rootId), highlightedNodes(std::move(highlightedNodes)), pointers(std::move(pointers)), successNodes(std::move(successNodes)) {}
         
@@ -53,6 +55,7 @@ struct HeapPayload : public IPayload {
     std::vector<size_t> highlightedIndices;
 
     HeapPayload() = default;
+    // Creates a heap payload snapshot.
     HeapPayload(std::vector<int> arrayData, std::vector<size_t> highlightedIndices = {})
         : arrayData(std::move(arrayData)), highlightedIndices(std::move(highlightedIndices)) {}
         
@@ -71,6 +74,7 @@ struct GraphPayload : public IPayload {
     std::vector<size_t> startVertices; // For special start node coloring
 
     GraphPayload() = default;
+    // Creates a graph payload snapshot.
     GraphPayload(
         std::vector<size_t> vertices,
         std::vector<Edge> edges = {},
@@ -94,6 +98,7 @@ struct SingleSourcePayload : public IPayload {
     std::vector<std::pair<int, size_t>> priorityQueueSnapShot;
 
     SingleSourcePayload() : startVertex(INVALID_INDEX) {}
+    // Creates a single-source shortest-path payload snapshot.
     SingleSourcePayload(
         GraphPayload baseGraph,
         size_t startVertex,
@@ -117,6 +122,7 @@ struct AStarPayload : public IPayload {
     size_t targetVertex;
 
     AStarPayload() : startVertex(INVALID_INDEX), targetVertex(INVALID_INDEX) {}
+    // Creates an A* payload snapshot.
     AStarPayload(
         GraphPayload baseGraph,
         size_t startVertex,
@@ -139,6 +145,7 @@ struct AllPairsPayload : public IPayload {
     std::vector<size_t> currentPath;
 
     AllPairsPayload() = default;
+    // Creates an all-pairs shortest-path payload snapshot.
     AllPairsPayload(
         GraphPayload baseGraph,
         std::vector<std::vector<int>> distances = {},
@@ -155,6 +162,7 @@ struct GridPayload : public IPayload {
     std::pair<size_t, size_t> currentCell;
 
     GridPayload() = default;
+    // Creates a grid payload snapshot.
     GridPayload(
         std::vector<std::vector<int>> gridData,
         std::pair<size_t, size_t> currentCell = {std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max()})
@@ -173,6 +181,7 @@ struct MenuAnimPayload : public IPayload {
     std::string title;
 
     MenuAnimPayload() = default;
+    // Creates a menu animation payload snapshot.
     MenuAnimPayload(float time, int menuState, bool isDarkMode, sf::Vector2f winSize, std::vector<std::string> buttonNames, std::string title)
         : time(time), menuState(menuState), isDarkMode(isDarkMode), winSize(winSize), buttonNames(std::move(buttonNames)), title(std::move(title)) {}
         
@@ -185,6 +194,7 @@ struct TopBarPayload : public IPayload {
     bool isShowingCode;
     sf::Vector2f winSize;
     TopBarPayload() = default;
+    // Creates a top-bar payload snapshot.
     TopBarPayload(bool dark, bool showingCode, sf::Vector2f ws) : isDarkMode(dark), isShowingCode(showingCode), winSize(ws) {}
     void accept(IPayloadVisitor& visitor) const override { visitor.visit(*this); }
     IPayload* clone() const override { return new TopBarPayload(*this); }
@@ -195,6 +205,7 @@ struct DecorationPayload : public IPayload {
     sf::Vector2f winSize;
 
     DecorationPayload() = default;
+    // Creates a decoration payload snapshot.
     DecorationPayload(float time, sf::Vector2f winSize)
         : time(time), winSize(winSize) {}
         

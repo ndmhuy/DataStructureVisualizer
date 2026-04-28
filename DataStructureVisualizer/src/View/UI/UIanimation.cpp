@@ -5,6 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <cstdlib>
+#include <cstdio>
 
 namespace {
     // Cấu trúc Hạt Particle dùng cho ParticleButton
@@ -293,6 +294,84 @@ namespace UIanimation {
         }
 
         return pressed;
+    }
+
+    bool JuicySliderFloat(const char* label, float* v, float v_min, float v_max, const char* format, ImVec4 cNormal, ImVec4 cHover, ImVec4 cActive) {
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        if (window->SkipItems) return false;
+
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
+        const ImGuiID id = window->GetID(label);
+        const float w = ImGui::CalcItemWidth();
+
+        const ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
+        const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
+        const ImRect total_bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
+
+        ImGui::ItemSize(total_bb, style.FramePadding.y);
+        if (!ImGui::ItemAdd(total_bb, id, &frame_bb)) return false;
+
+        // Tự xử lý sự kiện kéo thả (Drag) thay vì dùng SliderBehavior nội bộ gây crash
+        bool hovered, held;
+        bool pressed = ImGui::ButtonBehavior(frame_bb, id, &hovered, &held);
+        bool temp_changed = false;
+        if (held) {
+            float t = ImClamp((g.IO.MousePos.x - frame_bb.Min.x) / (frame_bb.Max.x - frame_bb.Min.x), 0.0f, 1.0f);
+            float new_v = v_min + t * (v_max - v_min);
+            if (*v != new_v) {
+                *v = new_v;
+                temp_changed = true;
+            }
+        }
+        bool active = held;
+
+        static std::unordered_map<ImGuiID, float> hAnim, aAnim, bumpAnim;
+        float dt = g.IO.DeltaTime;
+        hAnim[id] = ImClamp(hAnim[id] + (hovered ? dt * 10.0f : -dt * 5.0f), 0.0f, 1.0f);
+        aAnim[id] = ImClamp(aAnim[id] + (active ? dt * 15.0f : -dt * 10.0f), 0.0f, 1.0f);
+
+        if (temp_changed) bumpAnim[id] = 1.0f;
+        bumpAnim[id] = ImClamp(bumpAnim[id] - dt * 5.0f, 0.0f, 1.0f);
+
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImRect render_bb = frame_bb;
+        
+        float track_h = 6.0f + 2.0f * hAnim[id];
+        ImVec2 track_min = ImVec2(render_bb.Min.x, render_bb.GetCenter().y - track_h * 0.5f);
+        ImVec2 track_max = ImVec2(render_bb.Max.x, render_bb.GetCenter().y + track_h * 0.5f);
+        draw_list->AddRectFilled(track_min, track_max, ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.3f, 1.0f)), track_h * 0.5f);
+
+        // Tính toán vị trí núm trượt an toàn, tránh chia cho 0 sinh ra lỗi NaN
+        float grab_t = (v_max > v_min) ? ImClamp((*v - v_min) / (v_max - v_min), 0.0f, 1.0f) : 0.0f;
+        float grab_x = ImLerp(track_min.x + track_h * 0.5f, track_max.x - track_h * 0.5f, grab_t);
+        ImVec2 filled_max = ImVec2(grab_x, track_max.y);
+        draw_list->AddRectFilled(track_min, filled_max, ImGui::GetColorU32(cNormal), track_h * 0.5f);
+
+        float knob_r = 10.0f + 4.0f * hAnim[id] + 6.0f * aAnim[id];
+        ImVec2 knob_pos = ImVec2(grab_x, render_bb.GetCenter().y);
+        
+        if (active) {
+            float time = (float)ImGui::GetTime();
+            knob_pos.x += std::sin(time * 50.0f) * 1.5f;
+            knob_pos.y += std::cos(time * 60.0f) * 1.5f;
+            draw_list->AddCircleFilled(knob_pos, knob_r + 8.0f, ImGui::GetColorU32(ImVec4(cActive.x, cActive.y, cActive.z, 0.4f)));
+        }
+
+        draw_list->AddCircleFilled(knob_pos, knob_r, ImGui::GetColorU32(active ? cActive : (hovered ? cHover : cNormal)));
+        draw_list->AddCircle(knob_pos, knob_r, ImGui::GetColorU32(ImVec4(1,1,1,1)), 0, 2.0f);
+
+        char value_buf[64];
+        snprintf(value_buf, sizeof(value_buf), format, *v);
+        ImVec2 text_size = ImGui::CalcTextSize(value_buf);
+        ImVec2 text_pos = ImVec2(render_bb.GetCenter().x - text_size.x * 0.5f, render_bb.Min.y - text_size.y - 2.0f);
+        text_pos.y -= bumpAnim[id] * 5.0f; // Chữ nảy lên nhẹ khi thay đổi tốc độ
+        
+        // Tạo bóng mờ đen (Drop Shadow) để chữ luôn hiển thị rõ nét trên mọi nền
+        draw_list->AddText(text_pos + ImVec2(1,1), ImGui::GetColorU32(ImVec4(0,0,0,0.5f)), value_buf);
+        draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), value_buf);
+
+        return temp_changed;
     }
 
     void DrawHoloBackground(const ImVec2& pMin, const ImVec2& pMax, ImVec4 baseColor) {

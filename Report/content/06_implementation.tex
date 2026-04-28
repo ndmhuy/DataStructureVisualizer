@@ -1,6 +1,89 @@
 % 06_implementation.tex
 \section{Implementation}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus.
+This section details the concrete implementation of the core components within the system architecture. It outlines the specific mechanisms used in the Controller and Model layers, focusing on application orchestration, playback state management, and the underlying data structures utilized for visualizations.
 
-Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus.
+\subsection{Controller Layer Implementation}
+
+The Controller layer acts as the nervous system of the application, bridging user interactions with underlying structural logic and managing the flow of time.
+
+\subsubsection{\texttt{AppEngine} (Application Orchestrator)}
+The \texttt{AppEngine} class encapsulates the primary SFML event loop and coordinates all subsystems. Its implementation handles several critical responsibilities:
+
+\begin{itemize}
+    \item \textbf{Input Event Processing}: The \texttt{AppEngine} captures standard SFML events. If an event is not consumed by the \texttt{UIManager} (e.g., Dear ImGui captures a click on a menu button), it falls back to the \texttt{Renderer}. This allows seamless interaction, such as dragging and dropping graph nodes directly on the canvas without triggering UI elements.
+    \item \textbf{View Manipulation (Zoom and Pan)}: To handle large data structures, \texttt{AppEngine} implements an interactive 2D camera system. Mouse scroll wheel events dynamically scale the \texttt{sf::View}, adjusting the zoom factor with clamped boundaries to prevent extreme scaling. Panning is implemented by tracking the mouse delta between \texttt{MouseButtonPressed} and \texttt{MouseMoved} events and shifting the \texttt{sf::View} center accordingly.
+    \item \textbf{Data Action Routing}: When a user requests an algorithm (e.g., Insert, Delete, Run A*), \texttt{AppEngine} queries the \texttt{UIManager} for the input parameters. It then resolves the required action to a specific \texttt{AlgorithmType}, retrieves the corresponding pseudocode via \texttt{PseudocodeManager}, and dispatches the command to the active \texttt{IVisualizable} instance. Once the Model generates a \texttt{Timeline}, it is immediately assigned to the \texttt{Playback} system.
+\end{itemize}
+
+\subsubsection{\texttt{Playback} (Timeline Management)}
+The \texttt{Playback} system provides VCR-like controls (Play, Pause, Step Forward, Step Backward) over the generated visualization states.
+Instead of calculating animations on the fly, the \texttt{Playback} class acts as an iterator over a fully populated \texttt{Timeline}. Its \texttt{update(float deltaTime)} method tracks an internal \texttt{timeAccumulator}. When the accumulator exceeds the \texttt{baseStepDuration} (modified by a \texttt{speedMultiplier}), the system advances to the next \texttt{Frame} in the timeline. This design guarantees deterministic animation and allows users to jump instantly to any step in the algorithm's execution without recalculating the model's state.
+
+\subsection{Model Layer Implementation}
+
+The Model layer houses the mathematical logic and the data payload generation mechanisms for the visualizer.
+
+\subsubsection{Singly Linked List}
+The \texttt{SinglyLinkedList} class implements the \texttt{IStandardStructure} interface. Internally, it manages a standard chain of \texttt{Node} pointers.
+\begin{itemize}
+    \item \textbf{Payload Generation}: Every modification or traversal step in an algorithm (like insertion or searching) records a \texttt{Frame}. The structure captures its current state into a \texttt{std::vector<int>} and creates a \texttt{LinkedListPayload}. It also attaches an array of highlighted indices.
+    \item \textbf{Algorithm Tracking}: For instance, during a search operation, the list iterates through its nodes. At each node, a \texttt{Frame} is generated with the current node's index highlighted and a descriptive message (e.g., "Comparing with node value X"). This provides the View with the exact context needed to highlight the corresponding visual node on the screen.
+\end{itemize}
+
+\subsubsection{Graph Structures (Adjacency List \& Adjacency Matrix)}
+Graphs are implemented using the \texttt{IGraphStructure} abstraction, with concrete variants for Adjacency Lists (optimizing sparse graphs) and Adjacency Matrices (optimizing dense graphs).
+\begin{itemize}
+    \item \textbf{Edge and Vertex Management}: Both variants support adding/removing vertices and directed/undirected edges with weights.
+    \item \textbf{Pathfinding Algorithms}: Implementations for algorithms such as Dijkstra, Bellman-Ford, and A* are provided. During execution, the graph maps its internal state (visited nodes, current paths, edge weights) into a generic \texttt{GraphPayload}. Nodes and edges that are actively being evaluated are tagged with highlight flags within the payload, allowing the \texttt{Renderer} to change their colors dynamically.
+\end{itemize}
+
+\subsubsection{Grid Graph (Pathfinding Grids)}
+The \texttt{GridGraph} structure simulates shortest-path algorithms (BFS, A*) on a 2D matrix, treating each cell as a node with implicit edges to its orthogonal and diagonal neighbors.
+\begin{itemize}
+    \item \textbf{State Mapping}: The grid is represented by an array of \texttt{CellState} enums (Empty, Wall, Start, End, Path, Visited).
+    \item \textbf{Algorithm Visualization}: When running A*, the algorithm maintains open and closed sets. At each expansion step, a \texttt{GridPayload} is generated. Cells in the open set are marked as 'Discovered', and the current shortest path is traced backward from the current node to the start node, marked as 'Path'. This allows users to visually comprehend the expanding frontier of the heuristic search.
+\end{itemize}
+
+\subsubsection{Binary Heap}
+The \texttt{BinaryHeap} implementation provides a visualization of priority queue operations, utilizing a hybrid representation that bridges a logical complete binary tree with a physical contiguous array.
+
+\begin{itemize}
+    \item \textbf{Internal Representation}: The structure is managed via \texttt{std::vector<int> heapArray}. The parent-child relationships are calculated using zero-based indexing arithmetic: a node at index $i$ has children at $2i+1$ and $2i+2$, while its parent resides at $\lfloor(i-1)/2\rfloor$.
+    \item \textbf{Heapify Mechanics}: The core logic is encapsulated in \texttt{shiftUp} and \texttt{heapify} (shift-down) methods. During an \texttt{insert} or \texttt{remove} operation, every swap between elements triggers the generation of a new \texttt{Frame}. This allows the \texttt{Renderer} to animate the "bubbling" effect of elements moving through the levels of the tree.
+    \item \textbf{Polymorphic Comparison}: Through the \texttt{IHeapStructure} abstraction, the system supports both \texttt{MinHeap} and \texttt{MaxHeap}. The specific heap property is enforced by overriding the pure virtual \texttt{compare()} method, which determines the priority during the restoration of the heap invariant.
+\end{itemize}
+
+\subsubsection{AVL Tree (Self-Balancing BST)}
+The \texttt{AVLTree} implementation focuses on demonstrating the maintenance of the height-balance property ($|balance\_factor| \leq 1$) through recursive rotations.
+
+\begin{itemize}
+    \item \textbf{Recursive Balancing}: The structure uses a nested \texttt{Node} structure containing \texttt{height} and pointer-based child references. Following every \texttt{insert} or \texttt{remove} operation, the algorithm recursively traverses back to the root, updating heights and invoking the \texttt{balance()} method.
+    \item \textbf{Rotation Visualization}: The four types of rotations (Left, Right, Left-Right, and Right-Left) are decomposed into discrete steps. When a rotation occurs, the \texttt{AVLTree} generates a \texttt{TreePayload} that updates the parent-child pointers and node positions. The \texttt{Timeline} captures the transient states where the balance factor is violated, highlighting the specific nodes that trigger the rotation logic.
+    \item \textbf{Payload Mapping}: To facilitate rendering, the tree structure is flattened into a \texttt{TreePayload} containing \texttt{TreeNodeData} objects. Each node is assigned a unique ID and its current height, which the \texttt{Renderer} uses to compute the geometric layout on the 2D canvas, ensuring that subtrees do not overlap visually.
+\end{itemize}
+
+\subsection{View Layer Implementation}
+
+The View layer is responsible for the visual representation of data structures and the management of user interactions. It adopts a dual-platform approach: utilizing the Simple and Fast Multimedia Library (SFML) for high-performance 2D canvas rendering, and Dear ImGui for immediate-mode overlay interfaces.
+
+\subsubsection{\texttt{UIManager} (The Mediator)}
+To prevent tight coupling between the graphical interface and the core algorithmic logic, the system employs the \texttt{UIManager} class acting as a Mediator.
+\begin{itemize}
+    \item \textbf{Centralized UI Aggregation}: Instead of exposing individual UI components to the engine, \texttt{UIManager} encapsulates the \texttt{NavigationMenu}, \texttt{InputMenu}, \texttt{CodePanel}, and all playback widgets (\texttt{Button}, \texttt{Slider}).
+    \item \textbf{State Synchronization}: The interface does not process logic; it merely polls user commands (e.g., \texttt{getInputAction()}, \texttt{getInputString1()}) and relays them to the \texttt{AppEngine}. Conversely, the engine updates the UI via the \texttt{syncPlaybackUI()} method, ensuring that buttons correctly reflect the current timeline state (e.g., disabling the 'Step Forward' button when the algorithm terminates).
+\end{itemize}
+
+\subsubsection{\texttt{Renderer} (The Visitor Pattern)}
+The \texttt{Renderer} class is dedicated to drawing the algorithmic payloads onto the SFML canvas. It explicitly implements the \texttt{IPayloadVisitor} interface, leveraging the Visitor design pattern.
+\begin{itemize}
+    \item \textbf{Polymorphic Rendering}: When the core generates a visual state, it passes a generic payload to the \texttt{Renderer}. Through overloaded \texttt{visit()} methods, the \texttt{Renderer} dynamically resolves the payload type (e.g., \texttt{TreePayload}, \texttt{GraphPayload}) and invokes the appropriate drawing subroutines.
+    \item \textbf{Geometric Calculations}: The renderer abstracts complex SFML draw calls into reusable functions like \texttt{drawImageNode()} and \texttt{drawLineWithArrow()}, mathematically calculating boundary points based on the shape types (Circle or Rectangle) to ensure arrows precisely touch the edges of the nodes without overlapping.
+\end{itemize}
+
+\subsubsection{Dynamic Theming and Custom Animations}
+To enhance the user experience, the system avoids static styling by implementing a global \texttt{Theme} singleton.
+\begin{itemize}
+    \item \textbf{On-the-fly Customization}: The \texttt{Theme} structure holds global configurations for colors, typography, and asset paths, enabling seamless toggling between Dark and Light modes without requiring an application restart.
+    \item \textbf{Advanced ImGui Widgets}: Moving beyond default ImGui components, the \texttt{UIanimation} namespace introduces custom, mathematically interpolated widgets. Functions such as \texttt{JuicySliderFloat()} and \texttt{CyberButton()} utilize linear interpolation (Lerp) to create smooth scaling, pulsing glows, and dynamic color transitions, providing a highly polished, modern interface.
+\end{itemize}

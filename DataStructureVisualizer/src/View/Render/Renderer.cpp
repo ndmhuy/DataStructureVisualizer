@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <set>
 #include <cstdint>
+#include <functional>
 
 Renderer::Renderer(Window& m_window, const Theme& m_theme)
     : window(m_window), theme(m_theme), bgSprite(bgTexture) {}
@@ -520,7 +521,7 @@ void Renderer::visit(const LinkedListPayload& payload) {
 }
 
 void Renderer::visit(const TreePayload& payload) {
-    const auto& nodes = payload.nodes; // This nodes only contains non-null nodes, which is different from old way, we store ~ 2^h-1 nodes
+    const auto& nodes = payload.nodes; // This nodes only contains non-null nodes
     const auto& highlights = payload.highlightedNodes;
     
     if (nodes.empty())
@@ -529,15 +530,13 @@ void Renderer::visit(const TreePayload& payload) {
     sf::Vector2u winSize = window.getWindow().getSize();
     // Reserve right-side space for the CodePanel
     float rightReserve = theme.codePanelWidth + theme.codePanelRightOffset + 16.0f;
-    // Since this is new way we need to find the actual height
+    
     size_t maxId = 0;
     for (const auto& node : nodes) {
         if (node.id > maxId) maxId = node.id;
     }
     float virtualHeight = std::ceil(std::log2(maxId + 2)); 
 
-    // Coordinate mapping instead of array
-    // We use map since node id is not filled completely from 0 to final id
     std::map<size_t, sf::Vector2f> positions;
     sf::Vector2f nodeSize = getNodeSize();
 
@@ -545,24 +544,85 @@ void Renderer::visit(const TreePayload& payload) {
     float startX = (static_cast<float>(winSize.x) - rightReserve) / 2.0f;
     float startY = static_cast<float>(winSize.y) * 0.15f;
 
-    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.005f, nodeSize.x - 40.0f);
+    float distanceHorizontal = std::max(static_cast<float>(winSize.x) * 0.005f, nodeSize.x + 40.0f);
     float distanceVertical = std::max(static_cast<float>(winSize.y) * 0.095f, nodeSize.y + 40.0f);
+
+    std::map<size_t, size_t> nodeIndexMap; 
+    std::set<size_t> childIds;
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        nodeIndexMap[nodes[i].id] = i;
+        if (nodes[i].leftId != INVALID_INDEX) childIds.insert(nodes[i].leftId);
+        if (nodes[i].rightId != INVALID_INDEX) childIds.insert(nodes[i].rightId);
+    }
+    
+    size_t rootId = INVALID_INDEX;
+    for (const auto& n : nodes) {
+        if (childIds.find(n.id) == childIds.end()) {
+            rootId = n.id;
+            break;
+        }
+    }
+
+    std::map<size_t, float> subtreeWidth;
+    std::map<size_t, int> depthMap;
+    
+    std::function<float(size_t, int)> calcWidth = [&](size_t id, int depth) -> float {
+        if (id == INVALID_INDEX || nodeIndexMap.find(id) == nodeIndexMap.end()) return 0.0f;
+        
+        depthMap[id] = depth;
+        const auto& node = nodes[nodeIndexMap[id]];
+        
+        float lw = (node.leftId != INVALID_INDEX) ? calcWidth(node.leftId, depth + 1) : distanceHorizontal / 2.0f;
+        float rw = (node.rightId != INVALID_INDEX) ? calcWidth(node.rightId, depth + 1) : distanceHorizontal / 2.0f;
+        
+        float w = lw + rw;
+        if (w < distanceHorizontal) w = distanceHorizontal; 
+        
+        subtreeWidth[id] = w;
+        return w;
+    };
+
+    if (rootId != INVALID_INDEX) calcWidth(rootId, 0);
+
+    std::map<size_t, sf::Vector2f> targetPositions;
+    std::function<void(size_t, float, float)> assignCoords = [&](size_t id, float xStart, float xEnd) {
+        if (id == INVALID_INDEX || nodeIndexMap.find(id) == nodeIndexMap.end()) return;
+        
+        float currentX = (xStart + xEnd) / 2.0f;
+        float currentY = startY + depthMap[id] * distanceVertical;
+        targetPositions[id] = {currentX, currentY};
+        
+        const auto& node = nodes[nodeIndexMap[id]];
+
+        float lw = node.leftId != INVALID_INDEX ? subtreeWidth[node.leftId] : distanceHorizontal / 2.0f;
+        float rw = node.rightId != INVALID_INDEX ? subtreeWidth[node.rightId] : distanceHorizontal / 2.0f;
+        
+        assignCoords(node.leftId, xStart, xStart + lw);
+        assignCoords(node.rightId, xEnd - rw, xEnd);
+    };
+
+    if (rootId != INVALID_INDEX) {
+        assignCoords(rootId, startX - subtreeWidth[rootId] / 2.0f, startX + subtreeWidth[rootId] / 2.0f);
+    }
 
     std::set<size_t> activeIds;
     for (const auto& node : nodes) {
         size_t id = node.id;
+        activeIds.insert(id);
+
         int level = std::floor(std::log2(id + 1));
         int posInLevel = id - (std::pow(2, level) - 1);
-        
         float levelSpacing = distanceHorizontal * std::pow(2, virtualHeight - level);
         int nodesInLevel = std::pow(2, level);
         float levelWidth = levelSpacing * nodesInLevel;
-
         float currentX = startX - levelWidth / 2 + (posInLevel + 0.5f) * levelSpacing;
         float currentY = startY + level * distanceVertical;
         
         sf::Vector2f targetPos = {currentX, currentY};
-        activeIds.insert(id);
+        
+        if (targetPositions.find(id) != targetPositions.end()) {
+            targetPos = targetPositions[id];
+        }
 
         if (nodeAnimStates.find(id) == nodeAnimStates.end()) {
             nodeAnimStates[id].pos = targetPos - sf::Vector2f(0, 50.0f); // Fall down effect
@@ -575,10 +635,10 @@ void Renderer::visit(const TreePayload& payload) {
         float lerpScale = 1.0f - std::exp(-12.0f * currentDeltaTime);
         
         sf::Vector2f diff = targetPos - anim.pos;
-        // Chỉ bẻ cong (Curve) nếu khoảng cách còn đủ xa để tránh rung lắc lúc hội tụ
+        
         if (std::abs(diff.x) > 1.0f || std::abs(diff.y) > 1.0f) {
-            sf::Vector2f perp(-diff.y, diff.x); // Lấy vector vuông góc
-            anim.pos += (diff + perp * 0.3f) * lerpPos; // Cộng thêm độ lệch để tạo đường cong (0.3f là độ cong)
+            sf::Vector2f perp(-diff.y, diff.x); 
+            anim.pos += (diff + perp * 0.3f) * lerpPos; 
         } else {
             anim.pos += diff * lerpPos;
         }
@@ -600,25 +660,18 @@ void Renderer::visit(const TreePayload& payload) {
 
     // Draw edges (with arrow) then draw nodes
     for (const auto& node : nodes) {
-        // Lambda function 
-        // As my understanding, this is "small" function that is just used for specific part and dont need using anywhere else
         auto drawEdgeIfExist = [&](size_t childId) {
             if (positions.count(childId)) {
                 bool isHighlighted = std::find(highlights.begin(), highlights.end(), node.id) != highlights.end();
                 bool isHighlightedChild = std::find(highlights.begin(), highlights.end(), childId) != highlights.end();
-                
-                // arrow: parent to child
                 drawLineWithArrow(positions[node.id], nodeSize, ShapeType::Circle,
                                   positions[childId], nodeSize, ShapeType::Circle,
                                   3.0f, 12.0f, isHighlighted && isHighlightedChild);
             }
         };
 
-        if (node.leftId != INVALID_INDEX) // != static_cast<size_t>(-1)
-            drawEdgeIfExist(node.leftId);
-
-        if (node.rightId != INVALID_INDEX)
-            drawEdgeIfExist(node.rightId);
+        if (node.leftId != INVALID_INDEX) drawEdgeIfExist(node.leftId);
+        if (node.rightId != INVALID_INDEX) drawEdgeIfExist(node.rightId);
     } 
 
     // Draw active nodes
@@ -646,8 +699,10 @@ void Renderer::visit(const TreePayload& payload) {
             float lerpScale = 1.0f - std::exp(-15.0f * currentDeltaTime);
             it->second.scale += (0.0f - it->second.scale) * lerpScale;
             if (it->second.scale < 0.05f) { it = nodeAnimStates.erase(it); }
-            else { sf::Color fc(static_cast<std::uint8_t>(it->second.colorR), static_cast<std::uint8_t>(it->second.colorG), static_cast<std::uint8_t>(it->second.colorB), 255);
-            drawImageNode(it->second.pos, "", it->second.scale, fc, it->second.highlightAlpha); ++it; }
+            else { 
+                sf::Color fc(static_cast<std::uint8_t>(it->second.colorR), static_cast<std::uint8_t>(it->second.colorG), static_cast<std::uint8_t>(it->second.colorB), 255);
+                drawImageNode(it->second.pos, "", it->second.scale, fc, it->second.highlightAlpha); ++it; 
+            }
         } else {
             ++it;
         }
@@ -1016,7 +1071,10 @@ void Renderer::visit(const SingleSourcePayload& payload) {
         }
 
         if (vertexId < payload.distances.size()) {
-            std::string distStr = (payload.distances[vertexId] >= 1e9) ? "INF" : std::to_string(payload.distances[vertexId]);
+            std::string distStr;
+            if (payload.distances[vertexId] >= 1e9) distStr = "INF";
+            else if (payload.distances[vertexId] <= -1e9) distStr = "-INF";
+            else distStr = std::to_string(payload.distances[vertexId]);   
             drawTextPositioned(pos, "d: " + distStr, 14, theme.textColor, TextPositionMode::TopRight, nodeSize.y, nodeSize.x, 2.0f);
         }
     }
@@ -1092,15 +1150,35 @@ void Renderer::visit(const AllPairsPayload& payload) {
     
     // Draw a small distance matrix if size is manageable
     if (payload.distances.size() <= 10 && !payload.distances.empty()) {
-        float startX = 20.0f;
-        float startY = 100.0f;
+        sf::Vector2u winSize = window.getWindow().getSize();
         float cellW = 40.0f;
         float cellH = 30.0f;
         
+        float matrixWidth = (payload.distances[0].size() + 1) * cellW;
+        float matrixHeight = (payload.distances.size() + 1) * cellH;
+        
+        float startX = static_cast<float>(winSize.x) - theme.codePanelWidth - theme.codePanelRightOffset + (theme.codePanelWidth - matrixWidth) / 2.0f;
+        // Đẩy bảng xuống sát lề dưới (cách đáy 40px) để không đè lên Step Info
+        float startY = static_cast<float>(winSize.y) - matrixHeight - 40.0f;
+        
+        for (size_t j = 0; j < payload.distances[0].size(); ++j) {
+            sf::Vector2f pos(startX + (j + 1) * cellW, startY);
+            std::string vName = (j < payload.baseGraph.vertices.size()) ? std::to_string(payload.baseGraph.vertices[j]) : std::to_string(j);
+            drawText(pos, vName, 14, theme.accentColor, TextPosition::TopLeft);
+        }
+
         for (size_t i = 0; i < payload.distances.size(); ++i) {
+            sf::Vector2f rowPos(startX, startY + (i + 1) * cellH);
+            std::string vName = (i < payload.baseGraph.vertices.size()) ? std::to_string(payload.baseGraph.vertices[i]) : std::to_string(i);
+            drawText(rowPos, vName, 14, theme.accentColor, TextPosition::TopLeft);
+
             for (size_t j = 0; j < payload.distances[i].size(); ++j) {
-                std::string distStr = (payload.distances[i][j] >= 1e9) ? "INF" : std::to_string(payload.distances[i][j]);
-                sf::Vector2f pos(startX + j * cellW, startY + i * cellH);
+                std::string distStr;
+                if (payload.distances[i][j] >= 1e9) distStr = "INF";
+                else if (payload.distances[i][j] <= -1e9) distStr = "-INF";
+                else distStr = std::to_string(payload.distances[i][j]);
+                
+                sf::Vector2f pos(startX + (j + 1) * cellW, startY + (i + 1) * cellH);
                 drawText(pos, distStr, 14, theme.textColor, TextPosition::TopLeft);
             }
         }
@@ -1122,21 +1200,26 @@ void Renderer::visit(const GridPayload& payload) {
     float topPadding = std::max(
         layoutDefaults.gridTopPaddingMin,
         static_cast<float>(winSize.y) * layoutDefaults.gridTopPaddingRatio);
-    float bottomPadding = std::max(
-        layoutDefaults.gridBottomPaddingMin,
-        static_cast<float>(winSize.y) * layoutDefaults.gridBottomPaddingRatio);
+
+    // Tính toán vùng không gian an toàn ở dưới cho các nút UI.
+    // Điểm cao nhất của nút = yRatio - bán kính (1/divisor). Cần tính cả vùng này cộng thêm padding.
+    float buttonTopRatio = theme.uiButtonsYRatio - (1.0f / theme.uiButtonRadiusYDivisor);
+    float buttonZoneHeight = static_cast<float>(winSize.y) * (1.0f - buttonTopRatio) + 40.0f;
+    float bottomPadding = std::max({buttonZoneHeight, layoutDefaults.gridBottomPaddingMin, static_cast<float>(winSize.y) * layoutDefaults.gridBottomPaddingRatio});
+    
+    // Space for row/column labels (indices)
+    float labelWidth = 30.0f;  // Space for row labels on left
+    float labelHeight = 25.0f; // Space for column labels on top
 
     float rightReserve = theme.codePanelWidth + theme.codePanelRightOffset + 16.0f;
-    float availableWidth = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.x) - rightReserve - 2.0f * horizontalPadding);
-    float availableHeight = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.y) - topPadding - bottomPadding);
+    
+    // Trừ thêm khoảng trống cho label để đảm bảo lưới cộng với label không vượt quá không gian an toàn
+    float availableWidth = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.x) - rightReserve - 2.0f * horizontalPadding - labelWidth);
+    float availableHeight = std::max(layoutDefaults.gridViewportMinSize, static_cast<float>(winSize.y) - topPadding - bottomPadding - labelHeight);
 
     float cellSize = std::min(availableWidth / cols, availableHeight / rows);
     float gridWidth = cols * cellSize;
     float gridHeight = rows * cellSize;
-
-    // Space for row/column labels (indices)
-    float labelWidth = 30.0f;  // Space for row labels on left
-    float labelHeight = 25.0f; // Space for column labels on top
     
     float startX = ((static_cast<float>(winSize.x) - rightReserve) - gridWidth) / 2.0f + labelWidth;
     float startY = topPadding + (availableHeight - gridHeight) / 2.0f + labelHeight;
@@ -1827,8 +1910,8 @@ void Renderer::visit(const TopBarPayload& payload) {
     window.getWindow().setView(sf::View(sf::FloatRect({0.f, 0.f}, {payload.winSize.x, payload.winSize.y})));
     
     drawSFMLButton({10.0f, 10.0f}, {80.0f, 35.0f}, "Home", payload.isDarkMode, 16);
-    drawSFMLButton({270.0f, 10.0f}, {100.0f, 35.0f}, payload.isDarkMode ? "Light Mode" : "Dark Mode", payload.isDarkMode, 16);
-    drawSFMLButton({390.0f, 10.0f}, {90.0f, 35.0f}, payload.isShowingCode ? "Hide Code" : "Show Code", payload.isDarkMode, 16);
+    drawSFMLButton({110.0f, 10.0f}, {100.0f, 35.0f}, payload.isDarkMode ? "Light Mode" : "Dark Mode", payload.isDarkMode, 16);
+    drawSFMLButton({230.0f, 10.0f}, {90.0f, 35.0f}, payload.isShowingCode ? "Hide Code" : "Show Code", payload.isDarkMode, 16);
 
     window.getWindow().setView(currentView);
 }

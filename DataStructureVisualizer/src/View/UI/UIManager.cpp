@@ -259,21 +259,22 @@ void UIManager::render(sf::RenderWindow& window) {
             clickSound.play();
         }
 
-        ImGui::SetCursorScreenPos(ImVec2(120.0f, 10.0f));
-        ImGui::SetNextItemWidth(120.0f);
-        if (ImGui::SliderFloat("##ScaleApp", &theme.nodeScale, 0.3f, 2.0f, "Size %.1f")) {
-            theme.arrayScale = theme.nodeScale;
-            themeScaleChanged = true;
-        }
+        ImGui::SetCursorScreenPos(ImVec2(340.0f, 10.0f));
+        // ImGui::SetNextItemWidth(180.0f);
+        // if (ImGui::SliderFloat("##ScaleApp", &theme.nodeScale, 0.3f, 2.0f, "Size %.1f")) {
+        //     theme.arrayScale = theme.nodeScale;
+        //     themeScaleChanged = true;
+        // }
+        // ImGui::SliderFloat("##speed", &speed, 0.1f, 10.0f, "Speed %.1fx");
         
-        ImGui::SetCursorScreenPos(ImVec2(270.0f, 10.0f));
+        ImGui::SetCursorScreenPos(ImVec2(110.0f, 10.0f));
         if (ImGui::InvisibleButton("ThemeBtnTop", ImVec2(100.0f, 35.0f))) {
             isDarkMode = !isDarkMode;
             themeToggleRequested = true;
             clickSound.play();
         }
         
-        ImGui::SetCursorScreenPos(ImVec2(390.0f, 10.0f));
+        ImGui::SetCursorScreenPos(ImVec2(230.0f, 10.0f));
         if (ImGui::InvisibleButton("CodeBtnTop", ImVec2(90.0f, 35.0f))) {
             codePanel.toggleShowCode();
             clickSound.play();
@@ -284,15 +285,63 @@ void UIManager::render(sf::RenderWindow& window) {
         inputMenu.setDS(currentDS);
         inputMenu.render(window);
         codePanel.render(window);
-        slider.render(window);
+        // slider.render(window);
 
-        if (isshowingPlay) {
-            play.render(window);
-        } else {
-            pause.render(window);
-        }
-        stepForward.render(window);
-        stepBackward.render(window);
+        float winW = (float)window.getSize().x;
+        float winH = (float)window.getSize().y;
+
+        // Dòng quan trọng nhất: Pivot (0.5f, 0.5f) sẽ khóa TÂM cửa sổ vào giữa màn hình
+        ImGui::SetNextWindowPos(ImVec2(winW * 0.5f, winH - 120.0f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        ImGui::Begin("PlaybackControls", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground);
+
+        // 1. THANH SPEED NẰM TRÊN (CENTERED)
+        float sliderWidth = 300.0f; 
+        // Tính toán lề để đẩy cái slider vào giữa lòng cửa sổ ImGui
+        float windowInnerWidth = ImGui::GetWindowSize().x;
+        ImGui::SetCursorPosX((windowInnerWidth - sliderWidth) * 0.5f);
+
+        ImGui::Spacing(); // Thêm khoảng trống cho Label của Slider nhô lên ở trên
+        ImGui::PushItemWidth(sliderWidth);
+        // Thay thế bằng thanh trượt xịn xò đã thiết kế
+        UIanimation::JuicySliderFloat("##speed", &speed, 0.1f, 10.0f, "Speed %.1fx", btnColor, btnHover, btnHover);
+        ImGui::PopItemWidth();
+
+        ImGui::Spacing(); // Cách ra một đoạn
+        ImGui::Spacing(); // Cách ra thêm một chút để không đụng Slider
+
+        // 2. CỤM NÚT NẰM DƯỚI (CENTERED)
+        ImVec2 btnSize(80.0f, 50.0f); // Thiết lập kích thước nút tĩnh (Vì ta đã bỏ Padding)
+        float groupWidth = btnSize.x * 3 + 40.0f; // 3 nút, 2 khoảng cách 20.0f
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - groupWidth) * 0.5f); // Căn giữa trước khi vẽ
+
+        ImGui::BeginGroup();
+
+            // Nút Backward
+            ImGui::BeginDisabled(lastIsAtBeginning || lastIsPlaying); 
+            if (UIanimation::FloatButton(" |<< ", btnSize, btnColor, btnHover, btnHover, &clickSound)) { stepBackwardClicked = true; }
+            ImGui::EndDisabled();
+
+            ImGui::SameLine(0, 20.0f);
+
+            // Nút Play / Pause
+            if (isshowingPlay) {
+                ImGui::BeginDisabled(lastIsAtEnd || lastIsEmpty);
+                if (UIanimation::FloatButton("  >  ", btnSize, btnColor, btnHover, btnHover, &clickSound)) { playClicked = true; }
+                ImGui::EndDisabled();
+            } else {
+                if (UIanimation::FloatButton(" || ", btnSize, btnColor, btnHover, btnHover, &clickSound)) { pauseClicked = true; }
+            }
+
+            ImGui::SameLine(0, 20.0f);
+
+            // Nút Forward
+            ImGui::BeginDisabled(lastIsAtEnd || lastIsPlaying);
+            if (UIanimation::FloatButton(" >>| ", btnSize, btnColor, btnHover, btnHover, &clickSound)) { stepForwardClicked = true; }
+            ImGui::EndDisabled();
+
+        ImGui::EndGroup();
+
+        ImGui::End();
     }
 
     ImGui::SFML::Render(window);
