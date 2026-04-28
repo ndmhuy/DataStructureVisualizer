@@ -14,6 +14,45 @@ void AdjacencyList::addVertex(Timeline* timeline) {
     }
 }
 
+void AdjacencyList::removeVertex(Timeline* timeline) {
+    if (vertexCount == 0) {
+        if (timeline) {
+            timeline->addFrame(Frame(makeGraphPayload(), 0, "No vertex to remove."));
+        }
+        return;
+    }
+
+    size_t removedVertex = vertexCount - 1;
+
+    if (timeline) {
+        std::vector<Edge> removedEdges = getEdgesFromVertex(removedVertex);
+        for (const auto& [vertex, neighbours] : adjacencyList) {
+            if (vertex == removedVertex) {
+                continue;
+            }
+            for (const auto& node : neighbours) {
+                if (node.vertex == removedVertex) {
+                    removedEdges.emplace_back(vertex, removedVertex, node.weight);
+                }
+            }
+        }
+        timeline->addFrame(Frame(makeGraphPayload({removedVertex}, removedEdges), 0, "Removing vertex " + std::to_string(removedVertex) + " and its incident edges"));
+    }
+
+    adjacencyList.erase(removedVertex);
+
+    for (auto& [vertex, neighbours] : adjacencyList) {
+        neighbours.remove_if([removedVertex](const GraphNode& node) { return node.vertex == removedVertex; });
+    }
+
+    --vertexCount;
+    invalidateLayoutCache();
+
+    if (timeline) {
+        timeline->addFrame(Frame(makeGraphPayload(), 0, "Removed vertex " + std::to_string(removedVertex)));
+    }
+}
+
 void AdjacencyList::addEdge(size_t from, size_t to, int weight, Timeline* timeline) {
     bool createdFrom = adjacencyList.find(from) == adjacencyList.end();
     bool createdTo = adjacencyList.find(to) == adjacencyList.end();

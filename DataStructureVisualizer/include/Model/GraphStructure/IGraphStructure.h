@@ -37,6 +37,8 @@ class IGraphStructure : public IVisualizable {
     virtual void addVertex(Timeline* timeline = nullptr) = 0;
     // Adds an edge to the structure and optionally logs it to the timeline.
     virtual void addEdge(size_t from, size_t to, int weight = 1, Timeline* timeline = nullptr) = 0;
+    // Removes the vertex with the largest id and optionally logs it to the timeline.
+    virtual void removeVertex(Timeline* timeline = nullptr) = 0;
     // Deletes an edge from the structure and optionally logs it to the timeline.
     virtual void deleteEdge(size_t from, size_t to, Timeline* timeline = nullptr) = 0;
     // Returns whether an edge exists between the given vertices.

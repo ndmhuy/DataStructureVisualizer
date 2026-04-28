@@ -14,6 +14,42 @@ void AdjacencyMatrix::addVertex(Timeline* timeline) {
     }
 }
 
+void AdjacencyMatrix::removeVertex(Timeline* timeline) {
+    if (vertexCount == 0) {
+        if (timeline) {
+            timeline->addFrame(Frame(makeGraphPayload(), 0, "No vertex to remove."));
+        }
+        return;
+    }
+
+    size_t removedVertex = vertexCount - 1;
+
+    if (timeline) {
+        std::vector<Edge> removedEdges;
+        for (size_t j = 0; j < vertexCount; ++j) {
+            if (matrix[removedVertex][j] != 0) {
+                removedEdges.emplace_back(removedVertex, j, matrix[removedVertex][j]);
+            }
+            if (j != removedVertex && matrix[j][removedVertex] != 0) {
+                removedEdges.emplace_back(j, removedVertex, matrix[j][removedVertex]);
+            }
+        }
+        timeline->addFrame(Frame(makeGraphPayload({removedVertex}, removedEdges), 0, "Removing vertex " + std::to_string(removedVertex) + " and its incident edges"));
+    }
+
+    matrix.pop_back();
+    for (auto& row : matrix) {
+        row.pop_back();
+    }
+
+    --vertexCount;
+    invalidateLayoutCache();
+
+    if (timeline) {
+        timeline->addFrame(Frame(makeGraphPayload(), 0, "Removed vertex " + std::to_string(removedVertex)));
+    }
+}
+
 void AdjacencyMatrix::resizeMatrix(size_t newSize) {
     matrix.resize(newSize);
     for (auto& row : matrix) {

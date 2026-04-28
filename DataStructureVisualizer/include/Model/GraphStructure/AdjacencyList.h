@@ -25,6 +25,8 @@ class AdjacencyList : public IGraphStructure {
 
     // Adds a vertex to the adjacency list.
     void addVertex(Timeline* timeline = nullptr) override;
+    // Removes the vertex with the largest id from the adjacency list.
+    void removeVertex(Timeline* timeline = nullptr) override;
     // Adds or updates an edge in the adjacency list.
     void addEdge(size_t from, size_t to, int weight = 1, Timeline* timeline = nullptr) override;
     // Removes an edge from the adjacency list.

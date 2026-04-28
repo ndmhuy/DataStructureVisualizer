@@ -19,6 +19,8 @@ class AdjacencyMatrix : public IGraphStructure {
 
     // Adds a vertex to the matrix graph.
     void addVertex(Timeline* timeline = nullptr) override;
+    // Removes the vertex with the largest id from the matrix graph.
+    void removeVertex(Timeline* timeline = nullptr) override;
     // Adds or updates an edge in the matrix graph.
     void addEdge(size_t from, size_t to, int weight = 1, Timeline* timeline = nullptr) override;
     // Removes an edge from the matrix graph.
