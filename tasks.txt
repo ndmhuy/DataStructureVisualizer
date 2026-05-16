@@ -1,0 +1,28 @@
+43	25125083	Nguyễn Đình Minh Huy	Designed the initial MVC (Model-View-Controller) folder architecture for the project.
+44	25125083	Nguyễn Đình Minh Huy	Configured the cross-platform CMake build environment, created compile_commands.json generation logic to ensure code editors and IDEs understand the codebase.
+45	25125083	Nguyễn Đình Minh Huy	Created the LaTeX templates and structure for the ongoing project reports. Authored the README.md and PHASE1_TASKS.md documentation
+46	25125083	Nguyễn Đình Minh Huy	Designed the base IVisualizable into (originally IDataStructure) to enforce standard methods across models.
+47	25125083	Nguyễn Đình Minh Huy	Refactored IDataStructure into specialized sub-interfaces: IStandardStructure, IHeapStructure, and IGraphStructure (GridGraph inherits IVisualizable directly) to accomodate diverse inputs.
+48	25125083	Nguyễn Đình Minh Huy	Executed a codebase-wide refactoring to convert all indices from int to size_t, preventing overflow and ensuring memory compatibility.
+49	25125083	Nguyễn Đình Minh Huy	Implemented the Visitor Design Pattern within the Model and View layers to cleanly decouple IPayload generation from Renderer logic.
+50	25125083	Nguyễn Đình Minh Huy	Refactored Frame to support complex payloads (GraphPayload, TreePayload, etc) while preventing circular dependencies with edge structures.
+51	25125083	Nguyễn Đình Minh Huy	Fixed critical encapsulation leaks in the Frame and Timeline classes by enforcing private variables and explicit getter/setters.
+52	25125083	Nguyễn Đình Minh Huy	Implemented the Timeline class to hold sequences of states, then engineered the Playback controller to process the Timeline and manage time-stepped traversal (Play, Pause, Step Forward, Step Backward).
+53	25125083	Nguyễn Đình Minh Huy	Implemented the AppEngine class acting as the central coordinator, then integrated the Model, UIManager, and Renderer together into the main AppEngine application loop.
+54	25125083	Nguyễn Đình Minh Huy	Fixed the ImGui-SFML initialization and shutdown lifecycle to resolve teardown assertions and crashes during application exit.
+55	25125083	Nguyễn Đình Minh Huy	Upgraded error messaging for better debugging processes.
+56	25125083	Nguyễn Đình Minh Huy	Implemented the core logic and algorithms for SinglyLinkedList.
+57	25125083	Nguyễn Đình Minh Huy	Implemented the core logic for the AdjacencyMatrix and AdjacencyList graph structure.
+58	25125083	Nguyễn Đình Minh Huy	Implemented the GridGraph structure specifically for grid-based pathfinding visualizations.
+59	25125083	Nguyễn Đình Minh Huy	Implemented the physics layout graph generator and upgraded to produce better clustering resolution.
+60	25125083	Nguyễn Đình Minh Huy	Implemented Graph algorithms (Dijkstra, A*, Bellman-Ford, Floyd-Warshall, Johnson)
+61	25125083	Nguyễn Đình Minh Huy	Implemented Grid specialized algorithms (BFS, A*)
+62	25125083	Nguyễn Đình Minh Huy	Introduced the PseudocodeManager class to act as a database for algorithm codes.
+63	25125083	Nguyễn Đình Minh Huy	Wrote textual pseudocode mappings for the Singly Linked List operations and all Shortest Path algorithms.
+64	25125083	Nguyễn Đình Minh Huy	Wired the active code line indices from the running algorithm directly to the PseudocodeManager to trigger UI highlights in ImGui.
+65	25125083	Nguyễn Đình Minh Huy	Executed a massive syntax refactoring across 7+ UI components (Button, Slider, InputMenu, CodePanel, etc) for maintainability.
+66	25125083	Nguyễn Đình Minh Huy	Centralized the Theme configurations, replacing hardcoded colors/dimensions across the view components with the Theme class.
+67	25125083	Nguyễn Đình Minh Huy	Established Git branch naming conventions and team collaboration rules, managed the project timeline for Phase 1 (Framework) and Phase 2 (GUI Prototypes).
+68	25125083	Nguyễn Đình Minh Huy	Regularly reviewed Pull Requests (PRs) from team members, performed Git conflict resolutions during complex merges into the dev branch.
+69	25125083	Nguyễn Đình Minh Huy	Checked and formatted the weekly team reports for completeness and consistency (Weeks 04 through 09).
+70	25125083	Nguyễn Đình Minh Huy	Wrote comments for all files

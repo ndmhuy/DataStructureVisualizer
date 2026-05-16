@@ -90,8 +90,14 @@ void InputMenu::render(const sf::RenderWindow& window){
     int currentItemsCount = isopenMenu ? getCurrentMenu().size() : 1;
     float totalMenuHeight = currentItemsCount * height;
 
-    if (defaultY + totalMenuHeight > y) {
-        defaultY = y - totalMenuHeight - 10.0f; // Căn lề dưới (padding bottom) một khoảng an toàn
+    // Chừa thêm không gian cho cụm playback controls ở cạnh dưới màn hình.
+    const float playbackClearance = 140.0f;
+    float menuBottomLimit = y - playbackClearance;
+    if (defaultY + totalMenuHeight > menuBottomLimit) {
+        defaultY = menuBottomLimit - totalMenuHeight - 10.0f; // Căn lên trên để không đè lên playback bar
+        if (defaultY < 10.0f) {
+            defaultY = 10.0f;
+        }
     }
 
     ImGui::SetNextWindowPos(
